@@ -77,6 +77,15 @@ def _interpolated_noise(x: float, y: float, seed: int) -> float:
     i2 = v3 * (1 - frac_x) + v4 * frac_x
     return i1 * (1 - frac_y) + i2 * frac_y
 
+from functools import lru_cache
+
+@lru_cache(maxsize=16384)
+def _perlin_cached(x: float, y: float, seed: int, persistence: float, octaves: int) -> float:
+    """缓存版 perlin_2d，相同参数只算一次。"""
+    # 四舍五入到 0.1 精度，提高缓存命中率
+    rx = round(x, 1); ry = round(y, 1)
+    return _perlin_cached(rx, ry, seed, persistence, octaves)
+
 def perlin_2d(x: float, y: float, seed: int = 0,
               persistence: float = 0.5, octaves: int = 4) -> float:
     total = 0.0; freq = 1.0; amp = 1.0; max_val = 0.0
@@ -92,69 +101,67 @@ def perlin_2d(x: float, y: float, seed: int = 0,
 # ═══════════════════════════════════════
 
 def generate_tile(x: int, y: int, seed: int = 12345) -> int:
-    """返回该格的 tile ID（纯函数，无副作用）。"""
-    elevation = perlin_2d(x * 0.125, y * 0.125, seed=seed, octaves=6)
-    depth_factor = y * 0.03125
-    """返回该格的 tile ID。物理世界：地形/水域/树木/矿层。"""
-    elevation = perlin_2d(x * 0.008, y * 0.008, seed=seed, octaves=6)
-    detail = perlin_2d(x * 0.04, y * 0.04, seed=seed + 123, octaves=3) * 0.3
-    moisture = perlin_2d(x * 0.01, y * 0.01, seed=seed + 456, octaves=4)
-    rng_ore = perlin_2d(x / 2.5, y / 2.5, seed=seed + 7777, octaves=3)
-    rng_layer = perlin_2d(x / 8.0, y / 8.0, seed=seed + 5555, octaves=2)
-    h = elevation + detail
-    river_noise = perlin_2d(x * 0.03, y * 0.03, seed=seed + 789, octaves=2)
-    if (abs(h - 0.0) < 0.08 and moisture > 0.45 and river_noise > 0.35) or (h < -0.15 and moisture > 0.30):
+    """返回该格的 tile ID。只用2次perlin：高程(octaves=6含细节)+矿脉(octaves=3)。"""
+    # 高程（octaves=6 已包含大尺度地形+细节，用 seed 区分）
+    h = perlin_2d(x * 0.01, y * 0.01, seed=seed, octaves=6)
+    # 矿脉/湿度（合并到一个 perlin，节省调用）
+    ore = perlin_2d(x * 0.05, y * 0.05, seed=seed + 7777, octaves=3)
+    
+    # 水域：低高程 + 矿脉值适中 = 河流/湖泊
+    if (h < -0.10 and ore > 0.30) or (h < -0.20):
         return TILE_WATER
+    
+    # 地表
     if y > -3:
-        if h > 0.25:
-            return TILE_GRANITE if rng_layer > 0.40 else TILE_STONE
-        elif h > 0.08:
-            if rng_layer > 0.60: return TILE_LIMESTONE
-            t = perlin_2d(x * 0.2, y * 0.2, seed=seed + 999, octaves=1)
-            if 0.25 < moisture < 0.60 and t > 0.55: return TILE_TREE
+        if h > 0.30:
+            return TILE_GRANITE if ore > 0.50 else TILE_STONE
+        elif h > 0.12:
+            if ore > 0.70: return TILE_LIMESTONE
+            if 0.30 < ore < 0.65 and h > 0.18: return TILE_TREE
             return TILE_DIRT
-        elif h > -0.08:
-            if rng_ore > 0.70: return TILE_CLAY
-            elif rng_ore < 0.18: return TILE_SAND
-            t = perlin_2d(x * 0.2, y * 0.2, seed=seed + 999, octaves=1)
-            if 0.30 < moisture < 0.55 and t > 0.50: return TILE_TREE
+        elif h > -0.05:
+            if ore > 0.75: return TILE_CLAY
+            if ore < 0.20: return TILE_SAND
+            if 0.35 < ore < 0.55: return TILE_TREE
             return TILE_DIRT
         else:
-            return TILE_CLAY if moisture > 0.50 else TILE_SAND
+            return TILE_CLAY if ore > 0.50 else TILE_SAND
+    
+    # 地下分层
     if y > -8:
-        if h > -0.15:
-            if rng_layer > 0.55: return TILE_LIMESTONE
-            elif rng_layer < 0.25: return TILE_SAND
-            elif rng_ore > 0.65: return TILE_CLAY
+        if h > -0.10:
+            if ore > 0.65: return TILE_LIMESTONE
+            if ore < 0.20: return TILE_SAND
+            if ore > 0.55: return TILE_CLAY
             return TILE_DIRT
         return TILE_AIR
     elif y > -25:
-        if h > -0.20:
-            if rng_ore > 0.62: return TILE_COAL
-            elif rng_layer > 0.55 and rng_ore > 0.45: return TILE_LIMESTONE
+        if h > -0.15:
+            if ore > 0.65: return TILE_COAL
+            if ore > 0.55: return TILE_LIMESTONE
             return TILE_STONE
-        return TILE_STONE if rng_layer > 0.35 else TILE_AIR
+        return TILE_STONE if ore > 0.35 else TILE_AIR
     elif y > -45:
-        if h > -0.25:
-            if rng_ore > 0.70: return TILE_IRON
-            elif rng_ore > 0.58: return TILE_COPPER
-            elif rng_ore < 0.22 and rng_layer > 0.50: return TILE_SALT
-            elif rng_layer > 0.60: return TILE_MARBLE
+        if h > -0.20:
+            if ore > 0.72: return TILE_IRON
+            if ore > 0.58: return TILE_COPPER
+            if ore < 0.20: return TILE_SALT
+            if ore > 0.50: return TILE_MARBLE
             return TILE_STONE
         return TILE_STONE
     elif y > -70:
-        if h > -0.28:
-            if rng_ore > 0.72: return TILE_GOLD
-            elif rng_ore > 0.62: return TILE_SILVER
-            elif rng_layer > 0.65: return TILE_GRANITE
-            elif rng_ore < 0.15 and rng_layer < 0.30: return TILE_SULFUR
+        if h > -0.23:
+            if ore > 0.75: return TILE_GOLD
+            if ore > 0.62: return TILE_SILVER
+            if ore > 0.52: return TILE_GRANITE
+            if ore < 0.15: return TILE_SULFUR
             return TILE_STONE
         return TILE_STONE
     else:
-        if h > -0.30:
-            if rng_ore > 0.75: return TILE_DIAMOND
-            elif rng_ore > 0.60: return TILE_OBSIDIAN
-            elif rng_layer > 0.55: return TILE_MARBLE
+        if h > -0.25:
+            if ore > 0.78: return TILE_DIAMOND
+            if ore > 0.60: return TILE_OBSIDIAN
+            if ore > 0.50: return TILE_MARBLE
             return TILE_STONE
         return TILE_STONE
         return TILE_AIR
@@ -329,8 +336,13 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
                     return x, y
     return 0, 0
 
+def clear_perlin_cache():
+    """清理 perlin 缓存（切换世界时调用）。"""
+    _perlin_cached.cache_clear()
+
 def generate_world(seed: int = 12345, layer: int = 0):
     """返回 World 对象。"""
+    clear_perlin_cache()
     return World(seed=seed + layer * 10000)
 
 
