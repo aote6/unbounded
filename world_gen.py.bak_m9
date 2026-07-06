@@ -24,10 +24,6 @@ TILE_LIMESTONE = 13
 TILE_MARBLE = 14
 TILE_GRANITE = 15
 TILE_OBSIDIAN = 16
-TILE_STAIRS_DOWN = 17
-TILE_STAIRS_UP = 18
-TILE_WATER = 19
-TILE_TREE = 20
 
 TILE_DROPS = {
     TILE_DIRT: "泥土", TILE_STONE: "石头",
@@ -36,8 +32,6 @@ TILE_DROPS = {
     TILE_SULFUR: "硫磺", TILE_SALT: "盐矿石", TILE_CLAY: "黏土",
     TILE_SAND: "沙子", TILE_LIMESTONE: "石灰岩", TILE_MARBLE: "大理石",
     TILE_GRANITE: "花岗岩", TILE_OBSIDIAN: "黑曜石",
-    TILE_STAIRS_DOWN: "楼梯下", TILE_STAIRS_UP: "楼梯上",
-    TILE_WATER: "水域", TILE_TREE: "树木",
 }
 
 
@@ -95,68 +89,41 @@ def generate_tile(x: int, y: int, seed: int = 12345) -> int:
     """返回该格的 tile ID（纯函数，无副作用）。"""
     elevation = perlin_2d(x * 0.125, y * 0.125, seed=seed, octaves=6)
     depth_factor = y * 0.03125
-    """返回该格的 tile ID。物理世界：地形/水域/树木/矿层。"""
-    elevation = perlin_2d(x * 0.008, y * 0.008, seed=seed, octaves=6)
-    detail = perlin_2d(x * 0.04, y * 0.04, seed=seed + 123, octaves=3) * 0.3
-    moisture = perlin_2d(x * 0.01, y * 0.01, seed=seed + 456, octaves=4)
-    rng_ore = perlin_2d(x / 2.5, y / 2.5, seed=seed + 7777, octaves=3)
-    rng_layer = perlin_2d(x / 8.0, y / 8.0, seed=seed + 5555, octaves=2)
-    h = elevation + detail
-    river_noise = perlin_2d(x * 0.03, y * 0.03, seed=seed + 789, octaves=2)
-    if (abs(h - 0.0) < 0.08 and moisture > 0.45 and river_noise > 0.35) or (h < -0.15 and moisture > 0.30):
-        return TILE_WATER
-    if y > -3:
-        if h > 0.25:
-            return TILE_GRANITE if rng_layer > 0.40 else TILE_STONE
-        elif h > 0.08:
-            if rng_layer > 0.60: return TILE_LIMESTONE
-            t = perlin_2d(x * 0.2, y * 0.2, seed=seed + 999, octaves=1)
-            if 0.25 < moisture < 0.60 and t > 0.55: return TILE_TREE
-            return TILE_DIRT
-        elif h > -0.08:
-            if rng_ore > 0.70: return TILE_CLAY
-            elif rng_ore < 0.18: return TILE_SAND
-            t = perlin_2d(x * 0.2, y * 0.2, seed=seed + 999, octaves=1)
-            if 0.30 < moisture < 0.55 and t > 0.50: return TILE_TREE
-            return TILE_DIRT
-        else:
-            return TILE_CLAY if moisture > 0.50 else TILE_SAND
-    if y > -8:
-        if h > -0.15:
-            if rng_layer > 0.55: return TILE_LIMESTONE
-            elif rng_layer < 0.25: return TILE_SAND
-            elif rng_ore > 0.65: return TILE_CLAY
-            return TILE_DIRT
-        return TILE_AIR
-    elif y > -25:
-        if h > -0.20:
-            if rng_ore > 0.62: return TILE_COAL
-            elif rng_layer > 0.55 and rng_ore > 0.45: return TILE_LIMESTONE
-            return TILE_STONE
-        return TILE_STONE if rng_layer > 0.35 else TILE_AIR
-    elif y > -45:
-        if h > -0.25:
-            if rng_ore > 0.70: return TILE_IRON
-            elif rng_ore > 0.58: return TILE_COPPER
-            elif rng_ore < 0.22 and rng_layer > 0.50: return TILE_SALT
-            elif rng_layer > 0.60: return TILE_MARBLE
-            return TILE_STONE
-        return TILE_STONE
-    elif y > -70:
-        if h > -0.28:
-            if rng_ore > 0.72: return TILE_GOLD
-            elif rng_ore > 0.62: return TILE_SILVER
-            elif rng_layer > 0.65: return TILE_GRANITE
-            elif rng_ore < 0.15 and rng_layer < 0.30: return TILE_SULFUR
-            return TILE_STONE
-        return TILE_STONE
+    adjusted = elevation - depth_factor * 0.3
+
+    if adjusted > 0.55:
+        tile = TILE_STONE
+        ore_seed = seed + 7777
+        ore_val = perlin_2d(x / 3.0, y / 3.0, seed=ore_seed, octaves=3)
+        depth_bonus = max(0, -y / 80.0)
+        if ore_val + depth_bonus > 0.72:
+            tile = TILE_DIAMOND
+        elif ore_val + depth_bonus > 0.65:
+            tile = TILE_GOLD
+        elif ore_val + depth_bonus > 0.58:
+            tile = TILE_SILVER
+        elif ore_val > 0.52:
+            tile = TILE_IRON
+        elif ore_val > 0.45:
+            tile = TILE_COPPER
+        elif ore_val > 0.38:
+            tile = TILE_COAL
+        elif ore_val < 0.20:
+            spec_val = perlin_2d(x / 7.0, y / 7.0, seed=seed + 8888, octaves=2)
+            if spec_val < 0.15:
+                tile = TILE_SULFUR
+            elif spec_val < 0.22:
+                tile = TILE_SALT
+        return tile
+    elif adjusted > 0.30:
+        tile = TILE_DIRT
+        surface_val = perlin_2d(x / 5.0, y / 5.0, seed=seed + 9999, octaves=2)
+        if surface_val > 0.60:
+            tile = TILE_CLAY
+        elif surface_val < 0.25:
+            tile = TILE_SAND
+        return tile
     else:
-        if h > -0.30:
-            if rng_ore > 0.75: return TILE_DIAMOND
-            elif rng_ore > 0.60: return TILE_OBSIDIAN
-            elif rng_layer > 0.55: return TILE_MARBLE
-            return TILE_STONE
-        return TILE_STONE
         return TILE_AIR
 
 
@@ -320,18 +287,18 @@ class World:
 
 def find_spawn(world: World, start_x: int = 0) -> tuple:
     """寻找合适的出生点。"""
-    for offset in range(40):
+    for offset in range(200):
         for x in (start_x + offset, start_x - offset):
-            for y in range(-10, 40):
+            for y in range(-20, 80):
                 current = world.get_tile(x, y)["tile"]
                 below = world.get_tile(x, y + 1)["tile"]
                 if current == TILE_AIR and below in (TILE_DIRT, TILE_STONE):
                     return x, y
     return 0, 0
 
-def generate_world(seed: int = 12345, layer: int = 0):
-    """返回 World 对象。"""
-    return World(seed=seed + layer * 10000)
+def generate_world(seed: int = 12345):
+    """兼容旧接口——返回 World 对象。"""
+    return World(seed=seed)
 
 
 # ═══════════════════════════════════════
@@ -343,7 +310,7 @@ __all__ = [
     'TILE_AIR', 'TILE_DIRT', 'TILE_STONE',
     'TILE_COAL', 'TILE_COPPER', 'TILE_IRON', 'TILE_SILVER', 'TILE_GOLD', 'TILE_DIAMOND',
     'TILE_SULFUR', 'TILE_SALT', 'TILE_CLAY', 'TILE_SAND',
-    'TILE_LIMESTONE', 'TILE_MARBLE', 'TILE_GRANITE', 'TILE_OBSIDIAN', 'TILE_STAIRS_DOWN', 'TILE_STAIRS_UP', 'TILE_WATER', 'TILE_TREE',
+    'TILE_LIMESTONE', 'TILE_MARBLE', 'TILE_GRANITE', 'TILE_OBSIDIAN',
     'TILE_DROPS',
     'World', 'Chunk', 'generate_tile', 'find_spawn', 'perlin_2d', 'generate_world',
 ]

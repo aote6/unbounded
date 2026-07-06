@@ -7,7 +7,6 @@ from world_gen import (
     TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_DIAMOND,
     TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_SAND,
     TILE_LIMESTONE, TILE_MARBLE, TILE_GRANITE, TILE_OBSIDIAN,
-    TILE_WATER, TILE_TREE,
 )
 from tile_props import get_tile_props, get_tile_char, get_dig_turns
 from config import (
@@ -17,7 +16,6 @@ from config import (
     SPAWN_INITIAL_COUNTDOWN, SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX,
     SPAWN_MIN_DISTANCE,
     DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START,
-    WORLD_LAYERS, LAYER_DEPTH_OFFSET,
 )
 import monsters as monsters_mod
 import items as items_mod
@@ -78,10 +76,6 @@ TILE_CHARS = {
     "石墙": "\u2588", "木墙": "\u2593", "火把": "\u2020",
     "史莱姆尸体": "%", "巨型史莱姆尸体": "%", "蝙蝠尸体": ",",
     "岩石傀儡残骸": "\u2588",
-    "楼梯下": ">",
-    "楼梯上": "<",
-    TILE_WATER: "~",
-    TILE_TREE: "\u2663",
 }
 
 DIRECTIONS = {
@@ -224,15 +218,17 @@ def crafting_menu(stdscr, game):
                 status_msg = f"合成了 {inst.name}{affix_str}！"
 
             elif items_mod.is_placeable(game.items, name):
+                # 木箱不进建造模式，放进背包让玩家自己决定何时放置
                 if name == "木箱":
-                    # 木箱不进建造模式，存进背包，玩家按 b 键随时选择放置
-                    game._add_material(name, 1)
-                    status_msg = f"合成了 {name}！按 b 从背包选择放置位置（共 {game._count_material(name)}）。"
+                    game._add_equipment_instance(name)
+                    break
+                    game.message = f"合成了 {name}！方向键移动光标，回车放置，c 取消。\n"
+                    game.cursor_x, game.cursor_y = game.player_x, game.player_y
+                    game.last_place = game.place_mode
+                    game.place_mode = items_mod.get_place_tile(game.items, name)
                 else:
                     game.place_mode = items_mod.get_place_tile(game.items, name)
-                    game.place_item_name = None
                     game.last_place = game.place_mode
-                    game.last_place_item_name = None
                     game.cursor_x, game.cursor_y = game.player_x, game.player_y
                     game.message = f"合成了 {name}！建造模式：方向键移动光标，回车放置，c 退出。"
                     break
@@ -313,47 +309,6 @@ def equipment_menu(stdscr, game):
     del win; game.stdscr.touchwin(); game.stdscr.refresh()
 
 # ═══════════════════════════════════
-# 放置菜单（从背包挑一个可放置物进入建造模式）
-# ═══════════════════════════════════
-def place_menu(stdscr, game):
-    candidates = [name for name, count in game.materials.items()
-                  if count > 0 and items_mod.is_placeable(game.items, name)]
-    if not candidates:
-        game.message = "背包里没有可放置的物品。"
-        return
-    selected = 0
-    h, w = len(candidates) + 6, 45
-    y, x = max(0, (curses.LINES - h) // 2), max(0, (curses.COLS - w) // 2)
-    win = curses.newwin(h, w, y, x)
-    win.keypad(True)
-    while True:
-        win.erase(); win.box()
-        win.addstr(0, 2, " 放置物品 ")
-        win.addstr(1, 2, "↑↓ 选择 Enter 进入建造 c 关闭")
-        for i, name in enumerate(candidates):
-            line = f" {name} x{game.materials.get(name, 0)}"
-            attr = curses.A_REVERSE if i == selected else curses.A_NORMAL
-            win.addstr(3 + i, 2, line[:w - 4], attr)
-        win.refresh()
-        key = win.getch()
-        if key in (ord('c'), ord('q')):
-            break
-        elif key == curses.KEY_UP:
-            selected = (selected - 1) % len(candidates)
-        elif key == curses.KEY_DOWN:
-            selected = (selected + 1) % len(candidates)
-        elif key in (curses.KEY_ENTER, 10, 13):
-            name = candidates[selected]
-            game.place_mode = items_mod.get_place_tile(game.items, name)
-            game.place_item_name = name
-            game.last_place = game.place_mode
-            game.last_place_item_name = name
-            game.cursor_x, game.cursor_y = game.player_x, game.player_y
-            game.message = f"建造模式：放置 {name}，方向键移动光标，回车放置，c 退出。"
-            break
-    del win; game.stdscr.touchwin(); game.stdscr.refresh()
-
-# ═══════════════════════════════════
 # Game 类
 # ═══════════════════════════════════
 class Game:
@@ -362,7 +317,6 @@ class Game:
         self._setup_curses()
         self.world = None
         self.player_x = self.player_y = 0
-        self.player_z = 0
         self.cursor_x = self.cursor_y = 0
         self.player_hp = PLAYER_INITIAL_HP
         self.player_max_hp = PLAYER_INITIAL_HP
@@ -372,7 +326,6 @@ class Game:
         self.equipment = {}                # 装备槽: {"main_hand": "石剑"}
         self.message = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
-        self.place_item_name = None; self.last_place_item_name = None
         self.dig_progress = None; self.look_mode = False
         self.recipes = load_recipes()
         self.items = items_mod.load_items()
@@ -383,6 +336,7 @@ class Game:
         self.corpses = {}
         self.modified_tiles = {}
         self.chests = {}  # {(x,y): {"materials": {}, "equipment_instances": [...]}}
+        self.placeable_inventory = {}  # {"木箱": 1, "石墙": 3} 可放置物品暂存
         self.skills = {"digging": 0, "combat": 0, "defense": 0}
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
 
@@ -522,7 +476,6 @@ class Game:
         self.world = generate_world(seed=WORLD_SEED)
         sx, sy = find_spawn(self.world, start_x=0)
         self.player_x, self.player_y = sx, sy
-        self.player_z = 0
         self.cursor_x, self.cursor_y = sx, sy
         self.player_hp = PLAYER_INITIAL_HP; self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
@@ -531,7 +484,6 @@ class Game:
         self.equipment = {}
         self.message = "新游戏开始。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
-        self.place_item_name = None; self.last_place_item_name = None
         self.dig_progress = None; self.look_mode = False
         self.recipes = load_recipes(); self.items = items_mod.load_items()
         self.monster_data = monsters_mod.load_monsters()
@@ -549,7 +501,6 @@ class Game:
         data = {
             "seed": WORLD_SEED,
             "player_x": self.player_x, "player_y": self.player_y,
-            "player_z": self.player_z,
             "player_hp": self.player_hp, "player_max_hp": self.player_max_hp,
             "turn": self.turn,
             "materials": self.materials,
@@ -583,7 +534,6 @@ class Game:
             self.message = f"读档失败: {e}"; return False
         self.world = generate_world(seed=data.get("seed", WORLD_SEED))
         self.player_x = data["player_x"]; self.player_y = data["player_y"]
-        self.player_z = data.get("player_z", 0)
         self.cursor_x, self.cursor_y = self.player_x, self.player_y
         self.player_hp = data["player_hp"]; self.player_max_hp = data["player_max_hp"]
         self.turn = data["turn"]
@@ -621,7 +571,6 @@ class Game:
             }
             self.monsters.append(m)
         self.place_mode = None; self.last_place = None
-        self.place_item_name = None; self.last_place_item_name = None
         self.dig_progress = None; self.look_mode = False
         self.recipes = load_recipes(); self.items = items_mod.load_items()
         self.monster_data = monsters_mod.load_monsters()
@@ -803,7 +752,6 @@ class Game:
         curses.init_pair(8,curses.COLOR_MAGENTA,-1)
         curses.init_pair(9,curses.COLOR_BLACK,curses.COLOR_YELLOW)
         self.stdscr.keypad(True)
-        self.stdscr.nodelay(False)  # getch 阻塞等待，但不缓冲重复按键
 
     def _check_terminal_size(self):
         term_h, term_w = self.stdscr.getmaxyx()
@@ -877,74 +825,6 @@ class Game:
             return False
         return self._dig_any_tile(x, y)
 
-    def _try_use_stairs(self):
-        """检测玩家脚下是否有楼梯，执行层切换。"""
-        tile = self.world.get_tile(self.player_x, self.player_y)["tile"]
-        tile_str = tile if isinstance(tile, str) else None
-        if tile_str == "楼梯下":
-            if self.player_z > -(WORLD_LAYERS - 1):
-                self.player_z -= 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你走下楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经是最底层了。"
-        elif tile_str == "楼梯上":
-            if self.player_z < 0:
-                self.player_z += 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你爬上楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经在地表了。"
-        return False
-
-    def _try_use_stairs(self):
-        """检测玩家脚下是否有楼梯，执行层切换。"""
-        tile = self.world.get_tile(self.player_x, self.player_y)["tile"]
-        tile_str = tile if isinstance(tile, str) else None
-        if tile_str == "楼梯下":
-            if self.player_z > -(WORLD_LAYERS - 1):
-                self.player_z -= 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你走下楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经是最底层了。"
-        elif tile_str == "楼梯上":
-            if self.player_z < 0:
-                self.player_z += 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你爬上楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经在地表了。"
-        return False
-
     def try_move_or_dig(self, dx, dy):
         nx, ny = self.player_x + dx, self.player_y + dy
         tile = self.world.get_tile(nx, ny)["tile"]
@@ -969,10 +849,6 @@ class Game:
         self.message = f"建造光标 ({self.cursor_x},{self.cursor_y})，回车放置，c 退出。"
 
     def _do_place(self):
-        if self.place_item_name and self._count_material(self.place_item_name) <= 0:
-            self.message = f"背包里已经没有 {self.place_item_name} 了。"
-            self.place_mode = None; self.place_item_name = None
-            return
         bx, by = self.cursor_x, self.cursor_y
         if self._monster_at(bx, by):
             self.message = "有怪物挡住了建造位置。"; return
@@ -994,12 +870,6 @@ class Game:
         # 如果放置的是箱子，初始化空箱子
         if self.place_mode == "木箱":
             self.chests[(bx, by)] = {"materials": {}, "equipment_instances": []}
-        if self.place_item_name:
-            self._remove_material(self.place_item_name, 1)
-            if self._count_material(self.place_item_name) <= 0:
-                self.message = f"放置了 {self.place_mode}（背包中已无更多，退出建造模式）"
-                self.place_mode = None; self.place_item_name = None
-                return
         self.message = f"放置了 {self.place_mode}（建造模式中，c 退出）"
 
     def _attack_monster(self, monster):
@@ -1191,19 +1061,6 @@ class Game:
             return curses.color_pair(4) | curses.A_BOLD
         return curses.A_NORMAL
 
-    def _get_geology_zone(self, y):
-        """根据 y 坐标返回地质层名称。"""
-        if y > -8:
-            return "地表沉积层"
-        elif y > -25:
-            return "浅层沉积岩"
-        elif y > -45:
-            return "热液矿脉带"
-        elif y > -70:
-            return "岩浆侵入带"
-        else:
-            return "深部变质基底"
-
     def _get_time_of_day(self):
         t = self.turn % DAY_LENGTH
         if DAWN_START <= t < DAY_START:
@@ -1259,8 +1116,7 @@ class Game:
         if def_bonus > 0:
             hp_str += f" 防:{def_bonus}"
         sk_str = f"挖掘:{self.skill_levels['digging']} 战斗:{self.skill_levels['combat']} 防御:{self.skill_levels['defense']}"
-        zone = self._get_geology_zone(self.player_y)
-        s1 = f"[{time_name}] {zone} | {hp_str} | 技能 {sk_str} | ({self.player_x},{self.player_y})"
+        s1 = f"[{time_name}] | {hp_str} | 技能 {sk_str} | ({self.player_x},{self.player_y})"
         if self.place_mode:
             s1 += f" | [建造: {self.place_mode}]"
         if self.dig_progress:
@@ -1274,7 +1130,7 @@ class Game:
             self.stdscr.addstr(VIEW_HEIGHT+3, 0, s3)
             self.stdscr.addstr(VIEW_HEIGHT+4, 0, self.message)
             self.stdscr.addstr(VIEW_HEIGHT+6, 0,
-                "移动 | c 合成 | e 装备 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | < > 换层 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出")
+                "移动 | c 合成 | e 装备 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出")
         except curses.error:
             pass
         self.stdscr.refresh()
@@ -1302,7 +1158,6 @@ class Game:
                 self.new_game()
                 continue
             key = self.stdscr.getch()
-            curses.flushinp()  # 清空输入缓冲，防止松手后残留按键
             acted = False
             if key in (ord('q'), ord('Q')): break
             elif key in (ord('o'), ord('O')):
@@ -1311,44 +1166,36 @@ class Game:
                 continue
             elif key in (ord('c'), ord('C')):
                 if self.place_mode:
-                    if self.place_item_name:
-                        # 这次放置来自背包已有物品，材料本来就没被扣，取消不用退还
-                        self.message = f"退出了建造模式，{self.place_item_name} 仍在背包里。"
-                        self.place_mode = None
-                        self.place_item_name = None
+                    # 取消建造，退还材料
+                    tile_info = self.items.get(self.place_mode, {})
+                    ingredients = self.recipes.get(self.place_mode, {}).get("ingredients", {})
+                    if not ingredients:
+                        # 尝试用配方名匹配
+                        for rname, rdata in self.recipes.items():
+                            if rname == self.place_mode or rdata.get("result", {}).get("archetype") == self.place_mode:
+                                ingredients = rdata.get("ingredients", {})
+                                break
+                    if ingredients:
+                        for mat, count in ingredients.items():
+                            self._add_material(mat, count)
+                        self.message = f"取消建造 {self.place_mode}，材料已退还。"
                     else:
-                        # 合成后立即建造：取消时退还配方材料
-                        ingredients = self.recipes.get(self.place_mode, {}).get("ingredients", {})
-                        if not ingredients:
-                            # 尝试用配方名匹配
-                            for rname, rdata in self.recipes.items():
-                                if rname == self.place_mode or rdata.get("result", {}).get("archetype") == self.place_mode:
-                                    ingredients = rdata.get("ingredients", {})
-                                    break
-                        if ingredients:
-                            for mat, count in ingredients.items():
-                                self._add_material(mat, count)
-                            self.message = f"取消建造 {self.place_mode}，材料已退还。"
-                        else:
-                            self.message = "退出了建造模式。"
-                        self.place_mode = None
+                        self.message = "退出了建造模式。"
+                    self.place_mode = None
                 else:
                     crafting_menu(self.stdscr, self); self.draw(); continue
             elif key == ord('e'):
                 equipment_menu(self.stdscr, self); self.draw(); continue
-            elif key == ord('b'):
-                place_menu(self.stdscr, self); self.draw(); continue
             elif key in (curses.KEY_ENTER, 10, 13):
                 if self.place_mode: self._do_place(); acted = True
                 self.draw(); continue
             elif key == ord('.'):
                 if self.last_place:
                     self.place_mode = self.last_place
-                    self.place_item_name = self.last_place_item_name
                     self.cursor_x, self.cursor_y = self.player_x, self.player_y
                     self.message = f"建造模式：放置 {self.last_place}，方向键移动光标，回车放置，c 取消。"
                 else:
-                    self.message = "还没有建造过任何东西。合成一个石墙，或按 b 放置背包里的木箱。"
+                    self.message = "还没有建造过任何东西。合成一个石墙或木箱。"
                 self.draw(); continue
             elif key in (ord('r'), ord('R')):
                 self.recipes = load_recipes()

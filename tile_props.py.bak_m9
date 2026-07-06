@@ -5,7 +5,6 @@ from world_gen import (
     TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_DIAMOND,
     TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_SAND,
     TILE_LIMESTONE, TILE_MARBLE, TILE_GRANITE, TILE_OBSIDIAN,
-    TILE_WATER, TILE_TREE,
 )
 
 TILE_PROPS = {
@@ -94,16 +93,6 @@ TILE_PROPS = {
         "blocks_vision": True, "diggable": True, "hardness": 10.0,
         "drop": "黑曜石", "char": "\u25a0",
     },
-    TILE_WATER: {
-        "name": "水域", "passable": False, "transparent": True,
-        "blocks_vision": False, "diggable": False, "hardness": 999.0,
-        "drop": None, "char": "~",
-    },
-    TILE_TREE: {
-        "name": "树木", "passable": True, "transparent": False,
-        "blocks_vision": True, "diggable": True, "hardness": 1.5,
-        "drop": "泥土", "char": "\u2663",
-    },
 }
 
 PLACEABLE_PROPS = {
@@ -173,14 +162,6 @@ PLACEABLE_PROPS = {
         "name": "岩石傀儡残骸", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 4.0,
         "drop": "石头", "char": "\u2588",
-    },
-    "楼梯下": {
-        "name": "向下的楼梯", "passable": True, "transparent": False,
-        "blocks_vision": True, "diggable": False, "hardness": 999.0, "char": ">",
-    },
-    "楼梯上": {
-        "name": "向上的楼梯", "passable": True, "transparent": False,
-        "blocks_vision": True, "diggable": False, "hardness": 999.0, "char": "<",
     },
 }
 

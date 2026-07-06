@@ -1,37 +1,547 @@
 {
   "石镐": {
-    "desc": "挖掘速度+1",
-    "ingredients": {"石头": 3, "泥土": 1},
-    "properties": {}
+    "desc": "挖掘工具",
+    "ingredients": {
+      "石头": 3,
+      "泥土": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "石头",
+      "affix_chance": 0.05
+    },
+    "category": "工具"
   },
   "石剑": {
-    "desc": "攻击力+2",
-    "ingredients": {"石头": 4},
-    "properties": {}
+    "desc": "近战武器",
+    "ingredients": {
+      "石头": 4
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "石头",
+      "affix_chance": 0.05
+    },
+    "category": "武器"
+  },
+  "石斧": {
+    "desc": "高伤害低命中",
+    "ingredients": {
+      "石头": 5
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "斧",
+      "material": "石头",
+      "affix_chance": 0.05
+    },
+    "category": "武器"
+  },
+  "石甲": {
+    "desc": "石头护甲",
+    "ingredients": {
+      "石头": 8
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "甲",
+      "material": "石头",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
+  },
+  "石盔": {
+    "desc": "石头头盔",
+    "ingredients": {
+      "石头": 4
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "头盔",
+      "material": "石头",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
   },
   "木盾": {
-    "desc": "防御力+1",
-    "ingredients": {"泥土": 6},
-    "properties": {}
+    "desc": "副手防御",
+    "ingredients": {
+      "泥土": 6
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "盾",
+      "material": "泥土",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
   },
   "皮甲": {
-    "desc": "防御力+2",
-    "ingredients": {"史莱姆凝胶": 3, "泥土": 4},
-    "properties": {}
+    "desc": "身体护甲",
+    "ingredients": {
+      "泥土": 8
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "甲",
+      "material": "泥土",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
+  },
+  "骨盔": {
+    "desc": "头部防护",
+    "ingredients": {
+      "史莱姆凝胶": 2,
+      "泥土": 2
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "头盔",
+      "material": "史莱姆凝胶",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
+  },
+  "铜镐": {
+    "desc": "铜制工具",
+    "ingredients": {
+      "铜矿石": 3
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "铜矿石",
+      "affix_chance": 0.06
+    },
+    "category": "工具"
+  },
+  "铜剑": {
+    "desc": "铜制武器",
+    "ingredients": {
+      "铜矿石": 4
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "铜矿石",
+      "affix_chance": 0.06
+    },
+    "category": "武器"
+  },
+  "铜斧": {
+    "desc": "铜制重武器",
+    "ingredients": {
+      "铜矿石": 5
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "斧",
+      "material": "铜矿石",
+      "affix_chance": 0.06
+    },
+    "category": "武器"
+  },
+  "铁镐": {
+    "desc": "铁制工具",
+    "ingredients": {
+      "铁矿石": 3,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "铁矿石",
+      "affix_chance": 0.08
+    },
+    "category": "工具"
+  },
+  "铁剑": {
+    "desc": "铁制武器",
+    "ingredients": {
+      "铁矿石": 4,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "铁矿石",
+      "affix_chance": 0.08
+    },
+    "category": "武器"
+  },
+  "铁斧": {
+    "desc": "铁制重武器",
+    "ingredients": {
+      "铁矿石": 5,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "斧",
+      "material": "铁矿石",
+      "affix_chance": 0.08
+    },
+    "category": "武器"
+  },
+  "铁甲": {
+    "desc": "铁制护甲",
+    "ingredients": {
+      "铁矿石": 6,
+      "煤矿": 2
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "甲",
+      "material": "铁矿石",
+      "affix_chance": 0.08
+    },
+    "category": "护甲"
+  },
+  "铁盔": {
+    "desc": "铁制头盔",
+    "ingredients": {
+      "铁矿石": 3,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "头盔",
+      "material": "铁矿石",
+      "affix_chance": 0.08
+    },
+    "category": "护甲"
+  },
+  "铁盾": {
+    "desc": "铁制盾牌",
+    "ingredients": {
+      "铁矿石": 4,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "盾",
+      "material": "铁矿石",
+      "affix_chance": 0.08
+    },
+    "category": "护甲"
+  },
+  "银剑": {
+    "desc": "银制武器",
+    "ingredients": {
+      "银矿石": 4,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "银矿石",
+      "affix_chance": 0.1
+    },
+    "category": "武器"
+  },
+  "银镐": {
+    "desc": "银制工具",
+    "ingredients": {
+      "银矿石": 3,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "银矿石",
+      "affix_chance": 0.1
+    },
+    "category": "工具"
+  },
+  "银甲": {
+    "desc": "银制护甲",
+    "ingredients": {
+      "银矿石": 6,
+      "煤矿": 2
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "甲",
+      "material": "银矿石",
+      "affix_chance": 0.1
+    },
+    "category": "护甲"
+  },
+  "金剑": {
+    "desc": "金制武器",
+    "ingredients": {
+      "金矿石": 4,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "金矿石",
+      "affix_chance": 0.12
+    },
+    "category": "武器"
+  },
+  "金镐": {
+    "desc": "金制工具",
+    "ingredients": {
+      "金矿石": 3,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "金矿石",
+      "affix_chance": 0.12
+    },
+    "category": "工具"
+  },
+  "金甲": {
+    "desc": "金制护甲",
+    "ingredients": {
+      "金矿石": 6,
+      "煤矿": 2
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "甲",
+      "material": "金矿石",
+      "affix_chance": 0.12
+    },
+    "category": "护甲"
+  },
+  "金盔": {
+    "desc": "金制头盔",
+    "ingredients": {
+      "金矿石": 3,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "头盔",
+      "material": "金矿石",
+      "affix_chance": 0.12
+    },
+    "category": "护甲"
+  },
+  "钻石剑": {
+    "desc": "极致锋利",
+    "ingredients": {
+      "钻石原石": 3,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "钻石原石",
+      "affix_chance": 0.2
+    },
+    "category": "武器"
+  },
+  "钻石镐": {
+    "desc": "最强挖掘",
+    "ingredients": {
+      "钻石原石": 2,
+      "煤矿": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "钻石原石",
+      "affix_chance": 0.2
+    },
+    "category": "工具"
+  },
+  "黑曜石剑": {
+    "desc": "锋利但脆弱",
+    "ingredients": {
+      "黑曜石": 4
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "剑",
+      "material": "黑曜石",
+      "affix_chance": 0.12
+    },
+    "category": "武器"
+  },
+  "黑曜石镐": {
+    "desc": "强效挖掘",
+    "ingredients": {
+      "黑曜石": 3
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "镐",
+      "material": "黑曜石",
+      "affix_chance": 0.12
+    },
+    "category": "工具"
+  },
+  "黑曜石斧": {
+    "desc": "极致伤害",
+    "ingredients": {
+      "黑曜石": 5
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "斧",
+      "material": "黑曜石",
+      "affix_chance": 0.12
+    },
+    "category": "武器"
+  },
+  "花岗岩墙": {
+    "desc": "坚硬石墙",
+    "ingredients": {
+      "花岗岩": 2
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "盾",
+      "material": "花岗岩",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
+  },
+  "大理石柱": {
+    "desc": "装饰石柱",
+    "ingredients": {
+      "大理石": 2
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "盾",
+      "material": "大理石",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
+  },
+  "硫磺药剂": {
+    "desc": "投掷用硫磺",
+    "ingredients": {
+      "硫磺": 2,
+      "泥土": 1
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "药水",
+      "material": "硫磺",
+      "affix_chance": 0
+    },
+    "category": "工具"
+  },
+  "黏土砖": {
+    "desc": "黏土盾牌",
+    "ingredients": {
+      "黏土": 4
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "盾",
+      "material": "黏土",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
+  },
+  "石灰粉": {
+    "desc": "石灰头盔",
+    "ingredients": {
+      "石灰岩": 3
+    },
+    "result": {
+      "type": "generated_equipment",
+      "archetype": "头盔",
+      "material": "石灰岩",
+      "affix_chance": 0.05
+    },
+    "category": "护甲"
   },
   "石墙": {
     "desc": "放置一格石墙",
-    "ingredients": {"石头": 2},
-    "properties": {}
+    "ingredients": {
+      "石头": 2
+    },
+    "category": "建筑"
   },
   "木墙": {
     "desc": "放置一格木墙",
-    "ingredients": {"泥土": 3},
-    "properties": {}
+    "ingredients": {
+      "泥土": 3
+    },
+    "category": "建筑"
   },
   "火把": {
-    "desc": "照亮周围（光照系统还没做）",
-    "ingredients": {"泥土": 1, "石头": 1},
-    "properties": {}
+    "desc": "照亮周围",
+    "ingredients": {
+      "泥土": 1,
+      "石头": 1
+    },
+    "category": "建筑"
+  },
+  "石灰岩墙配方": {
+    "desc": "放置石灰岩墙",
+    "ingredients": {
+      "石灰岩": 2
+    },
+    "category": "建筑"
+  },
+  "大理石柱配方": {
+    "desc": "放置大理石柱",
+    "ingredients": {
+      "大理石": 2
+    },
+    "category": "建筑"
+  },
+  "花岗岩砖配方": {
+    "desc": "放置花岗岩砖",
+    "ingredients": {
+      "花岗岩": 2
+    },
+    "category": "建筑"
+  },
+  "玻璃窗配方": {
+    "desc": "放置透明玻璃窗",
+    "ingredients": {
+      "沙子": 3
+    },
+    "category": "建筑"
+  },
+  "砖墙配方": {
+    "desc": "放置砖墙",
+    "ingredients": {
+      "黏土": 3
+    },
+    "category": "建筑"
+  },
+  "砂岩墙配方": {
+    "desc": "放置砂岩墙",
+    "ingredients": {
+      "沙子": 2
+    },
+    "category": "建筑"
+  },
+  "盐灯配方": {
+    "desc": "放置盐灯（微光）",
+    "ingredients": {
+      "盐矿石": 2
+    },
+    "category": "建筑"
+  },
+  "硫磺灯配方": {
+    "desc": "放置硫磺灯（微光）",
+    "ingredients": {
+      "硫磺": 2
+    },
+    "category": "建筑"
+  },
+  "木箱": {
+    "desc": "存放物品的箱子",
+    "ingredients": {
+      "泥土": 4
+    },
+    "category": "其他"
   }
 }

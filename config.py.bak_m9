@@ -5,7 +5,7 @@ VIEW_WIDTH = 40
 VIEW_HEIGHT = 18
 
 # ── 世界 ──
-WORLD_SEED = 51329  # 随机种子
+WORLD_SEED = 42
 
 # ── 玩家 ──
 PLAYER_INITIAL_HP = 100
@@ -20,10 +20,6 @@ SPAWN_INTERVAL_MAX = 40
 SPAWN_MIN_DISTANCE = 10
 MONSTER_SLEEP_DISTANCE = 30
 MONSTER_SLEEP_TICKS = 5
-
-# ── 多层世界 ──
-WORLD_LAYERS = 5          # 总层数（0=地表, -1=地下1层, -2=地下2层...）
-LAYER_DEPTH_OFFSET = 50   # 每层偏移量（叠加到 y 坐标计算深度）
 
 # ── 昼夜循环 ──
 DAY_LENGTH = 1800

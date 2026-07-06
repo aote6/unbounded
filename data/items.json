@@ -1,19 +1,28 @@
 {
   "泥土": {
-    "type": "material", "desc": "普通的泥土。", "weight": 1,
+    "type": "material",
+    "desc": "普通的泥土。",
+    "weight": 1,
     "properties": {}
   },
   "石头": {
-    "type": "material", "desc": "坚硬的石头。", "weight": 2,
+    "type": "material",
+    "desc": "坚硬的石头。",
+    "weight": 2,
     "properties": {}
   },
   "史莱姆凝胶": {
-    "type": "material", "desc": "黏糊糊的凝胶。", "weight": 1,
+    "type": "material",
+    "desc": "黏糊糊的凝胶。",
+    "weight": 1,
     "properties": {}
   },
   "石剑": {
-    "type": "weapon", "slot": "main_hand", "desc": "石头做的剑。",
-    "attack_bonus": 2, "weight": 8,
+    "type": "weapon",
+    "slot": "main_hand",
+    "desc": "石头做的剑。",
+    "attack_bonus": 2,
+    "weight": 8,
     "properties": {
       "material": "stone",
       "durability": 80,
@@ -21,8 +30,11 @@
     }
   },
   "石镐": {
-    "type": "tool", "slot": "main_hand", "desc": "挖掘用的镐子。",
-    "tool_bonus": 1, "weight": 6,
+    "type": "tool",
+    "slot": "main_hand",
+    "desc": "挖掘用的镐子。",
+    "tool_bonus": 1,
+    "weight": 6,
     "properties": {
       "material": "stone",
       "durability": 60,
@@ -30,8 +42,11 @@
     }
   },
   "木盾": {
-    "type": "shield", "slot": "off_hand", "desc": "木板拼的盾牌。",
-    "defense_bonus": 1, "weight": 5,
+    "type": "shield",
+    "slot": "off_hand",
+    "desc": "木板拼的盾牌。",
+    "defense_bonus": 1,
+    "weight": 5,
     "properties": {
       "material": "wood",
       "durability": 40,
@@ -39,8 +54,11 @@
     }
   },
   "皮甲": {
-    "type": "armor", "slot": "body", "desc": "史莱姆凝胶涂层的皮甲。",
-    "defense_bonus": 2, "weight": 10,
+    "type": "armor",
+    "slot": "body",
+    "desc": "史莱姆凝胶涂层的皮甲。",
+    "defense_bonus": 2,
+    "weight": 10,
     "properties": {
       "material": "leather",
       "durability": 50,
@@ -48,18 +66,148 @@
     }
   },
   "石墙": {
-    "type": "placeable", "desc": "石头砌的墙。",
-    "place_tile": "石墙", "drop_on_mine": {"石头": 2}, "weight": 2,
-    "properties": {"material": "stone"}
+    "type": "placeable",
+    "desc": "石头砌的墙。",
+    "place_tile": "石墙",
+    "drop_on_mine": {
+      "石头": 2
+    },
+    "weight": 2,
+    "properties": {
+      "material": "stone"
+    }
   },
   "木墙": {
-    "type": "placeable", "desc": "泥土压成的墙。",
-    "place_tile": "木墙", "drop_on_mine": {"泥土": 2}, "weight": 1,
-    "properties": {"material": "wood"}
+    "type": "placeable",
+    "desc": "泥土压成的墙。",
+    "place_tile": "木墙",
+    "drop_on_mine": {
+      "泥土": 2
+    },
+    "weight": 1,
+    "properties": {
+      "material": "wood"
+    }
   },
   "火把": {
-    "type": "placeable", "desc": "照亮周围（光照系统还没做）。",
-    "place_tile": "火把", "weight": 1,
-    "properties": {"material": "wood", "light": 5}
+    "type": "placeable",
+    "desc": "照亮周围（光照系统还没做）。",
+    "place_tile": "火把",
+    "weight": 1,
+    "properties": {
+      "material": "wood",
+      "light": 5
+    }
+  },
+  "石灰岩墙": {
+    "type": "placeable",
+    "desc": "石灰岩砌的墙。",
+    "place_tile": "石灰岩墙",
+    "drop_on_mine": {
+      "石灰岩": 2
+    },
+    "weight": 3,
+    "properties": {
+      "material": "stone"
+    }
+  },
+  "大理石柱": {
+    "type": "placeable",
+    "desc": "大理石打磨的柱子。",
+    "place_tile": "大理石柱",
+    "drop_on_mine": {
+      "大理石": 2
+    },
+    "weight": 4,
+    "properties": {
+      "material": "stone"
+    }
+  },
+  "花岗岩砖": {
+    "type": "placeable",
+    "desc": "花岗岩切割的砖块。",
+    "place_tile": "花岗岩砖",
+    "drop_on_mine": {
+      "花岗岩": 2
+    },
+    "weight": 5,
+    "properties": {
+      "material": "stone"
+    }
+  },
+  "玻璃窗": {
+    "type": "placeable",
+    "desc": "沙子烧制的玻璃窗，透明可透光。",
+    "place_tile": "玻璃窗",
+    "drop_on_mine": {
+      "沙子": 1
+    },
+    "weight": 1,
+    "properties": {
+      "material": "glass",
+      "transparent": true
+    }
+  },
+  "砖墙": {
+    "type": "placeable",
+    "desc": "黏土烧制的砖墙。",
+    "place_tile": "砖墙",
+    "drop_on_mine": {
+      "黏土": 2
+    },
+    "weight": 3,
+    "properties": {
+      "material": "brick"
+    }
+  },
+  "砂岩墙": {
+    "type": "placeable",
+    "desc": "沙子压成的墙。",
+    "place_tile": "砂岩墙",
+    "drop_on_mine": {
+      "沙子": 2
+    },
+    "weight": 2,
+    "properties": {
+      "material": "sand"
+    }
+  },
+  "盐灯": {
+    "type": "placeable",
+    "desc": "盐矿石雕成的灯，发出微光。",
+    "place_tile": "盐灯",
+    "drop_on_mine": {
+      "盐矿石": 1
+    },
+    "weight": 2,
+    "properties": {
+      "material": "salt",
+      "light": 3
+    }
+  },
+  "硫磺灯": {
+    "type": "placeable",
+    "desc": "硫磺制成的灯，发出淡黄光芒。",
+    "place_tile": "硫磺灯",
+    "drop_on_mine": {
+      "硫磺": 1
+    },
+    "weight": 2,
+    "properties": {
+      "material": "sulfur",
+      "light": 3
+    }
+  },
+  "木箱": {
+    "type": "placeable",
+    "desc": "存放物品的箱子。站旁边按 o 打开。",
+    "place_tile": "木箱",
+    "drop_on_mine": {
+      "泥土": 4
+    },
+    "weight": 8,
+    "properties": {
+      "material": "wood"
+    }
   }
 }

@@ -1,4 +1,11 @@
-# ASCII Terraria 开发路线图
+#!/usr/bin/env python3
+"""更新 ROADMAP.md 至最新状态"""
+from pathlib import Path
+
+BASE = Path(__file__).parent
+fp = BASE / "ROADMAP.md"
+
+new_content = """# ASCII Terraria 开发路线图
 
 ## 设计原则
 - 俯视图 roguelike，x/y 双向无限世界
@@ -232,3 +239,7 @@
 | 2026-07-06 | M4 接入完成（掉落生成器/吸血/装备显示） |
 | 2026-07-06 | 修复 config.py 昼夜参数、补全 tile_props 17种矿石 |
 | 2026-07-06 | 怪物碰撞检测 + 空间索引重构 |
+"""
+
+fp.write_text(new_content, encoding="utf-8")
+print("ROADMAP.md 已更新至 v2.1")
