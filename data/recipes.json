@@ -1,0 +1,37 @@
+{
+  "石镐": {
+    "desc": "挖掘速度+1",
+    "ingredients": {"石头": 3, "泥土": 1},
+    "properties": {}
+  },
+  "石剑": {
+    "desc": "攻击力+2",
+    "ingredients": {"石头": 4},
+    "properties": {}
+  },
+  "木盾": {
+    "desc": "防御力+1",
+    "ingredients": {"泥土": 6},
+    "properties": {}
+  },
+  "皮甲": {
+    "desc": "防御力+2",
+    "ingredients": {"史莱姆凝胶": 3, "泥土": 4},
+    "properties": {}
+  },
+  "石墙": {
+    "desc": "放置一格石墙",
+    "ingredients": {"石头": 2},
+    "properties": {}
+  },
+  "木墙": {
+    "desc": "放置一格木墙",
+    "ingredients": {"泥土": 3},
+    "properties": {}
+  },
+  "火把": {
+    "desc": "照亮周围（光照系统还没做）",
+    "ingredients": {"泥土": 1, "石头": 1},
+    "properties": {}
+  }
+}

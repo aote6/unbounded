@@ -1,0 +1,61 @@
+{
+  "剑": {
+    "slot": "main_hand",
+    "base_damage_min": 3,
+    "base_damage_max": 6,
+    "base_durability": 80,
+    "hit_bonus": 0,
+    "desc": "平衡的近战武器"
+  },
+  "斧": {
+    "slot": "main_hand",
+    "base_damage_min": 4,
+    "base_damage_max": 8,
+    "base_durability": 60,
+    "hit_bonus": -10,
+    "desc": "高伤害但命中率低"
+  },
+  "镐": {
+    "slot": "main_hand",
+    "base_damage_min": 1,
+    "base_damage_max": 3,
+    "base_tool_power": 1,
+    "base_durability": 60,
+    "hit_bonus": -5,
+    "desc": "主要用于挖掘"
+  },
+  "盾": {
+    "slot": "off_hand",
+    "base_defense": 2,
+    "base_durability": 50,
+    "hit_bonus": 0,
+    "desc": "提升防御"
+  },
+  "甲": {
+    "slot": "body",
+    "base_defense": 3,
+    "base_durability": 70,
+    "hit_bonus": 0,
+    "desc": "身体护甲"
+  },
+  "头盔": {
+    "slot": "accessory",
+    "base_defense": 1,
+    "base_durability": 40,
+    "hit_bonus": 0,
+    "desc": "头部防护"
+  },
+  "戒指": {
+    "slot": "accessory",
+    "base_defense": 0,
+    "base_durability": 30,
+    "hit_bonus": 5,
+    "desc": "提供命中加成"
+  },
+  "药水": {
+    "slot": null,
+    "base_durability": 1,
+    "consumable": true,
+    "desc": "一次性使用的液体"
+  }
+}

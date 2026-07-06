@@ -1,0 +1,222 @@
+{
+  "史莱姆": {
+    "char": "M",
+    "hp": 8,
+    "attack_power": [
+      1,
+      3
+    ],
+    "hit_chance": 0.7,
+    "vision": 6,
+    "flee_at_hp_ratio": 0.5,
+    "spawn_weight": 4,
+    "scores": {
+      "attack": 15,
+      "chase": 10,
+      "flee": 12,
+      "wander": 1
+    },
+    "drop": {
+      "史莱姆凝胶": 1
+    },
+    "corpse_tile": "史莱姆尸体",
+    "properties": {
+      "material": "flesh",
+      "body_type": "slime",
+      "natural_armor": 0
+    },
+    "depth_range": [
+      -50,
+      10
+    ]
+  },
+  "巨型史莱姆": {
+    "char": "M",
+    "hp": 25,
+    "attack_power": [
+      3,
+      6
+    ],
+    "hit_chance": 0.8,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.2,
+    "spawn_weight": 1,
+    "scores": {
+      "attack": 20,
+      "chase": 15,
+      "flee": 5,
+      "wander": 1
+    },
+    "drop": {
+      "史莱姆凝胶": 3
+    },
+    "corpse_tile": "巨型史莱姆尸体",
+    "split_into": {
+      "name": "史莱姆",
+      "count": 2
+    },
+    "special_behavior": "split_on_death",
+    "properties": {
+      "material": "flesh",
+      "body_type": "slime",
+      "natural_armor": 2
+    },
+    "depth_range": [
+      -40,
+      10
+    ]
+  },
+  "洞穴蝙蝠": {
+    "char": "B",
+    "hp": 5,
+    "attack_power": [
+      2,
+      4
+    ],
+    "hit_chance": 0.6,
+    "vision": 10,
+    "flee_at_hp_ratio": 0.3,
+    "spawn_weight": 3,
+    "scores": {
+      "attack": 12,
+      "chase": 14,
+      "flee": 8,
+      "wander": 3
+    },
+    "drop": {},
+    "corpse_tile": "蝙蝠尸体",
+    "special_behavior": "erratic_movement",
+    "properties": {
+      "material": "flesh",
+      "body_type": "winged",
+      "natural_armor": 0
+    },
+    "depth_range": [
+      -60,
+      20
+    ]
+  },
+  "岩石傀儡": {
+    "char": "G",
+    "hp": 40,
+    "attack_power": [
+      4,
+      8
+    ],
+    "hit_chance": 0.5,
+    "vision": 5,
+    "flee_at_hp_ratio": 0.0,
+    "spawn_weight": 3,
+    "scores": {
+      "attack": 18,
+      "chase": 6,
+      "flee": 0,
+      "wander": 1
+    },
+    "drop": {
+      "石头": 5
+    },
+    "corpse_tile": "岩石傀儡残骸",
+    "special_behavior": "never_flee",
+    "properties": {
+      "material": "stone",
+      "body_type": "golem",
+      "natural_armor": 5
+    },
+    "depth_range": [
+      -100,
+      -10
+    ]
+  },
+  "暗影史莱姆": {
+    "char": "S",
+    "hp": 15,
+    "attack_power": [
+      3,
+      5
+    ],
+    "hit_chance": 0.75,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.3,
+    "spawn_weight": 3,
+    "depth_range": [
+      -100,
+      -20
+    ],
+    "scores": {
+      "attack": 16,
+      "chase": 12,
+      "flee": 8,
+      "wander": 2
+    },
+    "drop": {},
+    "corpse_tile": "史莱姆尸体",
+    "properties": {
+      "material": "shadow",
+      "body_type": "slime",
+      "natural_armor": 1
+    }
+  },
+  "地穴蜘蛛": {
+    "char": "S",
+    "hp": 20,
+    "attack_power": [
+      4,
+      7
+    ],
+    "hit_chance": 0.8,
+    "vision": 12,
+    "flee_at_hp_ratio": 0.2,
+    "spawn_weight": 2,
+    "depth_range": [
+      -100,
+      -15
+    ],
+    "scores": {
+      "attack": 18,
+      "chase": 15,
+      "flee": 6,
+      "wander": 1
+    },
+    "drop": {},
+    "corpse_tile": "蝙蝠尸体",
+    "special_behavior": "erratic_movement",
+    "properties": {
+      "material": "chitin",
+      "body_type": "arachnid",
+      "natural_armor": 2
+    }
+  },
+  "熔岩傀儡": {
+    "char": "G",
+    "hp": 60,
+    "attack_power": [
+      6,
+      12
+    ],
+    "hit_chance": 0.6,
+    "vision": 4,
+    "flee_at_hp_ratio": 0.0,
+    "spawn_weight": 2,
+    "depth_range": [
+      -200,
+      -30
+    ],
+    "scores": {
+      "attack": 22,
+      "chase": 8,
+      "flee": 0,
+      "wander": 1
+    },
+    "drop": {
+      "黑曜石": 3
+    },
+    "corpse_tile": "岩石傀儡残骸",
+    "special_behavior": "never_flee",
+    "properties": {
+      "material": "obsidian",
+      "body_type": "golem",
+      "natural_armor": 8
+    }
+  }
+}
