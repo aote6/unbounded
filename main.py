@@ -21,6 +21,7 @@ from config import (
 )
 import monsters as monsters_mod
 import items as items_mod
+from inventory import Inventory
 
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -189,9 +190,10 @@ def crafting_menu(stdscr, game):
             for m,c in r.get("ingredients",{}).items():
                 game._remove_material(m, c)
 
-            # 检查是否使用三层物品生成器
-            result_def = r.get("result")
-            if result_def and result_def.get("type") == "generated_equipment":
+            # 检查 result 类型
+            result_def = r.get("result", {})
+            result_type = result_def.get("type", "") if result_def else ""
+            if result_type == "generated_equipment":
                 from item_generator import get_generator
                 gen = get_generator()
                 arch = result_def.get("archetype")
@@ -222,6 +224,18 @@ def crafting_menu(stdscr, game):
                 if inst.affixes:
                     affix_str = " [" + "|".join(inst.affixes) + "]"
                 status_msg = f"合成了 {inst.name}{affix_str}！"
+
+            elif result_type == "material":
+                # 材料类产物，存到材料背包
+                mat_name = result_def.get("name", name)
+                mat_count = result_def.get("count", 1)
+                game._add_material(mat_name, mat_count)
+                status_msg = f"合成了 {mat_name} x{mat_count}（共 {game._count_material(mat_name)}）"
+
+            elif result_type == "placeable":
+                # 可放置物，存到背包
+                game._add_material(name, 1)
+                status_msg = f"合成了 {name} x1（共 {game._count_material(name)}）。按 b 放置。"
 
             elif items_mod.is_placeable(game.items, name):
                 if name == "木箱":
@@ -316,7 +330,7 @@ def equipment_menu(stdscr, game):
 # 放置菜单（从背包挑一个可放置物进入建造模式）
 # ═══════════════════════════════════
 def place_menu(stdscr, game):
-    candidates = [name for name, count in game.materials.items()
+    candidates = [name for name, count in game.inventory.get_materials().items()
                   if count > 0 and items_mod.is_placeable(game.items, name)]
     if not candidates:
         game.message = "背包里没有可放置的物品。"
@@ -331,7 +345,7 @@ def place_menu(stdscr, game):
         win.addstr(0, 2, " 放置物品 ")
         win.addstr(1, 2, "↑↓ 选择 Enter 进入建造 c 关闭")
         for i, name in enumerate(candidates):
-            line = f" {name} x{game.materials.get(name, 0)}"
+            line = f" {name} x{game.inventory.count(name)}"
             attr = curses.A_REVERSE if i == selected else curses.A_NORMAL
             win.addstr(3 + i, 2, line[:w - 4], attr)
         win.refresh()
@@ -396,20 +410,17 @@ class Game:
 
     # ── 材料系统（堆叠物品） ──
     def _count_material(self, name):
-        return self.materials.get(name, 0)
+        return self.inventory.count(name)
 
     def _add_material(self, name, count):
-        self.materials[name] = self.materials.get(name, 0) + count
+        self.inventory.add(name, count)
 
     def _remove_material(self, name, count):
-        if name in self.materials:
-            self.materials[name] -= count
-            if self.materials[name] <= 0:
-                del self.materials[name]
+        self.inventory.remove(name, count)
 
     # ── 装备实例系统（独立物品） ──
     def _add_equipment_instance(self, name, instance_data=None):
-        """添加一个装备实例到背包（创建 EquipmentInstance 对象）。"""
+        """添加一个装备实例到背包。"""
         if instance_data is None:
             item_data = self.items.get(name, {})
             inst = EquipmentInstance(
@@ -430,23 +441,24 @@ class Game:
             inst = instance_data
         else:
             inst = EquipmentInstance.from_dict(instance_data)
-        self.equipment_instances.append(inst)
+        self.inventory.add(name, item_type="equipment", instance=inst)
 
     def _get_equipment_instance(self, name):
-        for inst in self.equipment_instances:
-            if inst.name == name:
-                return inst
+        for item_id, item in self.inventory.all_items():
+            if item.item_type == "equipment" and item.instance and item.instance.name == name:
+                return item.instance
         return None
 
     def _remove_equipment_instance(self, name):
-        for i, inst in enumerate(self.equipment_instances):
-            if inst.name == name:
-                self.equipment_instances.pop(i)
+        for item_id, item in list(self.inventory.all_items()):
+            if item.item_type == "equipment" and item.instance and item.instance.name == name:
+                self.inventory.remove(item_id)
                 return True
         return False
 
     def _count_equipment(self, name):
-        return sum(1 for inst in self.equipment_instances if inst.name == name)
+        return sum(1 for _, item in self.inventory.all_items() 
+               if item.item_type == "equipment" and item.instance and item.instance.name == name)
 
     def _get_item_attr(self, item_name, field_name):
         """获取装备实例的属性，兼容旧 items dict。"""
@@ -535,8 +547,7 @@ class Game:
         self.cursor_x, self.cursor_y = sx, sy
         self.player_hp = PLAYER_INITIAL_HP; self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
-        self.materials = {}
-        self.equipment_instances = []
+        self.inventory = Inventory()
         self.equipment = {}
         self.message = "新游戏开始。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
@@ -561,8 +572,7 @@ class Game:
             "player_z": self.player_z,
             "player_hp": self.player_hp, "player_max_hp": self.player_max_hp,
             "turn": self.turn,
-            "materials": self.materials,
-            "equipment_instances": [inst.to_dict() for inst in self.equipment_instances],
+            "inventory": self.inventory.to_dict(),
             "equipment": self.equipment,
             "skills": self.skills, "skill_levels": self.skill_levels,
             "spawn_counter": self.spawn_counter,
@@ -596,8 +606,8 @@ class Game:
         self.cursor_x, self.cursor_y = self.player_x, self.player_y
         self.player_hp = data["player_hp"]; self.player_max_hp = data["player_max_hp"]
         self.turn = data["turn"]
-        self.materials = data.get("materials", {})
-        self.equipment_instances = [
+        self.inventory = Inventory.from_dict(data.get("inventory", {}))
+        _old_equipment_instances = [
             EquipmentInstance.from_dict(d) if isinstance(d, dict) else d
             for d in data.get("equipment_instances", [])
         ]
@@ -646,7 +656,8 @@ class Game:
                 ]
             }
         self._build_monster_index()
-        self.message = f"读档成功。位置 ({self.player_x},{self.player_y})。"
+        inv_summary = ", ".join(f"{k}:{v}" for k,v in self.inventory.get_materials().items()) or "空"
+        self.message = f"读档成功。位置 ({self.player_x},{self.player_y})。背包: {inv_summary}"
         return True
 
     # ── 箱子系统 ──
@@ -674,8 +685,8 @@ class Game:
         viewing_chest = True  # True=看箱子, False=看背包
         chest_mats = list(chest["materials"].items())
         chest_equips = [(inst.name, inst) for inst in chest["equipment_instances"]]
-        backpack_mats = list(self.materials.items())
-        backpack_equips = [(inst.name, inst) for inst in self.equipment_instances]
+        backpack_mats = list(self.inventory.get_materials().items())
+        backpack_equips = [(inst.name, inst) for inst in self.inventory.get_equipment()]
 
         selected = 0
         while True:
@@ -733,8 +744,8 @@ class Game:
                 # 刷新列表
                 chest_mats = list(chest["materials"].items())
                 chest_equips = [(inst.name, inst) for inst in chest["equipment_instances"]]
-                backpack_mats = list(self.materials.items())
-                backpack_equips = [(inst.name, inst) for inst in self.equipment_instances]
+                backpack_mats = list(self.inventory.get_materials().items())
+                backpack_equips = [(inst.name, inst) for inst in self.inventory.get_equipment()]
             elif key == curses.KEY_UP:
                 selected = (selected - 1) % max(1, len(items))
             elif key == curses.KEY_DOWN:
@@ -743,12 +754,13 @@ class Game:
                 # 全部存入箱子
                 if viewing_chest:
                     # 全部存入：背包 → 箱子
-                    for k, v in list(self.materials.items()):
-                        chest["materials"][k] = chest["materials"].get(k, 0) + v
-                        self._remove_material(k, v)
-                    for inst in list(self.equipment_instances):
-                        chest["equipment_instances"].append(inst)
-                        self.equipment_instances.remove(inst)
+                    for item_id, item in list(self.inventory.all_items()):
+                        if item.item_type in ("material", "placeable"):
+                            chest["materials"][item_id] = chest["materials"].get(item_id, 0) + item.count
+                            self.inventory.remove(item_id, item.count)
+                        elif item.item_type == "equipment":
+                            chest["equipment_instances"].append(item.instance)
+                            self.inventory.remove(item_id)
                     self.message = "所有物品已存入箱子。"
                     backpack_mats = []
                     backpack_equips = []
@@ -785,12 +797,12 @@ class Game:
                         mat_name, count = item[1], item[2]
                         chest["materials"][mat_name] = chest["materials"].get(mat_name, 0) + count
                         self._remove_material(mat_name, count)
-                        backpack_mats = list(self.materials.items())
+                        backpack_mats = list(self.inventory.get_materials().items())
                     else:
                         inst = item[2]
                         chest["equipment_instances"].append(inst)
-                        self.equipment_instances.remove(inst)
-                        backpack_equips = [(i.name, i) for i in self.equipment_instances]
+                        self.inventory.remove(inst.name)
+                        backpack_equips = [(i.name, i) for i in self.inventory.get_equipment()]
                     self.message = "已存入。"
                 selected = 0
 
@@ -950,7 +962,7 @@ class Game:
         self.message = f"建造光标 ({self.cursor_x},{self.cursor_y})，回车放置，c 退出。"
 
     def _do_place(self):
-        if self.place_item_name and self._count_material(self.place_item_name) <= 0:
+        if self.place_item_name and self.inventory.count(self.place_item_name) <= 0:
             self.message = f"背包里已经没有 {self.place_item_name} 了。"
             self.place_mode = None; self.place_item_name = None
             return
@@ -1137,10 +1149,8 @@ class Game:
         """将背包内容掉落到地面附近"""
         # 将材料和装备实例掉落为尸体形式的容器
         # 简化实现：把掉落物信息存在消息里，物品暂不丢失（后续可改进为墓碑容器）
-        lost_mats = dict(self.materials)
-        lost_equips = [inst.name for inst in self.equipment_instances]
-        self.materials = {}
-        self.equipment_instances = []
+        lost_items = self.inventory.to_dict()
+        self.inventory = Inventory()
         # 卸下装备
         for slot in list(self.equipment.keys()):
             self.equipment.pop(slot, None)
@@ -1350,7 +1360,7 @@ class Game:
                 except curses.error:
                     pass
 
-        mats = " ".join(f"{k}:{v}" for k, v in self.materials.items()) or "（空）"
+        mats = " ".join(f"{k}:{v}" for k, v in self.inventory.get_materials().items()) or "（空）"
         eq_parts = []
         for slot_id in ("main_hand", "off_hand", "body", "accessory"):
             eq = self.equipment.get(slot_id, "空")
@@ -1578,7 +1588,36 @@ class Game:
 
 def main(stdscr):
     game = Game(stdscr)
-    if not game.load_game():
+    # 检查是否有存档
+    if SAVE_FILE.exists():
+        game.stdscr.erase()
+        h, w = game.stdscr.getmaxyx()
+        msg1 = "检测到存档文件"
+        msg2 = "按 L 继续上次游戏"
+        msg3 = "按 N 开始新游戏（会覆盖存档）"
+        game.stdscr.addstr(h//2-2, max(0,w//2-15), msg1, curses.A_BOLD)
+        game.stdscr.addstr(h//2, max(0,w//2-15), msg2)
+        game.stdscr.addstr(h//2+1, max(0,w//2-15), msg3)
+        game.stdscr.refresh()
+        while True:
+            key = game.stdscr.getch()
+            if key in (ord('l'), ord('L')):
+                if game.load_game():
+                    break
+                else:
+                    game.new_game()
+                    break
+            elif key in (ord('n'), ord('N')):
+                # 删旧存档
+                import shutil
+                from world_gen import SAVE_DIR
+                if SAVE_FILE.exists():
+                    SAVE_FILE.unlink()
+                if SAVE_DIR.exists():
+                    shutil.rmtree(SAVE_DIR)
+                game.new_game()
+                break
+    else:
         game.new_game()
     game.run()
 

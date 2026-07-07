@@ -471,14 +471,24 @@
     "ingredients": {
       "木板": 1
     },
-    "desc": "木制墙壁，可围出房间"
+    "desc": "木制墙壁，可围出房间",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木墙",
+      "consume_item": "木墙"
+    }
   },
   "火把": {
     "category": "建筑",
     "ingredients": {
       "木材": 1
     },
-    "desc": "照亮黑暗，标记基地"
+    "desc": "照亮黑暗，标记基地",
+    "result": {
+      "type": "placeable",
+      "place_tile": "火把",
+      "consume_item": "火把"
+    }
   },
   "石灰岩墙配方": {
     "desc": "放置石灰岩墙",
@@ -548,49 +558,84 @@
     "ingredients": {
       "木材": 2
     },
-    "desc": "基础建材，可制作木墙/地板/门"
+    "desc": "基础建材，可制作木墙/地板/门",
+    "result": {
+      "type": "material",
+      "name": "木板",
+      "count": 1
+    }
   },
   "木地板": {
     "category": "建筑",
     "ingredients": {
       "木板": 1
     },
-    "desc": "木制地板，走过有质感"
+    "desc": "木制地板，走过有质感",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木地板",
+      "consume_item": "木地板"
+    }
   },
   "木门": {
     "category": "建筑",
     "ingredients": {
       "木板": 2
     },
-    "desc": "木制门，可穿过"
+    "desc": "木制门，可穿过",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木门",
+      "consume_item": "木门"
+    }
   },
   "木桌": {
     "category": "建筑",
     "ingredients": {
       "木板": 3
     },
-    "desc": "木制桌子，放置物品"
+    "desc": "木制桌子，放置物品",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木桌",
+      "consume_item": "木桌"
+    }
   },
   "木椅": {
     "category": "建筑",
     "ingredients": {
       "木板": 1
     },
-    "desc": "木制椅子，可坐下休息"
+    "desc": "木制椅子，可坐下休息",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木椅",
+      "consume_item": "木椅"
+    }
   },
   "木墙(简易)": {
     "category": "建筑",
     "ingredients": {
       "木材": 2
     },
-    "desc": "用原木直接搭墙，无需加工木板"
+    "desc": "用原木直接搭墙，无需加工木板",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木墙",
+      "consume_item": "木墙"
+    }
   },
   "木门(简易)": {
     "category": "建筑",
     "ingredients": {
       "木材": 3
     },
-    "desc": "简易木门"
+    "desc": "简易木门",
+    "result": {
+      "type": "placeable",
+      "place_tile": "木门",
+      "consume_item": "木门"
+    }
   },
   "石砖": {
     "category": "建筑",
