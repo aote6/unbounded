@@ -467,19 +467,18 @@
     "category": "建筑"
   },
   "木墙": {
-    "desc": "放置一格木墙",
+    "category": "建筑",
     "ingredients": {
-      "泥土": 3
+      "木板": 1
     },
-    "category": "建筑"
+    "desc": "木制墙壁，可围出房间"
   },
   "火把": {
-    "desc": "照亮周围",
+    "category": "建筑",
     "ingredients": {
-      "泥土": 1,
-      "石头": 1
+      "木材": 1
     },
-    "category": "建筑"
+    "desc": "照亮黑暗，标记基地"
   },
   "石灰岩墙配方": {
     "desc": "放置石灰岩墙",
@@ -543,5 +542,111 @@
       "泥土": 4
     },
     "category": "其他"
+  },
+  "木板": {
+    "category": "建筑",
+    "ingredients": {
+      "木材": 2
+    },
+    "desc": "基础建材，可制作木墙/地板/门"
+  },
+  "木地板": {
+    "category": "建筑",
+    "ingredients": {
+      "木板": 1
+    },
+    "desc": "木制地板，走过有质感"
+  },
+  "木门": {
+    "category": "建筑",
+    "ingredients": {
+      "木板": 2
+    },
+    "desc": "木制门，可穿过"
+  },
+  "木桌": {
+    "category": "建筑",
+    "ingredients": {
+      "木板": 3
+    },
+    "desc": "木制桌子，放置物品"
+  },
+  "木椅": {
+    "category": "建筑",
+    "ingredients": {
+      "木板": 1
+    },
+    "desc": "木制椅子，可坐下休息"
+  },
+  "木墙(简易)": {
+    "category": "建筑",
+    "ingredients": {
+      "木材": 2
+    },
+    "desc": "用原木直接搭墙，无需加工木板"
+  },
+  "木门(简易)": {
+    "category": "建筑",
+    "ingredients": {
+      "木材": 3
+    },
+    "desc": "简易木门"
+  },
+  "石砖": {
+    "category": "建筑",
+    "ingredients": {
+      "石头": 3
+    },
+    "desc": "石头烧制成砖"
+  },
+  "石砖墙": {
+    "category": "建筑",
+    "ingredients": {
+      "石砖": 2
+    },
+    "desc": "坚固美观的石砖墙"
+  },
+  "玻璃": {
+    "category": "建筑",
+    "ingredients": {
+      "沙子": 2
+    },
+    "desc": "透明玻璃"
+  },
+  "玻璃窗": {
+    "category": "建筑",
+    "ingredients": {
+      "玻璃": 2
+    },
+    "desc": "透明的窗户"
+  },
+  "丝绸": {
+    "category": "建筑",
+    "ingredients": {
+      "蜘蛛丝": 3
+    },
+    "desc": "蜘蛛丝织成丝绸"
+  },
+  "丝绸墙纸": {
+    "category": "建筑",
+    "ingredients": {
+      "丝绸": 2
+    },
+    "desc": "华丽墙纸"
+  },
+  "骨墙": {
+    "category": "建筑",
+    "ingredients": {
+      "骨头": 3
+    },
+    "desc": "骨头搭的墙"
+  },
+  "地毯": {
+    "category": "建筑",
+    "ingredients": {
+      "史莱姆凝胶": 2,
+      "蜘蛛丝": 1
+    },
+    "desc": "柔软的地毯"
   }
 }

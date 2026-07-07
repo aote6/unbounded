@@ -17,7 +17,8 @@
       "wander": 1
     },
     "drop": {
-      "史莱姆凝胶": 1
+      "史莱姆凝胶": 80,
+      "木材": 20
     },
     "corpse_tile": "史莱姆尸体",
     "properties": {
@@ -48,7 +49,8 @@
       "wander": 1
     },
     "drop": {
-      "史莱姆凝胶": 3
+      "史莱姆凝胶": 100,
+      "石头": 30
     },
     "corpse_tile": "巨型史莱姆尸体",
     "split_into": {
@@ -83,7 +85,10 @@
       "flee": 8,
       "wander": 3
     },
-    "drop": {},
+    "drop": {
+      "蝙蝠翅膀": 70,
+      "石头": 30
+    },
     "corpse_tile": "蝙蝠尸体",
     "special_behavior": "erratic_movement",
     "properties": {
@@ -114,7 +119,9 @@
       "wander": 1
     },
     "drop": {
-      "石头": 5
+      "石头": 100,
+      "花岗岩": 50,
+      "铁矿石": 10
     },
     "corpse_tile": "岩石傀儡残骸",
     "special_behavior": "never_flee",
@@ -149,7 +156,10 @@
       "flee": 8,
       "wander": 2
     },
-    "drop": {},
+    "drop": {
+      "史莱姆凝胶": 100,
+      "黑曜石": 20
+    },
     "corpse_tile": "史莱姆尸体",
     "properties": {
       "material": "shadow",
@@ -178,7 +188,10 @@
       "flee": 6,
       "wander": 1
     },
-    "drop": {},
+    "drop": {
+      "蜘蛛丝": 90,
+      "骨头": 40
+    },
     "corpse_tile": "蝙蝠尸体",
     "special_behavior": "erratic_movement",
     "properties": {
@@ -209,7 +222,9 @@
       "wander": 1
     },
     "drop": {
-      "黑曜石": 3
+      "黑曜石": 80,
+      "铁矿石": 50,
+      "金矿石": 20
     },
     "corpse_tile": "岩石傀儡残骸",
     "special_behavior": "never_flee",

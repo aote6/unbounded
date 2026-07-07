@@ -79,13 +79,9 @@ def _interpolated_noise(x: float, y: float, seed: int) -> float:
 
 from functools import lru_cache
 
-@lru_cache(maxsize=16384)
-def _perlin_cached(x: float, y: float, seed: int, persistence: float, octaves: int) -> float:
-    """缓存版 perlin_2d，相同参数只算一次。"""
-    # 四舍五入到 0.1 精度，提高缓存命中率
-    rx = round(x, 1); ry = round(y, 1)
-    return _perlin_cached(rx, ry, seed, persistence, octaves)
 
+
+@lru_cache(maxsize=65536)
 def perlin_2d(x: float, y: float, seed: int = 0,
               persistence: float = 0.5, octaves: int = 4) -> float:
     total = 0.0; freq = 1.0; amp = 1.0; max_val = 0.0
@@ -102,10 +98,14 @@ def perlin_2d(x: float, y: float, seed: int = 0,
 
 def generate_tile(x: int, y: int, seed: int = 12345) -> int:
     """返回该格的 tile ID。只用2次perlin：高程(octaves=6含细节)+矿脉(octaves=3)。"""
-    # 高程（octaves=6 已包含大尺度地形+细节，用 seed 区分）
-    h = perlin_2d(x * 0.01, y * 0.01, seed=seed, octaves=6)
-    # 矿脉/湿度（合并到一个 perlin，节省调用）
-    ore = perlin_2d(x * 0.05, y * 0.05, seed=seed + 7777, octaves=3)
+    # 坐标取整到0.5精度，大幅提高perlin缓存命中率
+    fx = round(x * 0.01 * 2) / 2
+    fy = round(y * 0.01 * 2) / 2
+    h = perlin_2d(fx, fy, seed=seed, octaves=6)
+    # 矿脉/湿度
+    ox = round(x * 0.05 * 2) / 2
+    oy = round(y * 0.05 * 2) / 2
+    ore = perlin_2d(ox, oy, seed=seed + 7777, octaves=3)
     
     # 水域：低高程 + 矿脉值适中 = 河流/湖泊
     if (h < -0.10 and ore > 0.30) or (h < -0.20):
@@ -326,22 +326,136 @@ class World:
 # ═══════════════════════════════════════
 
 def find_spawn(world: World, start_x: int = 0) -> tuple:
-    """寻找合适的出生点。"""
-    for offset in range(40):
+    """寻找合适的出生点。确保玩家站在实体上，且周围有空位。"""
+    for offset in range(80):
         for x in (start_x + offset, start_x - offset):
-            for y in range(-10, 40):
+            for y in range(-3, 15):
                 current = world.get_tile(x, y)["tile"]
                 below = world.get_tile(x, y + 1)["tile"]
-                if current == TILE_AIR and below in (TILE_DIRT, TILE_STONE):
+                # 必须站在实体方块上，头顶是空气
+                if current == TILE_AIR and below not in (TILE_AIR, TILE_WATER, TILE_TREE):
+                    # 在出生点周围5格内种3-5棵树
+                    import random
+                    rng = random.Random(x * 1000 + y)
+                    for _ in range(5):
+                        tx = x + rng.randint(-5, 5)
+                        ty = y + rng.randint(-2, 1)
+                        if world.get_tile(tx, ty)["tile"] in (TILE_AIR, TILE_DIRT):
+                            world.set_tile(tx, ty, TILE_TREE)
                     return x, y
+    # 最终保底：返回原点并强制设为空气
+    world.set_tile(0, 0, TILE_AIR)
+    world.set_tile(0, 1, TILE_DIRT)
     return 0, 0
 
 def clear_perlin_cache():
     """清理 perlin 缓存（切换世界时调用）。"""
-    _perlin_cached.cache_clear()
+    perlin_2d.cache_clear()
+
+def _carve_caves(world):
+    """在每层挖出横向洞穴通道，确保有行走空间"""
+    import random
+    rng = random.Random(world.seed + 9999)
+    
+    # 额外：在出生点附近清理一片空地
+    for x in range(-10, 10):
+        for y in range(-2, 3):
+            world.set_tile(x, y, TILE_AIR)
+    world.set_tile(0, 1, TILE_DIRT)  # 确保脚下有东西
+    
+    for depth_band in [(-15, -3), (-35, -15), (-55, -35)]:
+        for _ in range(rng.randint(3, 5)):
+            x = rng.randint(-200, 200)
+            y = rng.randint(depth_band[0], depth_band[1])
+            length = rng.randint(100, 250)
+            height = rng.randint(3, 5)
+            
+            for step in range(length):
+                # 挖出横向通道
+                for dy in range(-height//2, height//2 + 1):
+                    try:
+                        tile = world.get_tile(x, y+dy)["tile"]
+                        if tile in (TILE_STONE, TILE_DIRT, TILE_COAL, TILE_COPPER, 
+                                   TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_LIMESTONE,
+                                   TILE_MARBLE, TILE_GRANITE, TILE_CLAY, TILE_SAND):
+                            world.set_tile(x, y+dy, TILE_AIR)
+                    except:
+                        pass
+                
+                # 随机游走，偏向水平
+                x += rng.choice([-1, 0, 1, 1, 1])
+                y += rng.choice([-1, 0, 0, 0, 0, 1])
+
+def _scatter_trees(world):
+    """在地表随机撒树，确保有足够的树可砍"""
+    import random
+    rng = random.Random(world.seed + 8888)
+    
+    planted = 0
+    for _ in range(200):
+        x = rng.randint(-60, 60)
+        y = rng.randint(-3, 1)
+        tile = world.get_tile(x, y)["tile"]
+        # 在泥土或空气上种树（但不能种在水上）
+        if tile == TILE_DIRT:
+            world.set_tile(x, y, TILE_TREE)
+            planted += 1
+            if planted >= 50:
+                break
+    # 如果还不够，在空气上也种一些
+    for _ in range(200):
+        x = rng.randint(-60, 60)
+        y = rng.randint(-3, 1)
+        tile = world.get_tile(x, y)["tile"]
+        if tile == TILE_AIR:
+            world.set_tile(x, y, TILE_TREE)
+            planted += 1
+            if planted >= 60:
+                break
+
+def _place_special_locations(world):
+    """在地图里埋藏特殊地貌，给玩家探索的惊喜"""
+    import random
+    rng = random.Random(world.seed + 4444)
+    
+    locations = [
+        ("废弃矿洞", TILE_STONE, 5, {"铁矿石": 15, "石头": 30}),
+        ("蜘蛛巢穴", TILE_DIRT, 3, {"蜘蛛丝": 20}),
+        ("水晶洞穴", TILE_STONE, 4, {"钻石原石": 5, "玻璃": 10}),
+        ("地下湖", TILE_AIR, 6, {"沙子": 20}),
+        ("远古遗迹", TILE_GRANITE, 5, {"金矿石": 8, "大理石": 15}),
+        ("蘑菇洞", TILE_DIRT, 3, {"黏土": 25}),
+        ("硫磺温泉", TILE_STONE, 3, {"硫磺": 15}),
+    ]
+    
+    placed = []
+    for name, base_tile, size, loot in locations:
+        for _ in range(30):
+            x = rng.randint(-150, 150)
+            y = rng.randint(-60, -8)
+            # 确保不重叠
+            too_close = any(abs(x-px) < 15 and abs(y-py) < 15 for px, py, _ in placed)
+            if not too_close:
+                # 挖出一个空间
+                for dx in range(-size, size+1):
+                    for dy in range(-size, size+1):
+                        world.set_tile(x+dx, y+dy, TILE_AIR)
+                # 放标志物
+                world.set_tile(x, y, "火把")
+                placed.append((x, y, name))
+                break
+    
+    return placed
 
 def generate_world(seed: int = 12345, layer: int = 0):
     """返回 World 对象。"""
+    clear_perlin_cache()
+    w = World(seed=seed + layer * 10000)
+    # 新世界生成时挖出洞穴通道
+    _carve_caves(w)
+    _scatter_trees(w)
+    w.special_locations = _place_special_locations(w)
+    return w
     clear_perlin_cache()
     return World(seed=seed + layer * 10000)
 

@@ -102,7 +102,7 @@ TILE_PROPS = {
     TILE_TREE: {
         "name": "树木", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 1.5,
-        "drop": "泥土", "char": "\u2663",
+        "drop": "木材", "drop_count": 2, "char": "\u2663",
     },
 }
 
@@ -182,7 +182,41 @@ PLACEABLE_PROPS = {
         "name": "向上的楼梯", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 999.0, "char": "<",
     },
+    "木地板": {
+        "name": "木地板", "passable": True, "transparent": False,
+        "blocks_vision": True, "diggable": False, "hardness": 1.5, "char": "=",
+    },
+    "木门": {
+        "name": "木门", "passable": True, "transparent": False,
+        "blocks_vision": True, "diggable": False, "hardness": 2.0, "char": "+",
+    },
+    "木桌": {
+        "name": "木桌", "passable": True, "transparent": True,
+        "blocks_vision": False, "diggable": False, "hardness": 1.5, "char": "\u253c",
+    },
+    "木椅": {
+        "name": "木椅", "passable": True, "transparent": True,
+        "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u2534",
+
+    "骨墙": {
+        "name": "骨墙", "passable": False, "transparent": False,
+        "blocks_vision": True, "diggable": False, "hardness": 3.0, "char": "\u263a",
+    },
+    "丝绸墙纸": {
+        "name": "丝绸墙纸", "passable": False, "transparent": False,
+        "blocks_vision": True, "diggable": False, "hardness": 1.0, "char": "\u2591",
+    },
+    "石砖墙": {
+        "name": "石砖墙", "passable": False, "transparent": False,
+        "blocks_vision": True, "diggable": False, "hardness": 6.0, "char": "\u2588",
+    },
+    "地毯": {
+        "name": "地毯", "passable": True, "transparent": True,
+        "blocks_vision": False, "diggable": False, "hardness": 0.5, "char": "\u2248",
+    },
+    },
 }
+
 
 def get_tile_props(tile):
     """统一查询入口。tile 可以是 int tile ID、字符串名称、或带 extra 的 dict。"""
@@ -208,7 +242,7 @@ def get_dig_turns(tile, tool_power=1):
     hardness = props.get("hardness", 3.0)
     if hardness <= 0:
         return 1
-    return max(1, int((hardness ** 2 * 2) / max(1, tool_power)))
+    return max(1, int((hardness * 2) / max(1, tool_power)))
 
 def get_light_radius(tile):
     """返回方块的光照半径，无光照返回0"""

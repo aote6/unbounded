@@ -1,5 +1,7 @@
 __pycache__/
 *.pyc
-*.pyo
+*.bak
+*.bak_*
+patch_*.py
 data/save.json
 data/chunks/

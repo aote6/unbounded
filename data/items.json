@@ -137,16 +137,8 @@
   },
   "玻璃窗": {
     "type": "placeable",
-    "desc": "沙子烧制的玻璃窗，透明可透光。",
     "place_tile": "玻璃窗",
-    "drop_on_mine": {
-      "沙子": 1
-    },
-    "weight": 1,
-    "properties": {
-      "material": "glass",
-      "transparent": true
-    }
+    "desc": "透明玻璃窗"
   },
   "砖墙": {
     "type": "placeable",
@@ -209,5 +201,49 @@
     "properties": {
       "material": "wood"
     }
+  },
+  "蜘蛛丝": {
+    "type": "material",
+    "desc": "地穴蜘蛛的丝，可织成丝绸"
+  },
+  "丝绸": {
+    "type": "material",
+    "desc": "光滑的丝绸，做墙纸用"
+  },
+  "蝙蝠翅膀": {
+    "type": "material",
+    "desc": "薄如蝉翼"
+  },
+  "骨头": {
+    "type": "material",
+    "desc": "可做骨墙"
+  },
+  "石砖": {
+    "type": "material",
+    "desc": "石头烧制的砖块"
+  },
+  "玻璃": {
+    "type": "material",
+    "desc": "沙子烧制的透明玻璃"
+  },
+  "骨墙": {
+    "type": "placeable",
+    "place_tile": "骨墙",
+    "desc": "阴森的骨墙"
+  },
+  "丝绸墙纸": {
+    "type": "placeable",
+    "place_tile": "丝绸墙纸",
+    "desc": "华丽的丝绸墙纸"
+  },
+  "石砖墙": {
+    "type": "placeable",
+    "place_tile": "石砖墙",
+    "desc": "坚固的石砖墙"
+  },
+  "地毯": {
+    "type": "placeable",
+    "place_tile": "地毯",
+    "desc": "柔软的地毯"
   }
 }

@@ -48,7 +48,7 @@ class ItemGenerator:
         else:
             arch_name = random.choice(list(self.archetypes.keys()))
             arch = dict(self.archetypes[arch_name])
-        arch["name"] = archetype_name or arch.get("name", "未知")
+        arch["name"] = archetype_name if archetype_name else arch.get("name", "未知原型")
 
         # 选材质
         if material_name and material_name in self.materials:
@@ -56,7 +56,7 @@ class ItemGenerator:
         else:
             mat_name = random.choice(list(self.materials.keys()))
             mat = dict(self.materials[mat_name])
-        mat["name"] = material_name or mat.get("name", "未知")
+        mat["name"] = material_name if material_name else mat.get("name", "未知材质")
 
         # 选词缀（0-3条，不重复）
         if affix_count is None:

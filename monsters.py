@@ -258,7 +258,33 @@ def get_split_spawns(monster, monster_data):
             break
     return spawns
 
-def generate_loot_for(depth):
+def generate_loot_for(depth, monster_name=None):
+    """生成掉落物。如果有怪物名，优先用怪物的drop表"""
+    import random
+    # 如果有怪物特定掉落表
+    if monster_name:
+        monster_data = load_monsters()
+        monster = monster_data.get(monster_name, {})
+        drop_table = monster.get("drop", {})
+        if drop_table:
+            # 按权重随机选掉落
+            items_list = list(drop_table.items())
+            # 格式可能是 {"物品名": 权重} 或 {"物品名": 数量}
+            # 先检查是否全是数字权重
+            if all(isinstance(v, (int, float)) for v in drop_table.values()):
+                total = sum(drop_table.values())
+                r = random.randint(1, total)
+                cumulative = 0
+                for item_name, weight in drop_table.items():
+                    cumulative += weight
+                    if r <= cumulative:
+                        return item_name, {"name": item_name, "count": 1}
+            else:
+                # 旧格式
+                item = generate_loot(depth)
+                if item:
+                    return item["name"], item
+    # 回退到通用掉落
     item = generate_loot(depth)
     if item:
         return item["name"], item

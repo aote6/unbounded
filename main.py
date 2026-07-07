@@ -251,7 +251,7 @@ def equipment_menu(stdscr, game):
     win = curses.newwin(h,w,y,x)
     win.keypad(True)
     status_msg = ""
-    def redraw():
+    def redraw_eq():
         win.erase(); win.box()
         win.addstr(0,2," 装备菜单 ")
         win.addstr(1,2,"↑↓ 选槽位 Enter 换装 c 关闭")
@@ -268,7 +268,7 @@ def equipment_menu(stdscr, game):
             win.addstr(h-2,2,status_msg[:w-4],curses.A_BOLD)
         win.refresh()
     while True:
-        redraw()
+        redraw_eq()
         key = win.getch()
         if key in (ord('c'), ord('q')): break
         elif key == curses.KEY_UP: sel_slot = (sel_slot-1) % len(slots); status_msg = ""
@@ -283,7 +283,7 @@ def equipment_menu(stdscr, game):
                 candidates.insert(0, "__unequip__")
             if not candidates:
                 status_msg = f"背包里没有能装备到{slot_name}的物品。按任意键继续。"
-                redraw(); win.getch(); status_msg = ""; continue
+                redraw_eq(); win.getch(); status_msg = ""; continue
             sub_sel = 0; sub_h = len(candidates)+4; sub_w = 40
             sub_y = max(0, (curses.LINES-sub_h)//2); sub_x = max(0, (curses.COLS-sub_w)//2)
             sub = curses.newwin(sub_h, sub_w, sub_y, sub_x); sub.keypad(True)
@@ -384,6 +384,14 @@ class Game:
         self.modified_tiles = {}
         self.chests = {}  # {(x,y): {"materials": {}, "equipment_instances": [...]}}
         self.skills = {"digging": 0, "combat": 0, "defense": 0}
+        self.respawn_x = 0
+        self.respawn_y = 0
+        self.bed_x = None
+        self.bed_y = None
+        # 目标系统
+        self.goal = "build_first_room"
+        self.goals_completed = []
+        self.goal_message_shown = False
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
 
     # ── 材料系统（堆叠物品） ──
@@ -522,6 +530,7 @@ class Game:
         self.world = generate_world(seed=WORLD_SEED)
         sx, sy = find_spawn(self.world, start_x=0)
         self.player_x, self.player_y = sx, sy
+        self.respawn_x, self.respawn_y = sx, sy
         self.player_z = 0
         self.cursor_x, self.cursor_y = sx, sy
         self.player_hp = PLAYER_INITIAL_HP; self.player_max_hp = PLAYER_INITIAL_HP
@@ -911,40 +920,6 @@ class Game:
                 self.message = "已经在地表了。"
         return False
 
-    def _try_use_stairs(self):
-        """检测玩家脚下是否有楼梯，执行层切换。"""
-        tile = self.world.get_tile(self.player_x, self.player_y)["tile"]
-        tile_str = tile if isinstance(tile, str) else None
-        if tile_str == "楼梯下":
-            if self.player_z > -(WORLD_LAYERS - 1):
-                self.player_z -= 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你走下楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经是最底层了。"
-        elif tile_str == "楼梯上":
-            if self.player_z < 0:
-                self.player_z += 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你爬上楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经在地表了。"
-        return False
-
     def try_move_or_dig(self, dx, dy):
         nx, ny = self.player_x + dx, self.player_y + dy
         tile = self.world.get_tile(nx, ny)["tile"]
@@ -955,11 +930,17 @@ class Game:
             self._maybe_cancel_dig(nx, ny); self._attack_monster(mon); return
         props = get_tile_props(tile)
         if props["passable"]:
-            # 也要检查是否有怪物挡路（空间索引 O(1)）
+            # 树虽然可穿过，但应该自动挖掘
+            from world_gen import TILE_TREE
+            if tile == TILE_TREE:
+                self._dig_any_tile(nx, ny)
+                return
             if self._monster_has_position(nx, ny):
                 return
             self._maybe_cancel_dig(nx, ny)
             self.player_x, self.player_y = nx, ny
+            # 检查是否进入特殊地貌
+            self._check_special_location()
         elif props["diggable"]:
             self._dig_natural_tile(nx, ny)
 
@@ -1038,9 +1019,12 @@ class Game:
         mname = monster["name"]
         corpse_tile = monster.get("corpse_tile")
         splits = monsters_mod.get_split_spawns(monster, self.monster_data)
-        drop_name, drop_obj = monsters_mod.generate_loot_for(self.player_y)
-        if drop_name:
-            self._add_equipment_instance(drop_name, drop_obj)
+        drop_name, drop_obj = monsters_mod.generate_loot_for(self.player_y, mname)
+        if drop_name and drop_obj:
+            if isinstance(drop_obj, dict) and "count" in drop_obj:
+                self._add_material(drop_name, drop_obj.get("count", 1))
+            else:
+                self._add_equipment_instance(drop_name, drop_obj)
         self._remove_monster(monster)
         if corpse_tile and self.world.get_tile(mx, my)["tile"] == TILE_AIR:
             self.world.set_tile(mx, my, corpse_tile)
@@ -1149,25 +1133,43 @@ class Game:
             self._add_monster(m)
             self.message = f"一只 {m['name']} 出现了！"
 
+    def _drop_items_on_ground(self, x, y):
+        """将背包内容掉落到地面附近"""
+        # 将材料和装备实例掉落为尸体形式的容器
+        # 简化实现：把掉落物信息存在消息里，物品暂不丢失（后续可改进为墓碑容器）
+        lost_mats = dict(self.materials)
+        lost_equips = [inst.name for inst in self.equipment_instances]
+        self.materials = {}
+        self.equipment_instances = []
+        # 卸下装备
+        for slot in list(self.equipment.keys()):
+            self.equipment.pop(slot, None)
+        self.message = f"你的物品散落在 ({x},{y}) 附近。"
+    
     def check_death(self):
-        return self.player_hp <= 0
+        if self.player_hp <= 0:
+            # 掉落背包到原地
+            self._drop_items_on_ground(self.player_x, self.player_y)
+            # 在复活点重生
+            if self.bed_x is not None:
+                self.player_x, self.player_y = self.bed_x, self.bed_y
+            else:
+                self.player_x, self.player_y = self.respawn_x, self.respawn_y
+            self.player_hp = self.player_max_hp
+            self.message = "你死了。物品掉落在原地。"
+            return True
+        return False
 
     def show_death_screen(self):
         self.stdscr.erase()
-        m1, m2 = "你死了。", f"位置 ({self.player_x},{self.player_y})"
-        mats = " ".join(f"{k}:{v}" for k, v in self.materials.items()) or "（空）"
-        eq_names = [v for v in self.equipment.values() if v]
-        eq = " ".join(f"{SLOT_NAMES.get(k,k)}:{v}" for k,v in self.equipment.items()) or "（空）"
-        sk = f"挖掘:{self.skill_levels['digging']} 战斗:{self.skill_levels['combat']} 防御:{self.skill_levels['defense']}"
-        m3, m4, m5 = f"材料: {mats}", f"装备: {eq}", f"技能等级: {sk}"
-        m6 = "按任意键退出。"
+        m1, m2 = "你死了。", f"物品掉落在 ({self.player_x},{self.player_y})"
+        m3 = "你将在出生点复活。"
+        m4 = "按任意键继续..."
         h, w = self.stdscr.getmaxyx()
-        self.stdscr.addstr(h//2-4, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
-        self.stdscr.addstr(h//2-2, max(0, w//2-len(m2)//2), m2)
-        self.stdscr.addstr(h//2-1, max(0, w//2-len(m3)//2), m3)
-        self.stdscr.addstr(h//2, max(0, w//2-len(m4)//2), m4)
-        self.stdscr.addstr(h//2+1, max(0, w//2-len(m5)//2), m5)
-        self.stdscr.addstr(h//2+3, max(0, w//2-len(m6)//2), m6)
+        self.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
+        self.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
+        self.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
+        self.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
         self.stdscr.refresh(); self.stdscr.getch()
 
     def get_viewport_origin(self):
@@ -1177,11 +1179,12 @@ class Game:
 
     def tile_attr(self, tile):
         props = get_tile_props(tile); name = props["name"]
-        # 全局色调：夜晚暗一些
         _, ambient = self._get_time_of_day()
         if ambient <= 2:
-            return curses.color_pair(4)  # 夜晚暗色
-        if name == "石头":
+            return curses.color_pair(4)
+        if name == "树木":
+            return curses.color_pair(3) | curses.A_BOLD  # 绿色加粗
+        elif name == "石头":
             return curses.color_pair(1)
         elif name == "泥土":
             return curses.color_pair(2)
@@ -1204,6 +1207,102 @@ class Game:
         else:
             return "深部变质基底"
 
+    def _detect_room(self, start_x, start_y):
+        """从 (start_x, start_y) 开始 flood fill，检测是否是封闭空间"""
+        from tile_props import get_tile_props
+        from world_gen import TILE_AIR
+        
+        if self.world.get_tile(start_x, start_y)["tile"] != TILE_AIR:
+            return None  # 起点必须是空气
+        
+        visited = set()
+        queue = [(start_x, start_y)]
+        has_door = False
+        has_torch = False
+        has_chest = False
+        blocked = True
+        
+        while queue and len(visited) < 500:
+            x, y = queue.pop(0)
+            if (x, y) in visited:
+                continue
+            visited.add((x, y))
+            
+            for dx, dy in [(0,-1),(0,1),(-1,0),(1,0)]:
+                nx, ny = x+dx, y+dy
+                tile = self.world.get_tile(nx, ny)["tile"]
+                props = get_tile_props(tile)
+                
+                if tile == "木门":
+                    has_door = True
+                    visited.add((nx, ny))
+                    continue
+                if tile == "火把":
+                    has_torch = True
+                    continue
+                if tile == "木箱":
+                    has_chest = True
+                    continue
+                if (nx, ny) in visited:
+                    continue
+                if props.get("passable", False) and not props.get("blocks_vision", False):
+                    continue
+                if abs(nx - start_x) > 40 or abs(ny - start_y) > 40:
+                    blocked = False
+                    continue
+                if not props.get("passable", False):
+                    queue.append((nx, ny))
+        
+        area = len(visited)
+        if blocked and 15 <= area <= 400:
+            return {"area": area, "has_door": has_door, "has_torch": has_torch, "has_chest": has_chest, "tiles": visited}
+        return None
+    
+    def _check_room_formation(self):
+        """检查玩家四周是否形成了封闭房间，并评级"""
+        from world_gen import TILE_AIR
+        for dx, dy in [(0,0),(1,0),(-1,0),(0,1),(0,-1)]:
+            cx, cy = self.player_x + dx, self.player_y + dy
+            if self.world.get_tile(cx, cy)["tile"] == TILE_AIR:
+                room = self._detect_room(cx, cy)
+                if room:
+                    return self._rate_room(room)
+        return False
+    
+    def _rate_room(self, room):
+        """给房间评级"""
+        area = room["area"]
+        has_door = room["has_door"]
+        has_torch = room["has_torch"]
+        has_chest = room["has_chest"]
+        
+        # 扫描房间内的高级建材
+        luxury_count = 0
+        for x, y in room.get("tiles", set()):
+            tile = self.world.get_tile(x, y)["tile"]
+            if tile in ("丝绸墙纸", "玻璃窗", "地毯", "石砖墙", "骨墙"):
+                luxury_count += 1
+        
+        # 评级
+        if has_door and has_torch and has_chest:
+            if luxury_count >= 8:
+                rating = "豪华基地"
+                emoji = "👑"
+            elif luxury_count >= 4:
+                rating = "舒适小屋"
+                emoji = "🏠"
+            else:
+                rating = "简陋木屋"
+                emoji = "🛖"
+            self.message = f"【{emoji}{rating}】面积{area}格，高级建材{luxury_count}个。"
+        elif has_door:
+            self.message = f"【房间】面积{area}格。放火把和箱子升级为基地！"
+        elif has_torch:
+            self.message = f"【空间】有火把，还缺个门。面积{area}格。"
+        else:
+            self.message = f"【空间】封闭空间，面积{area}格。"
+        return True
+    
     def _get_time_of_day(self):
         t = self.turn % DAY_LENGTH
         if DAWN_START <= t < DAY_START:
@@ -1231,7 +1330,7 @@ class Game:
                     if m["hp"] < m["max_hp"] * 0.5:
                         attr = curses.color_pair(7) | curses.A_BOLD
                     else:
-                        attr = curses.color_pair(6) | curses.A_BOLD
+                        attr = curses.color_pair(3) | curses.A_BOLD
                 elif wx == self.player_x and wy == self.player_y:
                     ch, attr = "@", curses.color_pair(3) | curses.A_BOLD
                 elif (self.place_mode or self.look_mode) and wx == self.cursor_x and wy == self.cursor_y:
@@ -1240,6 +1339,9 @@ class Game:
                     tile = self.world.get_tile(wx, wy)["tile"]
                     ch = TILE_CHARS.get(tile, get_tile_char(tile))
                     attr = self.tile_attr(tile)
+                    # 树强制亮绿色（用名字判断）
+                    if get_tile_props(tile).get("name") == "树木":
+                        attr = curses.color_pair(3) | curses.A_BOLD
                 # 夜晚全局压暗
                 if ambient <= 2:
                     attr = curses.color_pair(4)
@@ -1260,7 +1362,10 @@ class Game:
             hp_str += f" 防:{def_bonus}"
         sk_str = f"挖掘:{self.skill_levels['digging']} 战斗:{self.skill_levels['combat']} 防御:{self.skill_levels['defense']}"
         zone = self._get_geology_zone(self.player_y)
-        s1 = f"[{time_name}] {zone} | {hp_str} | 技能 {sk_str} | ({self.player_x},{self.player_y})"
+        goal_names = {"build_first_room": "建造第一个房间", "explore_cave": "深入地下探索", 
+              "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
+        goal_text = goal_names.get(self.goal, self.goal)
+        s1 = f"[{time_name}] {zone} | {hp_str} | 技能 {sk_str} | ({self.player_x},{self.player_y}) | 目标:{goal_text}"
         if self.place_mode:
             s1 += f" | [建造: {self.place_mode}]"
         if self.dig_progress:
@@ -1285,6 +1390,62 @@ class Game:
         self._tick_status_effects()
         self._try_spawn_monster()
         self.world.keep_radius(self.player_x, self.player_y, CHUNK_KEEP_RADIUS)
+        if self.turn % 10 == 0:
+            self._check_room_formation()
+        # 目标推进
+        self._check_goals()
+    
+    def _check_goals(self):
+        """根据玩家进度推进目标"""
+        # 建了第一个房间 → 探索
+        if self.goal == "build_first_room" and self._count_rooms_nearby() >= 1:
+            self.goal = "explore_cave"
+            self.message = "【目标】家已建成！深入地下探索吧。"
+        # 探索到一定深度 → 狩猎
+        elif self.goal == "explore_cave" and self.player_y < -20:
+            self.goal = "kill_spiders"
+            self.message = "【目标】你进入了深层地下！狩猎怪物收集稀有材料。"
+        # 杀了一定数量怪物 → 建造豪华基地
+        elif self.goal == "kill_spiders" and self.turn > 500:
+            self.goal = "build_luxury"
+            self.message = "【目标】收集了足够的材料，建造豪华基地吧！"
+    
+    def _count_rooms_nearby(self):
+        """统计附近的房间数量"""
+        count = 0
+        for dx in range(-20, 21, 5):
+            for dy in range(-20, 21, 5):
+                room = self._detect_room(self.player_x + dx, self.player_y + dy)
+                if room and room.get("has_door"):
+                    count += 1
+        return count
+    
+    def _check_special_location(self):
+        """检测玩家是否进入特殊地貌"""
+        if not hasattr(self.world, 'special_locations'):
+            return
+        for x, y, name in self.world.special_locations:
+            if abs(self.player_x - x) <= 6 and abs(self.player_y - y) <= 6:
+                if not hasattr(self, '_found_specials'):
+                    self._found_specials = set()
+                if (x, y) not in self._found_specials:
+                    self._found_specials.add((x, y))
+                    self.message = f"🔍 你发现了【{name}】！这里似乎有稀有资源..."
+                    # 给奖励
+                    loot_tables = {
+                        "废弃矿洞": {"铁矿石": 10, "石头": 20},
+                        "蜘蛛巢穴": {"蜘蛛丝": 15},
+                        "水晶洞穴": {"钻石原石": 3, "玻璃": 8},
+                        "地下湖": {"沙子": 15},
+                        "远古遗迹": {"金矿石": 5, "大理石": 10},
+                        "蘑菇洞": {"黏土": 20},
+                        "硫磺温泉": {"硫磺": 10},
+                    }
+                    loot = loot_tables.get(name, {})
+                    for item, count in loot.items():
+                        self._add_material(item, count)
+                    self.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
+                break
 
     def run(self):
         self.draw()
