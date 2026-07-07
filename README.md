@@ -44,3 +44,44 @@ python3 main.py
 
 - `data/save.json` — 玩家状态
 - `data/chunks/` — 地形修改数据
+
+## 开发环境 (Termux 手机端)
+
+### 已安装工具
+| 工具 | 用途 | 命令示例 |
+|------|------|---------|
+| micro | 代码编辑器（语法高亮、行号、跳转） | `micro +200 main.py` |
+| ripgrep (rg) | 超快代码搜索 | `rg -n "关键词" *.py` |
+| fd | 超快文件查找 | `fd chunk_` |
+
+### 项目路径
+`~/unbounded`
+
+### 常用操作
+```bash
+cd ~/unbounded
+rg -n "搜索内容" *.py          # 搜索代码
+micro +行号 文件名.py           # 打开文件跳转到指定行
+python main.py                  # 运行游戏
+python3 -c "import main"       # 语法检查
+cat >> ~/unbounded/README.md << 'EOF'
+
+## 开发环境 (Termux 手机端)
+
+### 已安装工具
+| 工具 | 用途 | 命令示例 |
+|------|------|---------|
+| micro | 代码编辑器（语法高亮、行号、跳转） | `micro +200 main.py` |
+| ripgrep (rg) | 超快代码搜索 | `rg -n "关键词" *.py` |
+| fd | 超快文件查找 | `fd chunk_` |
+
+### 项目路径
+`~/unbounded`
+
+### 常用操作
+```bash
+cd ~/unbounded
+rg -n "搜索内容" *.py          # 搜索代码
+micro +行号 文件名.py           # 打开文件跳转到指定行
+python main.py                  # 运行游戏
+python3 -c "import main"       # 语法检查

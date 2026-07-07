@@ -16,9 +16,6 @@ def load_items():
         print(f"[items] JSON 解析失败: {e}")
         return {}
 
-def get_item(items, name):
-    return items.get(name, {})
-
 def is_placeable(items, name):
     return items.get(name, {}).get("type") == "placeable"
 
@@ -28,12 +25,3 @@ def get_place_tile(items, name):
 def get_drop_on_mine(items, name):
     return items.get(name, {}).get("drop_on_mine", {})
 
-def get_slot(items, name):
-    """获取物品的装备槽位。兼容 EquipmentInstance 和普通 dict。"""
-    # 如果是 EquipmentInstance，通过 .slot 属性获取
-    if hasattr(name, 'slot'):
-        return name.slot
-    return items.get(name, {}).get("slot")
-
-def is_equippable(items, name):
-    return get_slot(items, name) is not None

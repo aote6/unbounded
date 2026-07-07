@@ -164,7 +164,6 @@ def generate_tile(x: int, y: int, seed: int = 12345) -> int:
             if ore > 0.50: return TILE_MARBLE
             return TILE_STONE
         return TILE_STONE
-        return TILE_AIR
 
 
 # ═══════════════════════════════════════
@@ -316,11 +315,6 @@ class World:
         for chunk in self._chunks.values():
             chunk.save_to_disk()
 
-    @property
-    def loaded_chunk_count(self):
-        return len(self._chunks)
-
-
 # ═══════════════════════════════════════
 # 辅助函数
 # ═══════════════════════════════════════
@@ -447,17 +441,18 @@ def _place_special_locations(world):
     
     return placed
 
-def generate_world(seed: int = 12345, layer: int = 0):
-    """返回 World 对象。"""
+def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
+    """返回 World 对象。decorate=False 用于读档，跳过洞穴/树木/特殊地貌生成，
+    避免覆盖玩家已建造的内容（这是之前读档丢失bug的根源）。"""
     clear_perlin_cache()
     w = World(seed=seed + layer * 10000)
-    # 新世界生成时挖出洞穴通道
-    _carve_caves(w)
-    _scatter_trees(w)
-    w.special_locations = _place_special_locations(w)
+    if decorate:
+        _carve_caves(w)
+        _scatter_trees(w)
+        w.special_locations = _place_special_locations(w)
+    else:
+        w.special_locations = []
     return w
-    clear_perlin_cache()
-    return World(seed=seed + layer * 10000)
 
 
 # ═══════════════════════════════════════

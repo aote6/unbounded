@@ -219,9 +219,6 @@ def get_generator():
     return _generator
 
 
-def generate_item(archetype=None, material=None, affix_count=None):
-    return get_generator().generate(archetype, material, affix_count)
-
 
 def generate_loot(depth=0):
     return get_generator().generate_loot(depth)

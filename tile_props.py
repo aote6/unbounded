@@ -243,8 +243,3 @@ def get_dig_turns(tile, tool_power=1):
     if hardness <= 0:
         return 1
     return max(1, int((hardness * 2) / max(1, tool_power)))
-
-def get_light_radius(tile):
-    """返回方块的光照半径，无光照返回0"""
-    props = get_tile_props(tile)
-    return props.get("light_radius", 0)

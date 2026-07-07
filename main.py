@@ -10,6 +10,9 @@ from world_gen import (
     TILE_WATER, TILE_TREE,
 )
 from tile_props import get_tile_props, get_tile_char, get_dig_turns
+from systems.interaction import get_nearby_chest, open_chest_menu
+from ui.equipment_ui import equipment_menu
+from ui.crafting_ui import crafting_menu
 from config import (
     VIEW_WIDTH, VIEW_HEIGHT, WORLD_SEED,
     PLAYER_INITIAL_HP,
@@ -82,7 +85,7 @@ TILE_CHARS = {
     "楼梯下": ">",
     "楼梯上": "<",
     TILE_WATER: "~",
-    TILE_TREE: "\u2663",
+    TILE_TREE: "T",
 }
 
 DIRECTIONS = {
@@ -126,205 +129,14 @@ def load_recipes():
 # 合成菜单
 # ═══════════════════════════════════
 def crafting_menu(stdscr, game):
-    recipes = game.recipes
-    if not recipes:
-        game.message = "（没有可用配方）"; return
-
-    # 收集所有配方并按分类分组
-    all_names = [k for k, v in recipes.items() if isinstance(v, dict) and "ingredients" in v]
-    categories = {}
-    for name in all_names:
-        cat = recipes[name].get("category", "未分类")
-        if cat not in categories:
-            categories[cat] = []
-        categories[cat].append(name)
-    
-    cat_order = ["武器", "工具", "护甲", "建筑", "其他", "未分类"]
-    ordered_cats = [c for c in cat_order if c in categories] + [c for c in categories if c not in cat_order]
-    
-    current_cat_idx = 0
-    selected = 0
-    h, w = 18, 50
-    y, x = max(0,(curses.LINES-h)//2), max(0,(curses.COLS-w)//2)
-    win = curses.newwin(h,w,y,x)
-    win.keypad(True)
-    status_msg = ""
-    def redraw():
-        win.erase(); win.box()
-        cat_name = ordered_cats[current_cat_idx]
-        names = categories[cat_name]
-        win.addstr(0,2,f" 合成菜单 [{cat_name}] ")
-        win.addstr(1,2,",切换分类 | ↑↓选择 | Enter合成 | c关闭")
-        for i,name in enumerate(names):
-            if i >= h - 5:
-                win.addstr(3+i,2,f"  ... 还有 {len(names)-i} 项")
-                break
-            r = recipes[name]
-            ing = " + ".join(f"{v}x{k}" for k,v in r.get("ingredients",{}).items())
-            line = f" {name} ← {ing}"
-            if r.get("desc"): line += f" ({r['desc']})"
-            attr = curses.A_REVERSE if i==selected else curses.A_NORMAL
-            win.addstr(3+i,2,line[:w-4],attr)
-        if status_msg:
-            win.addstr(h-2,2,status_msg[:w-4],curses.A_BOLD)
-        win.refresh()
-    while True:
-        cat_name = ordered_cats[current_cat_idx]
-        names = categories[cat_name]
-        if selected >= len(names):
-            selected = 0
-        redraw()
-        key = win.getch()
-        if key in (ord('c'), ord('q')): status_msg = ""; break
-        elif key == ord(','):  # Tab
-            current_cat_idx = (current_cat_idx + 1) % len(ordered_cats)
-            selected = 0; status_msg = ""
-        elif key == curses.KEY_UP: selected = (selected-1) % len(names); status_msg = ""
-        elif key == curses.KEY_DOWN: selected = (selected+1) % len(names); status_msg = ""
-        elif key in (curses.KEY_ENTER, 10, 13):
-            name = names[selected]; r = recipes[name]
-            can = all(game._count_material(m) >= c for m,c in r.get("ingredients",{}).items())
-            if not can:
-                status_msg = "材料不足！按任意键继续。"
-                redraw(); win.getch(); status_msg = ""; continue
-            for m,c in r.get("ingredients",{}).items():
-                game._remove_material(m, c)
-
-            # 检查 result 类型
-            result_def = r.get("result", {})
-            result_type = result_def.get("type", "") if result_def else ""
-            if result_type == "generated_equipment":
-                from item_generator import get_generator
-                gen = get_generator()
-                arch = result_def.get("archetype")
-                mat = result_def.get("material")
-                # 矿石名自动映射到材质名
-                mat = ORE_TO_MATERIAL.get(mat, mat)
-                affix_chance = result_def.get("affix_chance", 0.0)
-                if affix_chance > 0 and random.random() < affix_chance:
-                    item_dict = gen.generate(archetype_name=arch, material_name=mat)
-                else:
-                    item_dict = gen.generate(archetype_name=arch, material_name=mat, affix_count=0)
-                inst = EquipmentInstance(
-                    name=item_dict["name"],
-                    slot=item_dict.get("slot"),
-                    attack_bonus=item_dict.get("attack_bonus", 0),
-                    defense_bonus=item_dict.get("defense_bonus", 0),
-                    tool_bonus=item_dict.get("tool_bonus", 0),
-                    damage_min=item_dict.get("damage_min", 0),
-                    damage_max=item_dict.get("damage_max", 0),
-                    hit_bonus=item_dict.get("hit_bonus", 0),
-                    affixes=item_dict.get("affixes", []),
-                    on_attack=item_dict.get("on_attack", []),
-                    lifesteal=item_dict.get("lifesteal", 0),
-                    speed_bonus=item_dict.get("speed_bonus", 0),
-                )
-                game._add_equipment_instance(inst.name, inst)
-                affix_str = ""
-                if inst.affixes:
-                    affix_str = " [" + "|".join(inst.affixes) + "]"
-                status_msg = f"合成了 {inst.name}{affix_str}！"
-
-            elif result_type == "material":
-                # 材料类产物，存到材料背包
-                mat_name = result_def.get("name", name)
-                mat_count = result_def.get("count", 1)
-                game._add_material(mat_name, mat_count)
-                status_msg = f"合成了 {mat_name} x{mat_count}（共 {game._count_material(mat_name)}）"
-
-            elif result_type == "placeable":
-                # 可放置物，存到背包
-                game._add_material(name, 1)
-                status_msg = f"合成了 {name} x1（共 {game._count_material(name)}）。按 b 放置。"
-
-            elif items_mod.is_placeable(game.items, name):
-                if name == "木箱":
-                    # 木箱不进建造模式，存进背包，玩家按 b 键随时选择放置
-                    game._add_material(name, 1)
-                    status_msg = f"合成了 {name}！按 b 从背包选择放置位置（共 {game._count_material(name)}）。"
-                else:
-                    game.place_mode = items_mod.get_place_tile(game.items, name)
-                    game.place_item_name = None
-                    game.last_place = game.place_mode
-                    game.last_place_item_name = None
-                    game.cursor_x, game.cursor_y = game.player_x, game.player_y
-                    game.message = f"合成了 {name}！建造模式：方向键移动光标，回车放置，c 退出。"
-                    break
-            else:
-                game._add_equipment_instance(name)
-                status_msg = f"合成了 {name} x1（共 {game._count_equipment(name)}）"
-    del win; game.stdscr.touchwin(); game.stdscr.refresh()
+    from ui.crafting_ui import crafting_menu as _ui
+    _ui(stdscr, game)
 # ═══════════════════════════════════
 # 装备菜单
 # ═══════════════════════════════════
 def equipment_menu(stdscr, game):
-    slots = [("main_hand","主手"),("off_hand","副手"),("body","身体"),("accessory","饰品")]
-    sel_slot = 0
-    h, w = len(slots)+6, 50
-    y, x = max(0,(curses.LINES-h)//2), max(0,(curses.COLS-w)//2)
-    win = curses.newwin(h,w,y,x)
-    win.keypad(True)
-    status_msg = ""
-    def redraw_eq():
-        win.erase(); win.box()
-        win.addstr(0,2," 装备菜单 ")
-        win.addstr(1,2,"↑↓ 选槽位 Enter 换装 c 关闭")
-        for i,(slot_id,slot_name) in enumerate(slots):
-            equipped = game.equipment.get(slot_id, "（空）")
-            line = f" {slot_name}: {equipped}"
-            if equipped != "（空）":
-                inst = game._get_equipment_instance(equipped)
-                if inst:
-                    if inst.affixes: line += " [" + "|".join(inst.affixes) + "]"
-            attr = curses.A_REVERSE if i==sel_slot else curses.A_NORMAL
-            win.addstr(3+i,2,line[:w-4],attr)
-        if status_msg:
-            win.addstr(h-2,2,status_msg[:w-4],curses.A_BOLD)
-        win.refresh()
-    while True:
-        redraw_eq()
-        key = win.getch()
-        if key in (ord('c'), ord('q')): break
-        elif key == curses.KEY_UP: sel_slot = (sel_slot-1) % len(slots); status_msg = ""
-        elif key == curses.KEY_DOWN: sel_slot = (sel_slot+1) % len(slots); status_msg = ""
-        elif key in (curses.KEY_ENTER, 10, 13):
-            slot_id, slot_name = slots[sel_slot]
-            candidates = []
-            for inst in game.equipment_instances:
-                if inst.slot == slot_id:
-                    candidates.append(inst.name)
-            if game.equipment.get(slot_id):
-                candidates.insert(0, "__unequip__")
-            if not candidates:
-                status_msg = f"背包里没有能装备到{slot_name}的物品。按任意键继续。"
-                redraw_eq(); win.getch(); status_msg = ""; continue
-            sub_sel = 0; sub_h = len(candidates)+4; sub_w = 40
-            sub_y = max(0, (curses.LINES-sub_h)//2); sub_x = max(0, (curses.COLS-sub_w)//2)
-            sub = curses.newwin(sub_h, sub_w, sub_y, sub_x); sub.keypad(True)
-            while True:
-                sub.erase(); sub.box()
-                sub.addstr(0,2,f" 选择{slot_name} 装备 ")
-                for ci, cname in enumerate(candidates):
-                    label = "（卸下）" if cname == "__unequip__" else cname
-                    attr = curses.A_REVERSE if ci==sub_sel else curses.A_NORMAL
-                    sub.addstr(2+ci,2,label[:sub_w-4],attr)
-                sub.refresh()
-                sk = sub.getch()
-                if sk in (ord('c'), ord('q')): break
-                elif sk == curses.KEY_UP: sub_sel = (sub_sel-1) % len(candidates)
-                elif sk == curses.KEY_DOWN: sub_sel = (sub_sel+1) % len(candidates)
-                elif sk in (curses.KEY_ENTER, 10, 13):
-                    chosen = candidates[sub_sel]; old = game.equipment.get(slot_id)
-                    if chosen == "__unequip__":
-                        if old: game.equipment.pop(slot_id, None)
-                        game.message = f"卸下了 {old}。"
-                    else:
-                        if old: game.equipment.pop(slot_id, None)
-                        game.equipment[slot_id] = chosen
-                        game.message = f"装备了 {chosen} 到{slot_name}。"
-                    break
-            del sub
-    del win; game.stdscr.touchwin(); game.stdscr.refresh()
+    from ui.equipment_ui import equipment_menu as _ui
+    _ui(stdscr, game)
 
 # ═══════════════════════════════════
 # 放置菜单（从背包挑一个可放置物进入建造模式）
@@ -381,8 +193,6 @@ class Game:
         self.player_hp = PLAYER_INITIAL_HP
         self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
-        self.materials = {}                # 堆叠材料: {"石头": 15}
-        self.equipment_instances = []      # 装备实例列表: [{"name":"石剑","slot":"main_hand","attack_bonus":2,...}]
         self.equipment = {}                # 装备槽: {"main_hand": "石剑"}
         self.message = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
@@ -449,13 +259,6 @@ class Game:
                 return item.instance
         return None
 
-    def _remove_equipment_instance(self, name):
-        for item_id, item in list(self.inventory.all_items()):
-            if item.item_type == "equipment" and item.instance and item.instance.name == name:
-                self.inventory.remove(item_id)
-                return True
-        return False
-
     def _count_equipment(self, name):
         return sum(1 for _, item in self.inventory.all_items() 
                if item.item_type == "equipment" and item.instance and item.instance.name == name)
@@ -466,6 +269,12 @@ class Game:
         if inst:
             return getattr(inst, field_name, 0)
         return self.items.get(item_name, {}).get(field_name, 0)
+
+    def _get_nearby_chest(self):
+        return get_nearby_chest(self)
+
+    def open_chest_menu(self):
+        open_chest_menu(self)
 
     def _equipment_bonus(self, field_name):
         total = 0
@@ -600,17 +409,13 @@ class Game:
                 data = json.load(f)
         except Exception as e:
             self.message = f"读档失败: {e}"; return False
-        self.world = generate_world(seed=data.get("seed", WORLD_SEED))
+        self.world = generate_world(seed=data.get("seed", WORLD_SEED), decorate=False)
         self.player_x = data["player_x"]; self.player_y = data["player_y"]
         self.player_z = data.get("player_z", 0)
         self.cursor_x, self.cursor_y = self.player_x, self.player_y
         self.player_hp = data["player_hp"]; self.player_max_hp = data["player_max_hp"]
         self.turn = data["turn"]
         self.inventory = Inventory.from_dict(data.get("inventory", {}))
-        _old_equipment_instances = [
-            EquipmentInstance.from_dict(d) if isinstance(d, dict) else d
-            for d in data.get("equipment_instances", [])
-        ]
         self.equipment = data.get("equipment", {})
         self.skills = data.get("skills", {"digging": 0, "combat": 0, "defense": 0})
         self.skill_levels = data.get("skill_levels", {"digging": 1, "combat": 1, "defense": 1})
@@ -898,39 +703,6 @@ class Game:
             return False
         return self._dig_any_tile(x, y)
 
-    def _try_use_stairs(self):
-        """检测玩家脚下是否有楼梯，执行层切换。"""
-        tile = self.world.get_tile(self.player_x, self.player_y)["tile"]
-        tile_str = tile if isinstance(tile, str) else None
-        if tile_str == "楼梯下":
-            if self.player_z > -(WORLD_LAYERS - 1):
-                self.player_z -= 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你走下楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经是最底层了。"
-        elif tile_str == "楼梯上":
-            if self.player_z < 0:
-                self.player_z += 1
-                self.world = generate_world(seed=WORLD_SEED, layer=self.player_z)
-                sx, sy = find_spawn(self.world)
-                self.player_x, self.player_y = sx, sy
-                self.cursor_x, self.cursor_y = sx, sy
-                self.monsters.clear(); self._monster_index.clear()
-                self.corpses.clear(); self.modified_tiles.clear()
-                self.chests.clear()
-                self.message = f"你爬上楼梯，到达第 {self.player_z} 层。"
-                return True
-            else:
-                self.message = "已经在地表了。"
-        return False
 
     def try_move_or_dig(self, dx, dy):
         nx, ny = self.player_x + dx, self.player_y + dy
@@ -1189,11 +961,11 @@ class Game:
 
     def tile_attr(self, tile):
         props = get_tile_props(tile); name = props["name"]
+        if name == "树木":
+            return curses.color_pair(6) | curses.A_BOLD  # 绿色加粗，不受夜晚压暗影响
         _, ambient = self._get_time_of_day()
         if ambient <= 2:
             return curses.color_pair(4)
-        if name == "树木":
-            return curses.color_pair(3) | curses.A_BOLD  # 绿色加粗
         elif name == "石头":
             return curses.color_pair(1)
         elif name == "泥土":
@@ -1348,10 +1120,7 @@ class Game:
                 else:
                     tile = self.world.get_tile(wx, wy)["tile"]
                     ch = TILE_CHARS.get(tile, get_tile_char(tile))
-                    attr = self.tile_attr(tile)
-                    # 树强制亮绿色（用名字判断）
-                    if get_tile_props(tile).get("name") == "树木":
-                        attr = curses.color_pair(3) | curses.A_BOLD
+                    attr = self.tile_attr(tile)  # 树的颜色已在 tile_attr 内处理，不再重复判断
                 # 夜晚全局压暗
                 if ambient <= 2:
                     attr = curses.color_pair(4)
@@ -1382,7 +1151,9 @@ class Game:
             s1 += f" | [挖掘中 {self.dig_progress['remaining']}/{self.dig_progress['total']}]"
         s1 += f" | 怪物:{len(self.monsters)} 尸体:{len(self.corpses)}"
         s2 = f"装备: {eq_str}"
-        s3 = f"材料: {mats}"
+        equips = [inst.name for inst in self.inventory.get_equipment() if inst]
+        equip_str = " | ".join(equips) if equips else "无"
+        s3 = f"材料: {mats} | 装备: {equip_str}"
         try:
             self.stdscr.addstr(VIEW_HEIGHT+1, 0, s1, curses.A_BOLD)
             self.stdscr.addstr(VIEW_HEIGHT+2, 0, s2)
