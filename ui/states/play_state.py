@@ -8,6 +8,7 @@ from config import (
     KEY_REPEAT, KEY_RELOAD, KEY_RELOAD_UPPER,
     KEY_SAVE, KEY_SAVE_UPPER, KEY_LOAD, KEY_LOAD_UPPER,
     KEY_LOOK, KEY_DIG,
+    KEY_MOVE_UP_ALT, KEY_MOVE_DOWN_ALT, KEY_MOVE_LEFT_ALT, KEY_MOVE_RIGHT_ALT,
 )
 from ui.game_renderer import draw
 from ui.states.crafting_state import CraftingState
@@ -19,8 +20,8 @@ from ui.states.chest_state import ChestState
 DIRECTIONS = {
     curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
     curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
-    ord("h"): (-1, 0), ord("l"): (1, 0),
-    ord("k"): (0, -1), ord("j"): (0, 1),
+    KEY_MOVE_LEFT_ALT: (-1, 0), KEY_MOVE_RIGHT_ALT: (1, 0),
+    KEY_MOVE_UP_ALT: (0, -1), KEY_MOVE_DOWN_ALT: (0, 1),
 }
 
 
@@ -36,6 +37,12 @@ class PlayState(State):
         if key in (KEY_QUIT, KEY_QUIT_UPPER):
             game.engine._running = False
             return None
+        elif key == ord("?"):
+            from systems.keybind import reload_keybinds
+            from config import _init_keybinds
+            reload_keybinds()
+            _init_keybinds()
+            game.message = "键位已重新加载。"
 
         acted = False
 

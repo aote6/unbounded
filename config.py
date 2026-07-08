@@ -63,3 +63,38 @@ KEY_LEFT = ord('h')
 KEY_RIGHT = ord('l')
 KEY_UP = ord('k')
 KEY_DOWN = ord('j')
+
+# M28: 从 keybinds.json 加载键位，覆盖上方默认值
+import systems.keybind as _kb
+
+def _init_keybinds():
+    """用 keybinds.json 覆盖默认按键常量"""
+    kb = _kb.load_keybinds()
+    globals().update({
+        "KEY_QUIT": kb["quit"],
+        "KEY_QUIT_UPPER": kb["quit_upper"],
+        "KEY_CRAFT": kb["craft"],
+        "KEY_CRAFT_UPPER": kb["craft_upper"],
+        "KEY_EQUIP": kb["equip"],
+        "KEY_BUILD": kb["build"],
+        "KEY_CHEST": kb["chest"],
+        "KEY_CHEST_UPPER": kb["chest_upper"],
+        "KEY_LOOK": kb["look"],
+        "KEY_DIG": kb["dig"],
+        "KEY_REPEAT": kb["repeat"],
+        "KEY_RELOAD": kb["reload"],
+        "KEY_RELOAD_UPPER": kb["reload_upper"],
+        "KEY_SAVE": kb["save"],
+        "KEY_LOAD": kb["load"],
+        "KEY_CLOSE": kb["close"],
+        "KEY_CLOSE_UPPER": kb["close_upper"],
+        "KEY_SWITCH_TAB": kb["switch_tab"],
+        "KEY_TRANSFER_ALL": kb["transfer_all"],
+        "KEY_LEGACY_SHOP": kb["legacy_shop"],
+        "KEY_MOVE_UP_ALT": kb["move_up_alt"],
+        "KEY_MOVE_DOWN_ALT": kb["move_down_alt"],
+        "KEY_MOVE_LEFT_ALT": kb["move_left_alt"],
+        "KEY_MOVE_RIGHT_ALT": kb["move_right_alt"],
+    })
+
+_init_keybinds()
