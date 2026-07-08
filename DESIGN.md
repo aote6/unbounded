@@ -95,6 +95,17 @@ Tag 交互已从武器→怪物扩展到环境方块：
   - 燃烧方块有持续时间，到期变回 TILE_AIR
 - 在 advance_turn 中 tick_tile_interactions + tick_burning_tiles
 
+### M21: Buff/状态系统统一管理 (2026-07-08)
+
+消除三种不同格式的状态效果（on_fire int / burning dict / poisoned int）：
+
+- 统一 Buff dataclass：name/duration/damage_per_turn/source
+- BuffManager：add/has/tick_all/remove_entity/migrate_legacy
+- tick_all() 同时处理怪物和玩家（player_hp）
+- 同名 Buff 刷新不堆叠，死亡自动清理
+- 旧存档通过 migrate_legacy() 自动转换
+- advance_turn 中不再需要单独的 _tick_status_effects
+
 ### 远期：存档分离与永久世界
 
 当引入多角色/遗产机制时，分离存档：

@@ -1,4 +1,8 @@
-"""怪物AI系统：行为决策、移动索引、生成控制"""
+"""怪物AI系统：行为决策、移动索引、生成控制
+
+M21: tick_status_effects 改为委托 BuffManager.tick_all()，
+     保留兼容包装函数供旧调用方使用。
+"""
 
 import monsters as monsters_mod
 
@@ -38,6 +42,9 @@ def try_spawn_monster(game):
         min_dist=SPAWN_MIN_DISTANCE,
     )
     if m:
+        # M21: 新怪物也做旧格式迁移
+        if hasattr(game, 'buff_manager'):
+            game.buff_manager.migrate_legacy(m)
         game._add_monster(m)
         game.message = f"一只 {m['name']} 出现了！"
 
@@ -61,27 +68,14 @@ def tick_corpses(game):
 
 
 def tick_status_effects(game):
-    """每回合处理怪物身上的状态效果。"""
-    for m in list(game.monsters):
-        # 旧版 on_fire
-        if m.get("on_fire", 0) > 0:
-            m["hp"] -= 2
-            m["on_fire"] -= 1
-            if m["hp"] <= 0:
-                game._kill_monster(m, cause="burn")
-                continue
-        # 新版 burning（标签系统触发）
-        burn = m.get("burning")
-        if burn and burn.get("duration", 0) > 0:
-            m["hp"] -= burn.get("damage_per_turn", 2)
-            burn["duration"] -= 1
-            if burn["duration"] <= 0:
-                del m["burning"]
-            if m["hp"] <= 0:
-                game._kill_monster(m, cause="burn")
-                continue
-        if m.get("poisoned", 0) > 0:
-            m["hp"] -= 1
-            m["poisoned"] -= 1
-            if m["hp"] <= 0:
-                game._kill_monster(m, cause="poison")
+    """每回合处理怪物身上的状态效果。
+    
+    M21: 委托给 BuffManager.tick_all()，保留此函数供旧调用方兼容。
+    新代码应直接在 advance_turn 中调用 game.buff_manager.tick_all(game)。
+    """
+    if hasattr(game, 'buff_manager'):
+        game.buff_manager.tick_all(game)
+    else:
+        # 极端回退：如果 buff_manager 不存在（不应发生），
+        # 不做任何处理，避免重复扣血逻辑。
+        pass

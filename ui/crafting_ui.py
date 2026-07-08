@@ -1,3 +1,4 @@
+from config import KEY_CLOSE, KEY_CLOSE_UPPER
 """合成界面：配方分类浏览，材料检查，合成执行。"""
 import curses
 
@@ -52,8 +53,8 @@ def crafting_menu(stdscr, game):
             selected = 0
         redraw()
         key = win.getch()
-        if key in (ord('c'), ord('q')): status_msg = ""; break
-        elif key == ord(','):  # Tab
+        if key in (KEY_CLOSE, KEY_CLOSE_UPPER): status_msg = ""; break
+        elif key == ord(','):  # Tab切换分类  # Tab
             current_cat_idx = (current_cat_idx + 1) % len(ordered_cats)
             selected = 0; status_msg = ""
         elif key == curses.KEY_UP: selected = (selected-1) % len(names); status_msg = ""

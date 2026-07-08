@@ -1,3 +1,4 @@
+from config import KEY_CLOSE, KEY_CLOSE_UPPER
 """装备界面：查看装备槽位，选择候选装备，卸下/穿戴。"""
 import curses
 
@@ -29,7 +30,7 @@ def equipment_menu(stdscr, game):
     while True:
         redraw_eq()
         key = win.getch()
-        if key in (ord('c'), ord('q')): break
+        if key in (KEY_CLOSE, KEY_CLOSE_UPPER): break
         elif key == curses.KEY_UP: sel_slot = (sel_slot-1) % len(slots); status_msg = ""
         elif key == curses.KEY_DOWN: sel_slot = (sel_slot+1) % len(slots); status_msg = ""
         elif key in (curses.KEY_ENTER, 10, 13):
@@ -55,7 +56,7 @@ def equipment_menu(stdscr, game):
                     sub.addstr(2+ci,2,label[:sub_w-4],attr)
                 sub.refresh()
                 sk = sub.getch()
-                if sk in (ord('c'), ord('q')): break
+                if sk in (KEY_CLOSE, KEY_CLOSE_UPPER): break
                 elif sk == curses.KEY_UP: sub_sel = (sub_sel-1) % len(candidates)
                 elif sk == curses.KEY_DOWN: sub_sel = (sub_sel+1) % len(candidates)
                 elif sk in (curses.KEY_ENTER, 10, 13):

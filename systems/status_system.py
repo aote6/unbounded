@@ -1,5 +1,7 @@
 """状态系统：统一管理燃烧、中毒、吸血等状态效果。
 监听事件总线，替代 _attack_monster 和 _tick_status_effects 中的硬编码逻辑。
+
+M21 重构：通过 BuffManager 施加 Buff，不再直接修改实体字典。
 """
 from systems.event_bus import EventBus, EventType
 from systems.tag_system import check_interaction
@@ -37,13 +39,15 @@ def _on_damage_dealt(event, game):
     if not target:
         return
 
+    bm = game.buff_manager
+
     # ── 装备特效（燃烧/中毒）──
     effects = game._collect_attack_effects()
     for effect in effects:
         if effect == "fire":
-            target["burning"] = {"duration": 3, "damage_per_turn": 2}
+            bm.add(target, "burning", duration=3, damage_per_turn=2, source="fire")
         elif effect == "poison":
-            target["poisoned"] = 5
+            bm.add(target, "poisoned", duration=5, damage_per_turn=1, source="poison")
 
     # ── 标签交互（规则矩阵）──
     source_tags = _player_attack_tags(game) if attacker == "player" else _tags_of(attacker)
@@ -52,8 +56,8 @@ def _on_damage_dealt(event, game):
         if rule["effect"] == "apply_burning":
             duration = rule.get("duration", 3)
             dpt = rule.get("damage_per_turn", 2)
-            target["burning"] = {"duration": duration, "damage_per_turn": dpt}
-            game.message = f"{target.get('name', '目标')} 燃烧起来了！"
+            bm.add(target, "burning", duration=duration, damage_per_turn=dpt, source="fire")
+            game.message = f"{target.get('name', '目标')}  燃烧起来了！"
 
     # ── 吸血（仅玩家攻击时触发）──
     if attacker == "player" and damage > 0:
@@ -70,25 +74,13 @@ def _on_damage_dealt(event, game):
 # ═══════════════════════════════════════════════
 
 def _on_turn_start(event, game):
-    """TURN_START: 处理所有实体的持续状态伤害。"""
-    for m in list(game.monsters):
-        # 燃烧
-        burn = m.get("burning")
-        if burn and burn.get("duration", 0) > 0:
-            m["hp"] -= burn.get("damage_per_turn", 2)
-            burn["duration"] -= 1
-            if burn["duration"] <= 0:
-                del m["burning"]
-            if m["hp"] <= 0:
-                game._kill_monster(m, cause="burn")
-                continue
-
-        # 中毒
-        if m.get("poisoned", 0) > 0:
-            m["hp"] -= 1
-            m["poisoned"] -= 1
-            if m["hp"] <= 0:
-                game._kill_monster(m, cause="poison")
+    """TURN_START: 委托给 BuffManager 处理所有实体状态。
+    
+    M21: 不再直接遍历怪物字典，改为调用 buff_manager.tick_all()。
+    该调用已整合到 advance_turn 中，此处保留为事件钩子占位。
+    """
+    # Buff tick 已由 advance_turn → buff_manager.tick_all() 统一处理
+    pass
 
 
 # ═══════════════════════════════════════════════
@@ -96,8 +88,10 @@ def _on_turn_start(event, game):
 # ═══════════════════════════════════════════════
 
 def _on_monster_killed(event, game):
-    """MONSTER_KILLED: 预留，等有 on_kill 效果的装备时实现。"""
-    pass
+    """MONSTER_KILLED: 清理死亡实体的 Buff。"""
+    monster = event.data.get("monster")
+    if monster and hasattr(game, 'buff_manager'):
+        game.buff_manager.remove_entity(monster)
 
 
 # ═══════════════════════════════════════════════

@@ -10,7 +10,7 @@ from world_gen import (
     TILE_WATER, TILE_TREE,
 )
 from tile_props import get_tile_props, get_tile_char, get_dig_turns
-from systems.interaction import get_nearby_chest, open_chest_menu
+from systems.interaction import get_nearby_chest
 from systems.save_system import build_save_data, apply_load_data
 from ui.equipment_ui import equipment_menu
 from ui.game_renderer import draw
@@ -87,54 +87,6 @@ def equipment_menu(stdscr, game):
 # ═══════════════════════════════════
 # 放置菜单（从背包挑一个可放置物进入建造模式）
 # ═══════════════════════════════════
-def place_menu(stdscr, game):
-    candidates = [name for name, count in game.inventory.get_materials().items()
-                  if count > 0 and items_mod.is_placeable(game.items, name)]
-    if not candidates:
-        game.message = "背包里没有可放置的物品。"
-        return
-    selected = 0
-    h, w = len(candidates) + 6, 45
-    y, x = max(0, (curses.LINES - h) // 2), max(0, (curses.COLS - w) // 2)
-    win = curses.newwin(h, w, y, x)
-    win.keypad(True)
-    while True:
-        win.erase(); win.box()
-        win.addstr(0, 2, " 放置物品 ")
-        win.addstr(1, 2, "↑↓ 选择 Enter 进入建造 c 关闭")
-        for i, name in enumerate(candidates):
-            line = f" {name} x{game.inventory.count(name)}"
-            attr = curses.A_REVERSE if i == selected else curses.A_NORMAL
-            win.addstr(3 + i, 2, line[:w - 4], attr)
-        win.refresh()
-        key = win.getch()
-        if key in (ord('c'), ord('q')):
-            break
-        elif key == curses.KEY_UP:
-            selected = (selected - 1) % len(candidates)
-        elif key == curses.KEY_DOWN:
-            selected = (selected + 1) % len(candidates)
-        elif key in (curses.KEY_ENTER, 10, 13):
-            name = candidates[selected]
-            game.place_mode = items_mod.get_place_tile(game.items, name)
-            game.place_item_name = name
-            game.last_place = game.place_mode
-            game.last_place_item_name = name
-            game.cursor_x, game.cursor_y = game.player_x, game.player_y
-            game.message = f"建造模式：放置 {name}，方向键移动光标，回车放置，c 退出。"
-            break
-    del win; game.stdscr.touchwin(); game.stdscr.refresh()
-
-# ═══════════════════════════════════
-# Game 类
-# ═══════════════════════════════════
-
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
-    curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
-    ord("h"): (-1,0), ord("l"): (1,0), ord("k"): (0,-1), ord("j"): (0,1),
-}
-class Game:
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self._setup_curses()
@@ -174,6 +126,8 @@ class Game:
         from systems.event_bus import EventBus
         from systems.status_system import register as register_status
         register_status()
+        from systems.buff_system import create_buff_manager
+        self.buff_manager = create_buff_manager()
         self.engine = None  # 状态机引擎，由 run() 设置
 
     # ── 材料系统（堆叠物品） ──
@@ -231,8 +185,6 @@ class Game:
     def _get_nearby_chest(self):
         return get_nearby_chest(self)
 
-    def open_chest_menu(self):
-        open_chest_menu(self)
 
     def _equipment_bonus(self, field_name):
         total = 0
@@ -316,6 +268,7 @@ class Game:
         self.turn = 0
         self.inventory = Inventory()
         self.equipment = {}
+        self.buff_manager = create_buff_manager()  # M21: 新游戏重置
         self.message = "新游戏开始。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
         self.place_item_name = None; self.last_place_item_name = None
@@ -382,6 +335,10 @@ class Game:
             return False
         self.world = generate_world(seed=data.get("seed", WORLD_SEED), decorate=False)
         apply_load_data(self, data)
+        # M21: 迁移怪物旧状态格式
+        if hasattr(self, 'buff_manager'):
+            for m in self.monsters:
+                self.buff_manager.migrate_legacy(m)
         return True
 
 
@@ -562,7 +519,7 @@ class Game:
         self.message = cause_msg
 
     def _tick_status_effects(self):
-        tick_status_effects(self)
+        pass  # M21: 已由 advance_turn 中 buff_manager.tick_all() 统一处理
 
     def _tick_corpses(self):
         tick_corpses(self)
@@ -644,6 +601,7 @@ class Game:
     
     def check_death(self):
         if self.player_hp <= 0:
+            self.buff_manager.remove_entity(self)  # M21: 清理玩家Buff
             # 掉落背包到原地
             self._drop_items_on_ground(self.player_x, self.player_y)
             # 在复活点重生
@@ -812,9 +770,9 @@ class Game:
 
     def advance_turn(self):
         rebuild_scent_map(self)
+        self.buff_manager.tick_all(self)
         self._tick_corpses()
         self._tick_monsters()
-        self._tick_status_effects()
         self._try_spawn_monster()
         self.world.keep_radius(self.player_x, self.player_y, CHUNK_KEEP_RADIUS)
         if self.turn % 10 == 0:
@@ -873,53 +831,6 @@ class Game:
                         self._add_material(item, count)
                     self.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
                 break
-
-    def _handle_open_chest(self):
-        pass  # 已迁移到 ChestState
-
-    def _handle_craft(self):
-        if self.place_mode:
-            if self.place_item_name:
-                self.message = f"退出了建造模式，{self.place_item_name} 仍在背包里。"
-                self.place_mode = None
-                self.place_item_name = None
-            else:
-                ingredients = self.recipes.get(self.place_mode, {}).get("ingredients", {})
-                if not ingredients:
-                    for rname, rdata in self.recipes.items():
-                        if rname == self.place_mode or rdata.get("result", {}).get("archetype") == self.place_mode:
-                            ingredients = rdata.get("ingredients", {})
-                            break
-                if ingredients:
-                    for mat, count in ingredients.items():
-                        self._add_material(mat, count)
-                    self.message = f"取消建造 {self.place_mode}，材料已退还。"
-                else:
-                    self.message = "退出了建造模式。"
-                self.place_mode = None
-        else:
-            crafting_menu(self.stdscr, self)
-
-    def _handle_equip(self):
-        equipment_menu(self.stdscr, self)
-
-    def _handle_place_menu(self):
-        place_menu(self.stdscr, self)
-
-    def _handle_confirm_place(self):
-        if self.place_mode:
-            self._do_place()
-            return True
-        return False
-
-    def _handle_repeat_build(self):
-        if self.last_place:
-            self.place_mode = self.last_place
-            self.place_item_name = self.last_place_item_name
-            self.cursor_x, self.cursor_y = self.player_x, self.player_y
-            self.message = f"建造模式：放置 {self.last_place}，方向键移动光标，回车放置，c 取消。"
-        else:
-            self.message = "还没有建造过任何东西。合成一个石墙，或按 b 放置背包里的木箱。"
 
     def _handle_reload(self):
         self.recipes = load_recipes()
