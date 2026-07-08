@@ -19,11 +19,14 @@ def _get_load_recipes():
 # 序列化
 # ═══════════════════════════════════════════════
 
+CURRENT_SAVE_VERSION = 2
+
 def build_save_data(game):
     """返回 (player_data, world_data) 两个 dict。"""
     game.world.save_all()
     
     player_data = {
+        "version": CURRENT_SAVE_VERSION,
         "player_x": game.player_x,
         "player_y": game.player_y,
         "player_z": game.player_z,
@@ -82,6 +85,11 @@ def _serialize_chests(chests):
 # ═══════════════════════════════════════════════
 
 def apply_load_data(game, data):
+    # 检测存档版本，兼容旧格式
+    save_version = data.get("player", {}).get("version", data.get("version", 1))
+    if save_version < CURRENT_SAVE_VERSION:
+        game.message = f"旧版本存档(v{save_version})已自动升级到v{CURRENT_SAVE_VERSION}"
+
     """恢复存档。兼容新格式 {"player":..., "world":...} 和旧格式（扁平 dict）。"""
     if "player" in data:
         _apply_player_data(game, data["player"])
