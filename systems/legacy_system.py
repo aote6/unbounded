@@ -202,3 +202,73 @@ def purchase_perk(perk_id):
     legacy.setdefault("unlocked_perks", []).append(perk_id)
     save_legacy(legacy)
     return True, f"解锁了【{perk['name']}】！"
+
+from world_gen import TILE_AIR
+from systems.event_bus import EventBus, EventType, GameEvent
+from inventory import Inventory
+import json
+from pathlib import Path
+from systems.save_system import build_save_data
+
+BASE_DIR = Path(__file__).parent.parent
+
+
+def drop_items_on_ground(game, x, y):
+    """将背包内容掉落到地面附近。"""
+    game.inventory = Inventory()
+    game.equipment = {}
+    game.message = f"你的物品散落在 ({x},{y}) 附近。"
+
+
+def place_grave(game, x, y):
+    """在死亡位置生成墓碑。"""
+    tile = game.world.get_tile(x, y).get("tile", TILE_AIR)
+    if tile == TILE_AIR:
+        old_tile = game.world.get_tile(x, y)["tile"]
+        game.world.set_tile(x, y, "墓碑")
+        game.modified_tiles[(x, y)] = "墓碑"
+        EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": x, "y": y, "old": old_tile, "new": "墓碑"}), game)
+
+
+def save_world_on_death(game):
+    """死亡时保存世界状态。"""
+    _, world_data = build_save_data(game)
+    world_data["last_death_x"] = game.player_x
+    world_data["last_death_y"] = game.player_y
+    world_data["last_death_turn"] = game.turn
+    world_data["total_deaths"] = world_data.get("total_deaths", 0) + 1
+    world_path = BASE_DIR / "data" / "world_meta.json"
+    with open(world_path, "w") as f:
+        json.dump(world_data, f, indent=2, ensure_ascii=False)
+
+
+def check_death(game):
+    """检查玩家死亡，处理遗产和墓碑。"""
+    if game.player_hp <= 0:
+        game.buff_manager.remove_entity(game)
+        drop_items_on_ground(game, game.player_x, game.player_y)
+        place_grave(game, game.player_x, game.player_y)
+        save_world_on_death(game)
+        points = record_death(game)
+        game.message = f"你死了。获得 {points} 遗产点数。世界保留。"
+        return True
+    return False
+
+
+def show_death_screen(game):
+    """显示死亡画面并打开遗产商店。"""
+    import curses
+    game.stdscr.erase()
+    m1, m2 = "你死了。", f"物品掉落在 ({game.player_x},{game.player_y})"
+    m3 = "世界保留，新角色将继承一切。"
+    m4 = "按任意键打开遗产商店..."
+    h, w = game.stdscr.getmaxyx()
+    game.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
+    game.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
+    game.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
+    game.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
+    game.stdscr.refresh()
+    game.stdscr.getch()
+    from ui.states.legacy_state import LegacyState
+    if game.engine:
+        game.engine.push_state(LegacyState(game))

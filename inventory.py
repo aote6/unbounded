@@ -137,7 +137,7 @@ class Inventory:
             instance = item_data.get("instance")
             if instance and isinstance(instance, dict) and "name" in instance:
                 # 是装备实例
-                from main import EquipmentInstance
+                from equipment import EquipmentInstance
                 instance = EquipmentInstance.from_dict(instance)
             inv._items[item_id] = InventoryItem(
                 item_id=item_data.get("item_id", item_id),

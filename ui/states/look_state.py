@@ -1,17 +1,11 @@
 """查看模式状态：方向键移动光标，显示方块/怪物信息"""
 import curses
 from core.state_machine import State
-from config import VIEW_WIDTH, VIEW_HEIGHT
+from config import DIRECTIONS, VIEW_WIDTH, VIEW_HEIGHT
 from ui.game_renderer import draw
 from tile_props import get_tile_props
 
 
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
-    curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
-    ord("h"): (-1, 0), ord("l"): (1, 0),
-    ord("k"): (0, -1), ord("j"): (0, 1),
-}
 
 
 class LookState(State):

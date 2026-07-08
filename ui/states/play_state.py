@@ -3,6 +3,7 @@
 import curses
 from core.state_machine import State
 from config import (
+    DIRECTIONS,
     KEY_QUIT, KEY_QUIT_UPPER, KEY_CHEST, KEY_CHEST_UPPER,
     KEY_CRAFT, KEY_CRAFT_UPPER, KEY_EQUIP, KEY_BUILD,
     KEY_REPEAT, KEY_RELOAD, KEY_RELOAD_UPPER,
@@ -17,12 +18,6 @@ from ui.states.build_state import BuildState
 from ui.states.chest_state import ChestState
 
 
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
-    curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
-    KEY_MOVE_LEFT_ALT: (-1, 0), KEY_MOVE_RIGHT_ALT: (1, 0),
-    KEY_MOVE_UP_ALT: (0, -1), KEY_MOVE_DOWN_ALT: (0, 1),
-}
 
 
 class PlayState(State):

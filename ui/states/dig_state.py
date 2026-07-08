@@ -4,12 +4,6 @@ from core.state_machine import State
 from ui.game_renderer import draw
 
 
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
-    curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
-    ord("h"): (-1, 0), ord("l"): (1, 0),
-    ord("k"): (0, -1), ord("j"): (0, 1),
-}
 
 
 class DigState(State):

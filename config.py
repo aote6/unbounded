@@ -1,3 +1,4 @@
+import curses
 """ config.py 全局配置常量。"""
 
 # ── 视口 ──
@@ -96,8 +97,20 @@ def _init_keybinds():
         "KEY_MOVE_LEFT_ALT": kb["move_left_alt"],
         "KEY_MOVE_RIGHT_ALT": kb["move_right_alt"],
     })
+    
+    global DIRECTIONS
+    DIRECTIONS = {
+        curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
+        curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
+        ord("h"): (-1, 0), ord("l"): (1, 0), ord("k"): (0, -1), ord("j"): (0, 1),
+    }
 
 _init_keybinds()
 
 # 矿石映射（从 data_mappings 导入，保留此导出以兼容旧 import）
 from data_mappings import ORE_TO_MATERIAL
+
+
+# ═══════════════════════════════════════════
+# 方向映射
+# ═══════════════════════════════════════════

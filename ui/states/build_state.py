@@ -3,17 +3,12 @@
 import curses
 from core.state_machine import State
 from config import (
+    DIRECTIONS,
     KEY_QUIT, KEY_QUIT_UPPER, KEY_REPEAT,
 )
 import items as items_mod
 
 
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
-    curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
-    ord("h"): (-1, 0), ord("l"): (1, 0),
-    ord("k"): (0, -1), ord("j"): (0, 1),
-}
 
 
 class BuildState(State):

@@ -3,64 +3,45 @@ import curses, json, random, traceback, os
 from pathlib import Path
 from world_gen import (
     generate_world, find_spawn, World,
-    TILE_AIR, TILE_DIRT, TILE_STONE, TILE_DROPS, CHUNK_SIZE,
-    TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_DIAMOND,
-    TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_SAND,
-    TILE_LIMESTONE, TILE_MARBLE, TILE_GRANITE, TILE_OBSIDIAN,
+    TILE_AIR, TILE_DROPS, CHUNK_SIZE,
     TILE_WATER, TILE_TREE,
 )
-from tile_props import get_tile_props, get_tile_char, get_dig_turns
-from systems.interaction import get_nearby_chest
+from tile_props import get_tile_props
 from systems.save_system import build_save_data, apply_load_data
 from ui.game_renderer import draw
-from systems.tag_system import load_rules, check_interaction
+from systems.tag_system import load_rules
 from systems.scent_map import rebuild_scent_map
-from systems.tile_interaction import tick_tile_interactions, tick_burning_tiles
+
 from systems.monster_ai import tick_monsters, try_spawn_monster, tick_corpses, tick_status_effects
 from config import (
     VIEW_WIDTH, VIEW_HEIGHT, WORLD_SEED,
     PLAYER_INITIAL_HP,
-    PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX, PLAYER_BASE_HIT_CHANCE,
     SPAWN_INITIAL_COUNTDOWN, SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX,
     SPAWN_MIN_DISTANCE,
     DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START,
-    WORLD_LAYERS, LAYER_DEPTH_OFFSET,
-    ORE_TO_MATERIAL,
 )
 import monsters as monsters_mod
 import items as items_mod
-from inventory import Inventory, ItemCategory
+from inventory import Inventory
 
-from equipment import EquipmentInstance
-
+from data_mappings import load_recipes
+from systems.room_system import detect_room, check_room_formation, count_rooms_nearby
+from systems.goal_system import check_goals, check_special_location
+from systems.player_action import dig_adjacent, do_place, dig_any_tile, try_move_or_dig
+from systems.time_system import get_time_of_day, get_geology_zone
+from systems.skill_system import gain_skill, digging_speed_bonus, combat_damage_bonus, defense_reduction
+from systems.legacy_system import drop_items_on_ground, place_grave, save_world_on_death, check_death, show_death_screen
+from systems.player_items import add_equipment_instance, get_equipment_instance, count_equipment, get_item_attr, equipment_bonus, best_equipped_tool_bonus, collect_attack_effects
+from systems.monster_index import build_monster_index, monster_at, monster_has_position, monster_moved, add_monster, remove_monster
+from ui.terminal import setup_curses, check_terminal_size
 
 BASE_DIR = Path(__file__).parent
-RECIPES_FILE = BASE_DIR / "data" / "recipes.json"
 SAVE_FILE = BASE_DIR / "data" / "save.json"
-MIN_TERM_H = VIEW_HEIGHT + 8
-MIN_TERM_W = VIEW_WIDTH
 CORPSE_DECAY_TURNS = 50
 CHUNK_KEEP_RADIUS = 3
 SKILL_LEVEL_THRESHOLD = 10
 
-
 # 矿石→材质映射表（合成时自动转换）
-
-
-def load_recipes():
-    if not RECIPES_FILE.exists():
-        print(f"[recipes] 文件不存在: {RECIPES_FILE}"); return {}
-    try:
-        with open(RECIPES_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"[recipes] JSON 解析失败: {e}"); return {}
-
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
-    curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
-    ord("h"): (-1,0), ord("l"): (1,0), ord("k"): (0,-1), ord("j"): (0,1),
-}
 
 # ═══════════════════════════════════
 # Game 类
@@ -127,122 +108,44 @@ class Game:
     def _remove_material(self, name, count):
         self.inventory.remove(name, count)
 
-    # ── 装备实例系统（独立物品） ──
     def _add_equipment_instance(self, name, instance_data=None):
-        """添加一个装备实例到背包。"""
-        if instance_data is None:
-            item_data = self.items.get(name, {})
-            inst = EquipmentInstance(
-                name=name,
-                slot=item_data.get("slot"),
-                attack_bonus=item_data.get("attack_bonus", 0),
-                defense_bonus=item_data.get("defense_bonus", 0),
-                tool_bonus=item_data.get("tool_bonus", 0),
-                damage_min=item_data.get("damage_min", 0),
-                damage_max=item_data.get("damage_max", 0),
-                hit_bonus=item_data.get("hit_bonus", 0),
-                affixes=item_data.get("affixes", []),
-                on_attack=item_data.get("on_attack", []),
-                lifesteal=item_data.get("lifesteal", 0),
-                speed_bonus=item_data.get("speed_bonus", 0),
-            )
-        elif isinstance(instance_data, EquipmentInstance):
-            inst = instance_data
-        else:
-            inst = EquipmentInstance.from_dict(instance_data)
-        self.inventory.add(name, item_type=ItemCategory.EQUIPMENT, instance=inst)
+        add_equipment_instance(self, name, instance_data)
 
     def _get_equipment_instance(self, name):
-        for item_id, item in self.inventory.all_items():
-            if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name:
-                return item.instance
-        return None
+        return get_equipment_instance(self, name)
 
     def _count_equipment(self, name):
-        return sum(1 for _, item in self.inventory.all_items() 
-               if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name)
+        return count_equipment(self, name)
 
     def _get_item_attr(self, item_name, field_name):
-        """获取装备实例的属性。优先从装备槽查找（O(1)）。"""
-        # 先从装备槽查找
-        for inst in self.equipment.values():
-            if inst and inst.name == item_name:
-                return getattr(inst, field_name, 0)
-        # 回退：遍历背包（兼容非装备槽中的物品）
-        inst = self._get_equipment_instance(item_name)
-        if inst:
-            return getattr(inst, field_name, 0)
-        return 0
-
-    def _get_nearby_chest(self):
-        return get_nearby_chest(self)
-
+        return get_item_attr(self, item_name, field_name)
 
     def _equipment_bonus(self, field_name):
-        """从装备槽实例直接读取属性（O(1)，不再遍历背包）。"""
-        total = 0
-        for inst in self.equipment.values():
-            if inst is None:
-                continue
-            if field_name == "attack_bonus":
-                dmg_min = getattr(inst, "damage_min", 0)
-                dmg_max = getattr(inst, "damage_max", 0)
-                if dmg_max > 0:
-                    total += (dmg_min + dmg_max) // 2
-                else:
-                    total += getattr(inst, "attack_bonus", 0)
-            else:
-                total += getattr(inst, field_name, 0)
-        return total
+        return equipment_bonus(self, field_name)
 
     def _best_equipped_tool_bonus(self):
-        best = 0
-        for item_name in self.equipment.values():
-            inst = self._get_equipment_instance(item_name)
-            if inst:
-                best = max(best, inst.tool_bonus)
-            else:
-                best = max(best, self.items.get(item_name, {}).get("tool_bonus", 0))
-        return best
+        return best_equipped_tool_bonus(self)
 
     def _collect_attack_effects(self):
-        effects = []
-        for item_name in self.equipment.values():
-            inst = self._get_equipment_instance(item_name)
-            if inst:
-                effects.extend(inst.on_attack)
-            else:
-                effects.extend(self.items.get(item_name, {}).get("on_attack", []))
-        return effects
+        return collect_attack_effects(self)
 
-    # ── 怪物空间索引（持久字典，O(1) 查找） ──
     def _build_monster_index(self):
-        """全量重建空间索引（仅在读档/新游戏时调用）。"""
-        self._monster_index = {(m["x"], m["y"]): m for m in self.monsters}
+        build_monster_index(self)
 
     def _monster_at(self, x, y):
-        """O(1) 查找指定坐标的怪物。"""
-        return self._monster_index.get((x, y))
+        return monster_at(self, x, y)
 
     def _monster_has_position(self, x, y):
-        """检查坐标是否有怪物占用。"""
-        return (x, y) in self._monster_index
+        return monster_has_position(self, x, y)
 
     def _monster_moved(self, monster, old_x, old_y):
-        """怪物移动后更新索引（AI 调用）。"""
-        self._monster_index.pop((old_x, old_y), None)
-        self._monster_index[(monster["x"], monster["y"])] = monster
+        monster_moved(self, monster, old_x, old_y)
 
     def _add_monster(self, monster):
-        """添加怪物并更新索引。"""
-        self.monsters.append(monster)
-        self._monster_index[(monster["x"], monster["y"])] = monster
+        add_monster(self, monster)
 
     def _remove_monster(self, monster):
-        """移除怪物并更新索引。"""
-        if monster in self.monsters:
-            self.monsters.remove(monster)
-        self._monster_index.pop((monster["x"], monster["y"]), None)
+        remove_monster(self, monster)
 
     def new_game(self, inherit_world=False):
         # M26: inherit_world=True 保留世界 Chunk 和世界状态
@@ -326,33 +229,10 @@ class Game:
             self.message = f"存档失败: {e}"
 
     def _setup_curses(self):
-        curses.curs_set(0); curses.noecho(); curses.start_color(); curses.use_default_colors()
-        curses.init_pair(1,curses.COLOR_WHITE,-1)
-        curses.init_pair(2,curses.COLOR_YELLOW,-1)
-        curses.init_pair(3,curses.COLOR_CYAN,-1)
-        curses.init_pair(4,curses.COLOR_WHITE,curses.COLOR_BLACK)
-        curses.init_pair(5,curses.COLOR_YELLOW,curses.COLOR_BLACK)
-        curses.init_pair(6,curses.COLOR_GREEN,-1)
-        curses.init_pair(7,curses.COLOR_RED,-1)
-        curses.init_pair(8,curses.COLOR_MAGENTA,-1)
-        curses.init_pair(9,curses.COLOR_BLACK,curses.COLOR_YELLOW)
-        self.stdscr.keypad(True)
-        self.stdscr.nodelay(False)
+        setup_curses(self.stdscr)
 
     def _check_terminal_size(self):
-        term_h, term_w = self.stdscr.getmaxyx()
-        if term_h < MIN_TERM_H or term_w < MIN_TERM_W:
-            self.stdscr.erase()
-            msg1 = "终端窗口太小！"
-            msg2 = f"当前: {term_w}x{term_h} 需要至少: {MIN_TERM_W}x{MIN_TERM_H}"
-            msg3 = "请缩小字号、横屏或调整窗口大小后按任意键..."
-            h, w = term_h, term_w
-            self.stdscr.addstr(max(0,h//2-1), max(0,w//2-len(msg1)//2), msg1, curses.A_BOLD)
-            self.stdscr.addstr(max(0,h//2), max(0,w//2-len(msg2)//2), msg2)
-            self.stdscr.addstr(max(0,h//2+1), max(0,w//2-len(msg3)//2), msg3)
-            self.stdscr.refresh(); self.stdscr.getch()
-            return False
-        return True
+        return check_terminal_size(self.stdscr)
     def load_game(self):
         """从磁盘读取存档并恢复游戏状态。M25: 优先读取 player.json + world_meta.json。"""
         player_path = BASE_DIR / "data" / "player.json"
@@ -388,31 +268,24 @@ class Game:
                 self.buff_manager.migrate_legacy(m)
         return True
 
-
-
     def _maybe_cancel_dig(self, x, y):
         if self.dig_progress and (self.dig_progress["x"] != x or self.dig_progress["y"] != y):
             self.dig_progress = None
 
     def _dig_any_tile(self, x, y):
-        from systems.player_action import dig_any_tile
         return dig_any_tile(self, x, y)
 
     def _gain_skill(self, skill_name):
-        self.skills[skill_name] += 1
-        if self.skills[skill_name] >= self.skill_levels[skill_name] * SKILL_LEVEL_THRESHOLD:
-            self.skill_levels[skill_name] += 1
-            names_cn = {"digging": "挖掘", "combat": "战斗", "defense": "防御"}
-            self.message = f"【{names_cn[skill_name]}】升到了 {self.skill_levels[skill_name]} 级！"
+        gain_skill(self, skill_name)
 
     def _digging_speed_bonus(self):
-        return (self.skill_levels["digging"] - 1) // 10
+        return digging_speed_bonus(self.skill_levels)
 
     def _combat_damage_bonus(self):
-        return (self.skill_levels["combat"] - 1) // 10
+        return combat_damage_bonus(self.skill_levels)
 
     def _defense_reduction(self):
-        return (self.skill_levels["defense"] - 1) // 10
+        return defense_reduction(self.skill_levels)
 
     def _dig_natural_tile(self, x, y):
         tile = self.world.get_tile(x, y)["tile"]
@@ -420,49 +293,11 @@ class Game:
             return False
         return self._dig_any_tile(x, y)
 
-
     def try_move_or_dig(self, dx, dy):
-        from systems.player_action import try_move_or_dig
         try_move_or_dig(self, dx, dy)
 
     def _do_place(self):
-        if self.place_item_name and self.inventory.count(self.place_item_name) <= 0:
-            self.message = f"背包里已经没有 {self.place_item_name} 了。"
-            self.place_mode = None; self.place_item_name = None
-            return
-        bx, by = self.cursor_x, self.cursor_y
-        if self._monster_at(bx, by):
-            self.message = "有怪物挡住了建造位置。"; return
-        if self.world.get_tile(bx, by)["tile"] != TILE_AIR:
-            self.message = "这里不是空地，无法放置。"; return
-        if bx == self.player_x and by == self.player_y:
-            push_order = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-            pushed = False
-            for pdx, pdy in push_order:
-                px, py = self.player_x + pdx, self.player_y + pdy
-                if (self.world.get_tile(px, py)["tile"] == TILE_AIR
-                        and not self._monster_at(px, py)
-                        and not self._monster_has_position(px, py)):
-                    self.player_x, self.player_y = px, py; pushed = True; break
-            if not pushed:
-                self.message = "玩家没有空间后退，无法在脚下放置。"; return
-        old_tile = self.world.get_tile(bx, by)["tile"]
-        self.world.set_tile(bx, by, self.place_mode)
-        self.modified_tiles[(bx, by)] = self.place_mode
-        from systems.event_bus import EventBus, EventType, GameEvent
-        EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": bx, "y": by, "old": old_tile, "new": self.place_mode}), self)
-        # 如果放置的是箱子，初始化空箱子
-        # M27: 本局放置计数
-        self._blocks_placed_this_life += 1
-        if self.place_mode == "木箱":
-            self.chests[(bx, by)] = {"materials": {}, "equipment_instances": []}
-        if self.place_item_name:
-            self._remove_material(self.place_item_name, 1)
-            if self._count_material(self.place_item_name) <= 0:
-                self.message = f"放置了 {self.place_mode}（背包中已无更多，退出建造模式）"
-                self.place_mode = None; self.place_item_name = None
-                return
-        self.message = f"放置了 {self.place_mode}（建造模式中，c 退出）"
+        do_place(self)
 
     def _attack_monster(self, monster):
         from systems.combat_system import CombatSystem
@@ -508,125 +343,34 @@ class Game:
         self.message = cause_msg
 
     def _tick_status_effects(self):
-        pass  # M21: 已由 advance_turn 中 buff_manager.tick_all() 统一处理
+        tick_status_effects(self)
 
     def _tick_corpses(self):
         tick_corpses(self)
 
     def dig_adjacent(self, dx, dy):
-        nx, ny = self.player_x + dx, self.player_y + dy
-        if self._monster_at(nx, ny):
-            self.message = "有怪物挡住了挖掘位置。"; return
-        tile = self.world.get_tile(nx, ny)["tile"]
-        drop_info = items_mod.get_drop_on_mine(self.items, tile)
-        if drop_info:
-            self._maybe_cancel_dig(nx, ny)
-            for d, c in drop_info.items():
-                self._add_material(d, c)
-            old_tile = self.world.get_tile(nx, ny)["tile"]
-            self.world.set_tile(nx, ny, TILE_AIR)
-            self.modified_tiles[(nx, ny)] = TILE_AIR
-            from systems.event_bus import EventBus, EventType, GameEvent
-            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": nx, "y": ny, "old": old_tile, "new": TILE_AIR}), self)
-            if (nx, ny) in self.corpses:
-                del self.corpses[(nx, ny)]
-            # 如果拆除的是箱子，掉落里面所有物品到地上
-            if (nx, ny) in self.chests:
-                chest = self.chests.pop((nx, ny))
-                for mat, count in chest["materials"].items():
-                    self._add_material(mat, count)
-                for inst in chest["equipment_instances"]:
-                    self._add_equipment_instance(inst.name, inst)
-                self.message = f"拆掉了 {tile}，箱内物品已回收。"
-            else:
-                self.message = f"拆掉了 {tile}，回收材料。"
-            self._gain_skill("digging")
-        elif get_tile_props(tile)["diggable"]:
-            self._dig_any_tile(nx, ny)
-        else:
-            self.message = "这里无法挖掘。"
+        dig_adjacent(self, dx, dy)
 
     def _player_defense(self):
-        return self._equipment_bonus("defense_bonus") + self._defense_reduction()
+        return self._equipment_bonus("defense_bonus") + defense_reduction(self.skill_levels)
 
     def _tick_monsters(self):
-        msgs = []
-        for m in self.monsters:
-            old_x, old_y = m["x"], m["y"]
-            act = monsters_mod.ai_act(m, self.world, self.player_x, self.player_y,
-                                      self.turn, self._monster_index)
-            # 如果怪物移动了，更新空间索引
-            if m["x"] != old_x or m["y"] != old_y:
-                self._monster_moved(m, old_x, old_y)
-            if isinstance(act, int):
-                if act > 0:
-                    dmg = max(1, act - self._player_defense())
-                    self.player_hp -= dmg
-                    msgs.append(f"{m['name']} 攻击了你，造成 {dmg} 点伤害！")
-                    self._gain_skill("defense")
-                else:
-                    msgs.append(f"{m['name']} 的攻击落空了。")
-        if msgs:
-            self.message = " ".join(msgs[-2:])
+        tick_monsters(self)
 
     def _try_spawn_monster(self):
-        m = monsters_mod.try_spawn(
-            self.world, self.player_x, self.player_y,
-            self.monsters, self.spawn_counter, self.monster_data,
-            interval_min=SPAWN_INTERVAL_MIN, interval_max=SPAWN_INTERVAL_MAX,
-            min_dist=SPAWN_MIN_DISTANCE,
-        )
-        if m:
-            self._add_monster(m)
-            self.message = f"一只 {m['name']} 出现了！"
+        try_spawn_monster(self)
 
     def _drop_items_on_ground(self, x, y):
-        """将背包内容掉落到地面附近"""
-        # 将材料和装备实例掉落为尸体形式的容器
-        # 简化实现：把掉落物信息存在消息里，物品暂不丢失（后续可改进为墓碑容器）
-        lost_items = self.inventory.to_dict()
-        self.inventory = Inventory()
-        # 清空装备槽
-        self.equipment = {}  # slot_name -> EquipmentInstance or None
-        self.message = f"你的物品散落在 ({x},{y}) 附近。"
+        drop_items_on_ground(self, x, y)
     
     def _place_grave(self, x, y):
-        """M26: 在死亡位置生成墓碑"""
-        from world_gen import TILE_AIR
-        tile = self.world.get_tile(x, y).get("tile", TILE_AIR)
-        if tile == TILE_AIR:
-            old_tile = self.world.get_tile(x, y)["tile"]
-            self.world.set_tile(x, y, "墓碑")
-            self.modified_tiles[(x, y)] = "墓碑"
-            from systems.event_bus import EventBus, EventType, GameEvent
-            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": x, "y": y, "old": old_tile, "new": "墓碑"}), self)
+        place_grave(self, x, y)
 
     def _save_world_on_death(self):
-        """M26: 死亡时保存世界状态"""
-        import json
-        from systems.save_system import build_save_data
-        _, world_data = build_save_data(self)
-        world_data["last_death_x"] = self.player_x
-        world_data["last_death_y"] = self.player_y
-        world_data["last_death_turn"] = self.turn
-        world_data["total_deaths"] = world_data.get("total_deaths", 0) + 1
-        world_path = BASE_DIR / "data" / "world_meta.json"
-        with open(world_path, "w") as f:
-            json.dump(world_data, f, indent=2, ensure_ascii=False)
+        save_world_on_death(self)
 
     def check_death(self):
-        if self.player_hp <= 0:
-            self.buff_manager.remove_entity(self)
-            self._drop_items_on_ground(self.player_x, self.player_y)
-            self._place_grave(self.player_x, self.player_y)
-            self._save_world_on_death()
-            # M27: 记录遗产
-            from systems.legacy_system import record_death
-            points = record_death(self)
-            self.message = f"你死了。获得 {points} 遗产点数。世界保留。"
-            self.message = "你死了。世界保留，新角色继承一切。"
-            return True
-        return False
+        return check_death(self)
 
     def show_death_screen(self):
         self.stdscr.erase()
@@ -667,124 +411,15 @@ class Game:
         return curses.A_NORMAL
 
     def _get_geology_zone(self, y):
-        """根据 y 坐标返回地质层名称。"""
-        if y > -8:
-            return "地表沉积层"
-        elif y > -25:
-            return "浅层沉积岩"
-        elif y > -45:
-            return "热液矿脉带"
-        elif y > -70:
-            return "岩浆侵入带"
-        else:
-            return "深部变质基底"
+        return get_geology_zone(y)
 
-    def _detect_room(self, start_x, start_y):
-        """从 (start_x, start_y) 开始 flood fill，检测是否是封闭空间"""
-        from tile_props import get_tile_props
-        from world_gen import TILE_AIR
-        
-        if self.world.get_tile(start_x, start_y)["tile"] != TILE_AIR:
-            return None  # 起点必须是空气
-        
-        visited = set()
-        queue = [(start_x, start_y)]
-        has_door = False
-        has_torch = False
-        has_chest = False
-        blocked = True
-        
-        while queue and len(visited) < 500:
-            x, y = queue.pop(0)
-            if (x, y) in visited:
-                continue
-            visited.add((x, y))
-            
-            for dx, dy in [(0,-1),(0,1),(-1,0),(1,0)]:
-                nx, ny = x+dx, y+dy
-                tile = self.world.get_tile(nx, ny)["tile"]
-                props = get_tile_props(tile)
-                
-                if tile == "木门":
-                    has_door = True
-                    visited.add((nx, ny))
-                    continue
-                if tile == "火把":
-                    has_torch = True
-                    continue
-                if tile == "木箱":
-                    has_chest = True
-                    continue
-                if (nx, ny) in visited:
-                    continue
-                if props.get("passable", False) and not props.get("blocks_vision", False):
-                    continue
-                if abs(nx - start_x) > 40 or abs(ny - start_y) > 40:
-                    blocked = False
-                    continue
-                if not props.get("passable", False):
-                    queue.append((nx, ny))
-        
-        area = len(visited)
-        if blocked and 15 <= area <= 400:
-            return {"area": area, "has_door": has_door, "has_torch": has_torch, "has_chest": has_chest, "tiles": visited}
-        return None
     
     def _check_room_formation(self):
-        """检查玩家四周是否形成了封闭房间，并评级"""
-        from world_gen import TILE_AIR
-        for dx, dy in [(0,0),(1,0),(-1,0),(0,1),(0,-1)]:
-            cx, cy = self.player_x + dx, self.player_y + dy
-            if self.world.get_tile(cx, cy)["tile"] == TILE_AIR:
-                room = self._detect_room(cx, cy)
-                if room:
-                    return self._rate_room(room)
-        return False
+        return check_room_formation(self)
     
-    def _rate_room(self, room):
-        """给房间评级"""
-        area = room["area"]
-        has_door = room["has_door"]
-        has_torch = room["has_torch"]
-        has_chest = room["has_chest"]
-        
-        # 扫描房间内的高级建材
-        luxury_count = 0
-        for x, y in room.get("tiles", set()):
-            tile = self.world.get_tile(x, y)["tile"]
-            if tile in ("丝绸墙纸", "玻璃窗", "地毯", "石砖墙", "骨墙"):
-                luxury_count += 1
-        
-        # 评级
-        if has_door and has_torch and has_chest:
-            if luxury_count >= 8:
-                rating = "豪华基地"
-                emoji = "👑"
-            elif luxury_count >= 4:
-                rating = "舒适小屋"
-                emoji = "🏠"
-            else:
-                rating = "简陋木屋"
-                emoji = "🛖"
-            self.message = f"【{emoji}{rating}】面积{area}格，高级建材{luxury_count}个。"
-        elif has_door:
-            self.message = f"【房间】面积{area}格。放火把和箱子升级为基地！"
-        elif has_torch:
-            self.message = f"【空间】有火把，还缺个门。面积{area}格。"
-        else:
-            self.message = f"【空间】封闭空间，面积{area}格。"
-        return True
     
     def _get_time_of_day(self):
-        t = self.turn % DAY_LENGTH
-        if DAWN_START <= t < DAY_START:
-            return "黎明", 4
-        elif DAY_START <= t < DUSK_START:
-            return "白天", 9
-        elif DUSK_START <= t < NIGHT_START:
-            return "黄昏", 4
-        else:
-            return "夜晚", 1
+        return get_time_of_day(self.turn)
 
     def advance_turn(self):
         rebuild_scent_map(self)
@@ -797,56 +432,13 @@ class Game:
         self._check_goals()
     
     def _check_goals(self):
-        """根据玩家进度推进目标"""
-        # 建了第一个房间 → 探索
-        if self.goal == "build_first_room" and self._count_rooms_nearby() >= 1:
-            self.goal = "explore_cave"
-            self.message = "【目标】家已建成！深入地下探索吧。"
-        # 探索到一定深度 → 狩猎
-        elif self.goal == "explore_cave" and self.player_y < -20:
-            self.goal = "kill_spiders"
-            self.message = "【目标】你进入了深层地下！狩猎怪物收集稀有材料。"
-        # 杀了一定数量怪物 → 建造豪华基地
-        elif self.goal == "kill_spiders" and self.turn > 500:
-            self.goal = "build_luxury"
-            self.message = "【目标】收集了足够的材料，建造豪华基地吧！"
+        check_goals(self)
     
     def _count_rooms_nearby(self):
-        """统计附近的房间数量"""
-        count = 0
-        for dx in range(-20, 21, 5):
-            for dy in range(-20, 21, 5):
-                room = self._detect_room(self.player_x + dx, self.player_y + dy)
-                if room and room.get("has_door"):
-                    count += 1
-        return count
+        return count_rooms_nearby(self)
     
     def _check_special_location(self):
-        """检测玩家是否进入特殊地貌"""
-        if not hasattr(self.world, 'special_locations'):
-            return
-        for x, y, name in self.world.special_locations:
-            if abs(self.player_x - x) <= 6 and abs(self.player_y - y) <= 6:
-                if not hasattr(self, '_found_specials'):
-                    self._found_specials = set()
-                if (x, y) not in self._found_specials:
-                    self._found_specials.add((x, y))
-                    self.message = f"🔍 你发现了【{name}】！这里似乎有稀有资源..."
-                    # 给奖励
-                    loot_tables = {
-                        "废弃矿洞": {"铁矿石": 10, "石头": 20},
-                        "蜘蛛巢穴": {"蜘蛛丝": 15},
-                        "水晶洞穴": {"钻石原石": 3, "玻璃": 8},
-                        "地下湖": {"沙子": 15},
-                        "远古遗迹": {"金矿石": 5, "大理石": 10},
-                        "蘑菇洞": {"黏土": 20},
-                        "硫磺温泉": {"硫磺": 10},
-                    }
-                    loot = loot_tables.get(name, {})
-                    for item, count in loot.items():
-                        self._add_material(item, count)
-                    self.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
-                break
+        check_special_location(self)
 
     def _handle_reload(self):
         self.recipes = load_recipes()
@@ -864,8 +456,13 @@ class Game:
         self.message = "挖掘模式：按方向键选择要拆除的方块（包括尸体），其他键取消。"
         draw(self)
         key2 = self.stdscr.getch()
-        if key2 in DIRECTIONS:
-            dx, dy = DIRECTIONS[key2]
+        dirs = {
+            curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
+            curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
+            ord("h"): (-1,0), ord("l"): (1,0), ord("k"): (0,-1), ord("j"): (0,1),
+        }
+        if key2 in dirs:
+            dx, dy = dirs[key2]
             self.dig_adjacent(dx, dy)
             return True
         else:

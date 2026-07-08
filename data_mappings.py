@@ -21,3 +21,20 @@ ORE_TO_MATERIAL = {
     "黑曜石": "黑曜石",
     "史莱姆凝胶": "骨",
 }
+
+import json
+from pathlib import Path
+
+RECIPES_FILE = Path(__file__).parent / "data" / "recipes.json"
+
+def load_recipes():
+    """加载合成配方。"""
+    if not RECIPES_FILE.exists():
+        print(f"[recipes] 文件不存在: {RECIPES_FILE}")
+        return {}
+    try:
+        with open(RECIPES_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"[recipes] JSON 解析失败: {e}")
+        return {}

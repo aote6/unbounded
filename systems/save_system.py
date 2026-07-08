@@ -17,8 +17,8 @@ CURRENT_SAVE_VERSION = 2
 
 
 def _get_load_recipes():
-    import main as _main
-    return _main.load_recipes
+    from data_mappings import load_recipes
+    return load_recipes
 
 
 def build_save_data(game):

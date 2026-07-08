@@ -1,0 +1,11 @@
+Unbounded Crash Report - 20260708_225557
+Error: UnboundLocalError: cannot access local variable 'DIRECTIONS' where it is not associated with a value
+State stack: ['MainMenuState', 'PlayState']
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/unbounded/core/state_machine.py", line 69, in run
+    result = current.handle_input(key)
+  File "/data/data/com.termux/files/home/unbounded/ui/states/play_state.py", line 64, in handle_input
+    elif key in DIRECTIONS:
+                ^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'DIRECTIONS' where it is not associated with a value
