@@ -72,6 +72,29 @@ State 类型：
 - 水[wet] + 电[electric] -> 连锁伤害
 - 事件总线是承载这种涌现交互的天然载体
 
+### M19: 气味地图寻路 (2026-07-08)
+
+当前怪物 AI 使用贪心直线逼近，在复杂洞穴地形会卡墙角。已引入 BFS 气味场：
+
+- 每回合从玩家位置 BFS 扩散气味值（范围 30 格）
+- 墙壁阻断气味，怪物位置可通过但不传播
+- 怪物只需检查周围 8 格的气味值，向最高处移动
+- _move_toward 优先使用气味地图，回退贪心算法
+- 天然解决绕墙问题，性能优于每怪独立 A*
+
+### M20: Tag 系统扩展到方块 (2026-07-08)
+
+Tag 交互已从武器→怪物扩展到环境方块：
+
+- 25 种可放置方块添加 tags（flammable/heat_source/nonflammable 等）
+- "火" 方块：burning + heat_source + light
+- interaction_rules.json 新增 ignite_tile、extinguish 规则
+- systems/tile_interaction.py：每回合检查相邻方块交互
+  - heat_source + flammable → 点燃为"火"
+  - burning + flammable → 火焰传播到邻格
+  - 燃烧方块有持续时间，到期变回 TILE_AIR
+- 在 advance_turn 中 tick_tile_interactions + tick_burning_tiles
+
 ### 远期：存档分离与永久世界
 
 当引入多角色/遗产机制时，分离存档：

@@ -26,10 +26,30 @@ M16: 架构收敛-路线C — status_system统一副作用通道，修复5个逻
 
 ## 待完成
 
-M17: 状态机驱动架构（高优先级）
-  - Engine + State 栈结构，替代 run() 中的 if/elif 链
-  - State 类型：PlayState, InventoryState, CraftingState, BuildState, ChestState, DialogState
-  - 每个 State 自己处理 handle_input/update/render
+M17: 状态机驱动架构 ✅ (2026-07-08)
+  - core/state_machine.py: State 基类 + Engine 栈式状态机
+  - ui/states/: PlayState, CraftingState, EquipmentState, BuildState, ChestState
+  - main.py run() 从 50 行 if/elif → 3 行引擎委托
+
+M18: 按键常量集中化 ✅
+  - config.py 20+ 按键常量，ord() 从 25 处降至 4 处
+
+M19: 气味地图寻路 ✅ (2026-07-08)
+  - systems/scent_map.py: BFS 气味场，怪物 O(1) 查询最佳方向
+  - _move_toward 优先气味地图，回退贪心算法
+  - 每回合 rebuild_scent_map()，天然解决卡墙角
+
+M20: Tag 系统扩展到方块 ✅ (2026-07-08)
+  - tile_props.py: 25 种可放置方块 + "火" 添加 tags
+  - interaction_rules.json: ignite_tile, extinguish 规则
+  - systems/tile_interaction.py: 相邻方块交互 + 火焰传播 + 燃烧计时
+  - core/state_machine.py: State 基类 + Engine 栈式状态机
+  - ui/states/play_state.py: 主游戏状态（移动/攻击/挖掘/查看）
+  - ui/states/crafting_state.py: 合成界面（,切换分类/Enter合成）
+  - ui/states/equipment_state.py: 装备界面（槽位选择/换装/卸下）
+  - ui/states/build_state.py: 建造模式（选物品→光标放置/r重复）
+  - ui/states/chest_state.py: 箱子存取（,切换/+全部转移）
+  - main.py run() 改为委托 Engine.run(PlayState)
   - 菜单叠加通过 push/pop 栈自然支持
 
 M18: 交互优化

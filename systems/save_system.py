@@ -124,15 +124,29 @@ def apply_load_data(game, data):
 
     # 恢复箱子
     game.chests = {}
-    for cdata in data.get("chests", []):
-        cx, cy = cdata["x"], cdata["y"]
-        game.chests[(cx, cy)] = {
-            "materials": cdata.get("materials", {}),
-            "equipment_instances": [
-                game.inventory.from_dict(ei) if isinstance(ei, dict) else ei
-                for ei in cdata.get("equipment_instances", [])
-            ],
-        }
+    chests_data = data.get("chests", {})
+    if isinstance(chests_data, dict):
+        for key_str, cdata in chests_data.items():
+            parts = key_str.split(",")
+            if len(parts) == 2:
+                cx, cy = int(parts[0]), int(parts[1])
+                game.chests[(cx, cy)] = {
+                    "materials": cdata.get("materials", {}),
+                    "equipment_instances": [
+                        EquipmentInstance.from_dict(ei) if isinstance(ei, dict) else ei
+                        for ei in cdata.get("equipment_instances", [])
+                    ],
+                }
+    elif isinstance(chests_data, list):
+        for cdata in chests_data:
+            cx, cy = cdata["x"], cdata["y"]
+            game.chests[(cx, cy)] = {
+                "materials": cdata.get("materials", {}),
+                "equipment_instances": [
+                    game.inventory.from_dict(ei) if isinstance(ei, dict) else ei
+                    for ei in cdata.get("equipment_instances", [])
+                ],
+            }
 
     inv_summary = (
         ", ".join(f"{k}:{v}" for k, v in game.inventory.get_materials().items()) or "空"

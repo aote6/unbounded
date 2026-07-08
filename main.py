@@ -174,6 +174,7 @@ class Game:
         from systems.event_bus import EventBus
         from systems.status_system import register as register_status
         register_status()
+        self.engine = None  # 状态机引擎，由 run() 设置
 
     # ── 材料系统（堆叠物品） ──
     def _count_material(self, name):
@@ -561,39 +562,10 @@ class Game:
         self.message = cause_msg
 
     def _tick_status_effects(self):
-        for m in list(self.monsters):
-            # 旧版 on_fire
-            if m.get("on_fire", 0) > 0:
-                m["hp"] -= 2; m["on_fire"] -= 1
-                if m["hp"] <= 0:
-                    self._kill_monster(m, cause="burn"); continue
-            # 新版 burning（标签系统触发）
-            burn = m.get("burning")
-            if burn and burn.get("duration", 0) > 0:
-                m["hp"] -= burn.get("damage_per_turn", 2)
-                burn["duration"] -= 1
-                if burn["duration"] <= 0:
-                    del m["burning"]
-                if m["hp"] <= 0:
-                    self._kill_monster(m, cause="burn"); continue
-            if m.get("poisoned", 0) > 0:
-                m["hp"] -= 1; m["poisoned"] -= 1
-                if m["hp"] <= 0:
-                    self._kill_monster(m, cause="poison")
+        tick_status_effects(self)
 
     def _tick_corpses(self):
-        decayed = []
-        for (cx, cy), remaining in self.corpses.items():
-            remaining -= 1
-            if remaining <= 0:
-                if self.world.get_tile(cx, cy)["tile"] != TILE_AIR:
-                    self.world.set_tile(cx, cy, TILE_AIR)
-                    self.modified_tiles[(cx, cy)] = TILE_AIR
-                decayed.append((cx, cy))
-            else:
-                self.corpses[(cx, cy)] = remaining
-        for pos in decayed:
-            del self.corpses[pos]
+        tick_corpses(self)
 
     def dig_adjacent(self, dx, dy):
         nx, ny = self.player_x + dx, self.player_y + dy
@@ -839,6 +811,7 @@ class Game:
             return "夜晚", 1
 
     def advance_turn(self):
+        rebuild_scent_map(self)
         self._tick_corpses()
         self._tick_monsters()
         self._tick_status_effects()
@@ -902,7 +875,7 @@ class Game:
                 break
 
     def _handle_open_chest(self):
-        self.open_chest_menu()
+        pass  # 已迁移到 ChestState
 
     def _handle_craft(self):
         if self.place_mode:
@@ -1011,55 +984,12 @@ class Game:
             self.message = "取消挖掘。"
             return False
     def run(self):
-        """主循环：获取按键 → 分发处理 → 推进回合。"""
+        """主循环：委托状态机引擎。"""
+        from core.state_machine import Engine
+        from ui.states.play_state import PlayState
         draw(self)
-        while True:
-            if self.check_death():
-                self.show_death_screen()
-                import shutil
-                from world_gen import SAVE_DIR
-                if SAVE_DIR.exists():
-                    shutil.rmtree(SAVE_DIR)
-                SAVE_DIR.mkdir(parents=True, exist_ok=True)
-                if SAVE_FILE.exists():
-                    SAVE_FILE.unlink()
-                self.message = "你死了。存档已清除。"
-                self.new_game()
-                continue
-            key = self.stdscr.getch()
-            curses.flushinp()
-            acted = False
-            if key in (KEY_QUIT, KEY_QUIT_UPPER):
-                break
-            elif key in (KEY_CHEST, KEY_CHEST_UPPER):
-                self._handle_open_chest()
-            elif key in (KEY_CRAFT, KEY_CRAFT_UPPER):
-                self._handle_craft()
-            elif key == KEY_EQUIP:
-                self._handle_equip()
-            elif key == KEY_BUILD:
-                self._handle_place_menu()
-            elif key in (curses.KEY_ENTER, 10, 13):
-                acted = self._handle_confirm_place()
-            elif key == KEY_REPEAT:
-                self._handle_repeat_build()
-            elif key in (KEY_RELOAD, KEY_RELOAD_UPPER):
-                self._handle_reload()
-            elif key in (KEY_SAVE, KEY_SAVE_UPPER):
-                self._handle_save()
-            elif key in (KEY_LOAD, KEY_LOAD_UPPER):
-                self._handle_load()
-            elif key == KEY_LOOK:
-                self._handle_look_mode()
-            elif key == KEY_DIG:
-                acted = self._handle_dig_mode()
-            elif key in DIRECTIONS:
-                dx, dy = DIRECTIONS[key]
-                self.try_move_or_dig(dx, dy)
-                acted = True
-            if acted:
-                self.advance_turn()
-                draw(self)
+        self.engine = Engine(self.stdscr)
+        self.engine.run(PlayState(self))
 def main(stdscr):
     game = Game(stdscr)
     # 检查是否有存档

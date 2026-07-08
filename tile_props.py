@@ -102,7 +102,7 @@ TILE_PROPS = {
     TILE_TREE: {
         "name": "树木", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 1.5,
-        "drop": "木材", "drop_count": 2, "char": "\u2663",
+        "drop": "木材", "drop_count": 2, "char": "T",
     },
 }
 
@@ -110,50 +110,62 @@ PLACEABLE_PROPS = {
     "石墙": {
         "name": "石墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 5.0, "char": "\u2588",
+        "tags": ["stone", "wall", "nonflammable"]
     },
     "木墙": {
         "name": "木墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 2.0, "char": "\u2593",
+        "tags": ["wood", "wall", "flammable"]
     },
     "火把": {
         "name": "火把", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 0.5, "char": "\u2020",
+        "tags": ["light", "heat_source"]
     },
     "石灰岩墙": {
         "name": "石灰岩墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 4.0, "char": "\u2593",
+        "tags": ["stone", "wall", "nonflammable"]
     },
     "大理石柱": {
         "name": "大理石柱", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 5.5, "char": "\u2588",
+        "tags": ["stone", "decor", "nonflammable"]
     },
     "花岗岩砖": {
         "name": "花岗岩砖", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 6.0, "char": "\u2588",
+        "tags": ["stone", "wall", "nonflammable"]
     },
     "玻璃窗": {
         "name": "玻璃窗", "passable": False, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 1.5, "char": "\u2591",
+        "tags": ["glass", "wall", "transparent", "nonflammable"]
     },
     "砖墙": {
         "name": "砖墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 3.0, "char": "\u2593",
+        "tags": ["stone", "wall", "nonflammable"]
     },
     "砂岩墙": {
         "name": "砂岩墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 2.0, "char": "\u2591",
+        "tags": ["stone", "wall", "nonflammable"]
     },
     "盐灯": {
         "name": "盐灯", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u263c",
+        "tags": ["light", "decor"]
     },
     "硫磺灯": {
         "name": "硫磺灯", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u263f",
+        "tags": ["light", "heat_source", "flammable"]
     },
     "木箱": {
         "name": "木箱", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 2.0, "char": "\u25a1",
+        "tags": ["wood", "container", "flammable"]
     },
     "史莱姆尸体": {
         "name": "史莱姆尸体", "passable": True, "transparent": True,
@@ -177,45 +189,60 @@ PLACEABLE_PROPS = {
     "楼梯下": {
         "name": "向下的楼梯", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 999.0, "char": ">",
+        "tags": ["stairs", "stone", "nonflammable"]
     },
     "楼梯上": {
         "name": "向上的楼梯", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 999.0, "char": "<",
+        "tags": ["stairs", "stone", "nonflammable"]
     },
     "木地板": {
         "name": "木地板", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 1.5, "char": "=",
+        "tags": ["wood", "floor", "flammable"]
     },
     "木门": {
         "name": "木门", "passable": True, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 2.0, "char": "+",
+        "tags": ["wood", "door", "flammable"]
     },
     "木桌": {
         "name": "木桌", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 1.5, "char": "\u253c",
+        "tags": ["wood", "decor", "flammable"]
     },
     "木椅": {
         "name": "木椅", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u2534",
+        "tags": ["wood", "decor", "flammable"]
     },
 
     "骨墙": {
         "name": "骨墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 3.0, "char": "\u263a",
+        "tags": ["bone", "wall", "nonflammable"]
     },
     "丝绸墙纸": {
         "name": "丝绸墙纸", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 1.0, "char": "\u2591",
+        "tags": ["cloth", "wall", "flammable"]
     },
     "石砖墙": {
         "name": "石砖墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 6.0, "char": "\u2588",
+        "tags": ["stone", "wall", "nonflammable"]
     },
     "地毯": {
         "name": "地毯", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 0.5, "char": "\u2248",
+        "tags": ["cloth", "floor", "flammable"]
     },
+    "火": {
+        "name": "火焰", "passable": True, "transparent": True,
+        "blocks_vision": False, "diggable": False, "hardness": 0.1,
+        "char": "\u2668", "tags": ["burning", "heat_source", "light"],
     },
+}
 
 
 def get_tile_props(tile):

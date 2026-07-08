@@ -153,6 +153,19 @@ def _is_passable(world, x, y, monster_index, px, py):
     return True
 
 def _move_toward(monster, tx, ty, world, monster_index, px, py):
+    # 优先使用气味地图寻路（解决卡墙角问题）
+    try:
+        from systems.scent_map import scent_best_direction
+        dx, dy = scent_best_direction(monster["x"], monster["y"])
+        if (dx, dy) != (0, 0):
+            nx, ny = monster["x"] + dx, monster["y"] + dy
+            if _is_passable(world, nx, ny, monster_index, px, py):
+                monster["x"], monster["y"] = nx, ny
+                return "chase"
+    except ImportError:
+        pass
+
+    # 回退到贪心算法
     dx, dy = _step_toward(monster["x"], monster["y"], tx, ty)
     nx, ny = monster["x"] + dx, monster["y"] + dy
     if _is_passable(world, nx, ny, monster_index, px, py):
