@@ -103,6 +103,9 @@
         "diggable": false,
         "hardness": 0.5
       }
+    },
+    "drop_on_mine": {
+      "火把": 1
     }
   },
   "石灰岩墙": {
@@ -205,6 +208,9 @@
         "diggable": false,
         "hardness": 1.0
       }
+    },
+    "drop_on_mine": {
+      "玻璃": 1
     }
   },
   "砖墙": {
@@ -407,6 +413,9 @@
         "diggable": false,
         "hardness": 3.0
       }
+    },
+    "drop_on_mine": {
+      "骨头": 2
     }
   },
   "丝绸墙纸": {
@@ -427,6 +436,9 @@
         "diggable": false,
         "hardness": 1.0
       }
+    },
+    "drop_on_mine": {
+      "丝绸": 1
     }
   },
   "石砖墙": {
@@ -447,6 +459,9 @@
         "diggable": false,
         "hardness": 6.0
       }
+    },
+    "drop_on_mine": {
+      "石砖": 2
     }
   },
   "地毯": {
@@ -467,6 +482,9 @@
         "diggable": false,
         "hardness": 0.5
       }
+    },
+    "drop_on_mine": {
+      "丝绸": 1
     }
   },
   "剑": {
@@ -583,7 +601,10 @@
       "wood",
       "floor",
       "flammable"
-    ]
+    ],
+    "drop_on_mine": {
+      "木板": 1
+    }
   },
   "木门": {
     "type": "placeable",
@@ -602,7 +623,10 @@
       "wood",
       "door",
       "flammable"
-    ]
+    ],
+    "drop_on_mine": {
+      "木板": 2
+    }
   },
   "木桌": {
     "type": "placeable",
@@ -621,7 +645,10 @@
       "wood",
       "decor",
       "flammable"
-    ]
+    ],
+    "drop_on_mine": {
+      "木板": 2
+    }
   },
   "木椅": {
     "type": "placeable",
@@ -640,7 +667,10 @@
       "wood",
       "decor",
       "flammable"
-    ]
+    ],
+    "drop_on_mine": {
+      "木板": 1
+    }
   },
   "木墙(简易)": {
     "type": "placeable",
@@ -659,7 +689,10 @@
       "wood",
       "wall",
       "flammable"
-    ]
+    ],
+    "drop_on_mine": {
+      "木材": 2
+    }
   },
   "木门(简易)": {
     "type": "placeable",
@@ -678,7 +711,10 @@
       "wood",
       "door",
       "flammable"
-    ]
+    ],
+    "drop_on_mine": {
+      "木材": 1
+    }
   },
   "铁": {
     "type": "material",

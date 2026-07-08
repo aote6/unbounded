@@ -96,7 +96,7 @@ class ChestState(State):
                     chest["materials"][item_id] = chest["materials"].get(item_id, 0) + item.count
                     game.inventory.remove(item_id, item.count)
                 elif item.item_type == "equipment":
-                    chest["equipment_instances"].append(item.instance)
+                    chest["equipment_instances"].append(item.instance.clone() if hasattr(item.instance, "clone") else item.instance)
                     game.inventory.remove(item_id)
             game.message = "所有物品已存入箱子。"
         else:
@@ -133,7 +133,7 @@ class ChestState(State):
                 game._remove_material(mat_name, count)
             else:
                 inst = item[2]
-                chest["equipment_instances"].append(inst)
+                chest["equipment_instances"].append(inst.clone() if hasattr(inst, "clone") else inst)
                 game.inventory.remove(inst.name)
             game.message = "已存入。"
 

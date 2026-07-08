@@ -32,6 +32,18 @@ class EquipmentInstance:
             "tags": self.tags,
         }
 
+    def clone(self) -> "EquipmentInstance":
+        """深拷贝，杜绝引用污染（箱子存取/物品拆分时使用）。"""
+        return EquipmentInstance(
+            name=self.name, slot=self.slot,
+            attack_bonus=self.attack_bonus, defense_bonus=self.defense_bonus,
+            tool_bonus=self.tool_bonus, damage_min=self.damage_min,
+            damage_max=self.damage_max, hit_bonus=self.hit_bonus,
+            affixes=list(self.affixes), on_attack=list(self.on_attack),
+            lifesteal=self.lifesteal, speed_bonus=self.speed_bonus,
+            tags=list(self.tags),
+        )
+
     @classmethod
     def from_dict(cls, data: dict) -> "EquipmentInstance":
         """从 dict 反序列化。"""
