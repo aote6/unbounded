@@ -249,22 +249,35 @@ def equipment_menu(stdscr, game):
             self.monsters.remove(monster)
         self._monster_index.pop((monster["x"], monster["y"]), None)
 
-    def new_game(self):
-        # 清理旧存档，防止跨存档污染
-        import shutil
+    def new_game(self, inherit_world=False):
+        # M26: inherit_world=True 保留世界 Chunk 和世界状态
+        import shutil, json
         from world_gen import SAVE_DIR
-        if SAVE_DIR.exists():
-            shutil.rmtree(SAVE_DIR)
-        SAVE_DIR.mkdir(parents=True, exist_ok=True)
-        if SAVE_FILE.exists():
-            SAVE_FILE.unlink()
-        player_path = BASE_DIR / "data" / "player.json"
-        world_path = BASE_DIR / "data" / "world_meta.json"
-        if player_path.exists():
-            player_path.unlink()
-        if world_path.exists():
-            world_path.unlink()
-        self.world = generate_world(seed=WORLD_SEED)
+        
+        if not inherit_world:
+            if SAVE_DIR.exists():
+                shutil.rmtree(SAVE_DIR)
+            SAVE_DIR.mkdir(parents=True, exist_ok=True)
+            self.world = generate_world(seed=WORLD_SEED)
+        else:
+            world_path = BASE_DIR / "data" / "world_meta.json"
+            if SAVE_DIR.exists() and world_path.exists():
+                with open(world_path) as f:
+                    world_data = json.load(f)
+                seed = world_data.get("seed", WORLD_SEED)
+                self.world = generate_world(seed=seed)
+                from systems.save_system import _apply_world_data
+                _apply_world_data(self, world_data)
+            else:
+                if SAVE_DIR.exists():
+                    shutil.rmtree(SAVE_DIR)
+                SAVE_DIR.mkdir(parents=True, exist_ok=True)
+                self.world = generate_world(seed=WORLD_SEED)
+        
+        for p in [SAVE_FILE, BASE_DIR / "data" / "player.json"]:
+            if p.exists():
+                p.unlink()
+        
         sx, sy = find_spawn(self.world, start_x=0)
         self.player_x, self.player_y = sx, sy
         self.respawn_x, self.respawn_y = sx, sy
@@ -274,8 +287,8 @@ def equipment_menu(stdscr, game):
         self.turn = 0
         self.inventory = Inventory()
         self.equipment = {}
-        self.buff_manager = create_buff_manager()  # M21: 新游戏重置
-        self.message = "新游戏开始。S 存档，L 读档。"
+        self.buff_manager = create_buff_manager()
+        self.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
         self.place_mode = None; self.last_place = None
         self.place_item_name = None; self.last_place_item_name = None
         self.dig_progress = None; self.look_mode = False
@@ -631,32 +644,49 @@ def equipment_menu(stdscr, game):
             self.equipment.pop(slot, None)
         self.message = f"你的物品散落在 ({x},{y}) 附近。"
     
+    def _place_grave(self, x, y):
+        """M26: 在死亡位置生成墓碑"""
+        from world_gen import TILE_AIR
+        tile = self.world.get_tile(x, y).get("tile", TILE_AIR)
+        if tile == TILE_AIR:
+            self.world.set_tile(x, y, "墓碑")
+            self.modified_tiles[(x, y)] = "墓碑"
+
+    def _save_world_on_death(self):
+        """M26: 死亡时保存世界状态"""
+        import json
+        from systems.save_system import build_save_data
+        _, world_data = build_save_data(self)
+        world_data["last_death_x"] = self.player_x
+        world_data["last_death_y"] = self.player_y
+        world_data["last_death_turn"] = self.turn
+        world_data["total_deaths"] = world_data.get("total_deaths", 0) + 1
+        world_path = BASE_DIR / "data" / "world_meta.json"
+        with open(world_path, "w") as f:
+            json.dump(world_data, f, indent=2, ensure_ascii=False)
+
     def check_death(self):
         if self.player_hp <= 0:
-            self.buff_manager.remove_entity(self)  # M21: 清理玩家Buff
-            # 掉落背包到原地
+            self.buff_manager.remove_entity(self)
             self._drop_items_on_ground(self.player_x, self.player_y)
-            # 在复活点重生
-            if self.bed_x is not None:
-                self.player_x, self.player_y = self.bed_x, self.bed_y
-            else:
-                self.player_x, self.player_y = self.respawn_x, self.respawn_y
-            self.player_hp = self.player_max_hp
-            self.message = "你死了。物品掉落在原地。"
+            self._place_grave(self.player_x, self.player_y)
+            self._save_world_on_death()
+            self.message = "你死了。世界保留，新角色继承一切。"
             return True
         return False
 
     def show_death_screen(self):
         self.stdscr.erase()
         m1, m2 = "你死了。", f"物品掉落在 ({self.player_x},{self.player_y})"
-        m3 = "你将在出生点复活。"
-        m4 = "按任意键继续..."
+        m3 = "世界保留，新角色将继承一切。"
+        m4 = "按任意键以新角色继续..."
         h, w = self.stdscr.getmaxyx()
         self.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
         self.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
         self.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
         self.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
         self.stdscr.refresh(); self.stdscr.getch()
+        self.new_game(inherit_world=True)
 
     def get_viewport_origin(self):
         vx = self.player_x - VIEW_WIDTH // 2
@@ -935,8 +965,11 @@ def equipment_menu(stdscr, game):
         self.engine.run(PlayState(self))
 def main(stdscr):
     game = Game(stdscr)
-    # 检查是否有存档
-    if SAVE_FILE.exists():
+    player_path = BASE_DIR / "data" / "player.json"
+    world_path = BASE_DIR / "data" / "world_meta.json"
+    
+    # M26: 检测存档类型
+    if player_path.exists() or SAVE_FILE.exists():
         game.stdscr.erase()
         h, w = game.stdscr.getmaxyx()
         msg1 = "检测到存档文件"
@@ -955,15 +988,26 @@ def main(stdscr):
                     game.new_game()
                     break
             elif key in (ord('n'), ord('N')):
-                # 删旧存档
                 import shutil
                 from world_gen import SAVE_DIR
-                if SAVE_FILE.exists():
-                    SAVE_FILE.unlink()
+                for p in [SAVE_FILE, player_path, world_path]:
+                    if p.exists():
+                        p.unlink()
                 if SAVE_DIR.exists():
                     shutil.rmtree(SAVE_DIR)
                 game.new_game()
                 break
+    elif world_path.exists():
+        # 只有世界存档（角色已死）-> 继承世界
+        game.stdscr.erase()
+        h, w = game.stdscr.getmaxyx()
+        msg1 = "发现一个遗留的世界"
+        msg2 = "按任意键以新角色继承..."
+        game.stdscr.addstr(h//2-1, max(0,w//2-15), msg1, curses.A_BOLD)
+        game.stdscr.addstr(h//2+1, max(0,w//2-15), msg2)
+        game.stdscr.refresh()
+        game.stdscr.getch()
+        game.new_game(inherit_world=True)
     else:
         game.new_game()
     game.run()
