@@ -963,61 +963,13 @@ class Game:
         else:
             self.message = "取消挖掘。"
             return False
-    def run(self):
-        """主循环：委托状态机引擎。"""
-        from core.state_machine import Engine
-        from ui.states.play_state import PlayState
-        draw(self)
-        self.engine = Engine(self.stdscr)
-        self.engine.run(PlayState(self))
+
 def main(stdscr):
+    from ui.states.main_menu_state import MainMenuState
+    from core.state_machine import Engine
     game = Game(stdscr)
-    player_path = BASE_DIR / "data" / "player.json"
-    world_path = BASE_DIR / "data" / "world_meta.json"
-    
-    # M26: 检测存档类型
-    if player_path.exists() or SAVE_FILE.exists():
-        game.stdscr.erase()
-        h, w = game.stdscr.getmaxyx()
-        msg1 = "检测到存档文件"
-        msg2 = "按 L 继续上次游戏"
-        msg3 = "按 N 开始新游戏（会覆盖存档）"
-        game.stdscr.addstr(h//2-2, max(0,w//2-15), msg1, curses.A_BOLD)
-        game.stdscr.addstr(h//2, max(0,w//2-15), msg2)
-        game.stdscr.addstr(h//2+1, max(0,w//2-15), msg3)
-        game.stdscr.refresh()
-        while True:
-            key = game.stdscr.getch()
-            if key in (ord('l'), ord('L')):
-                if game.load_game():
-                    break
-                else:
-                    game.new_game()
-                    break
-            elif key in (ord('n'), ord('N')):
-                import shutil
-                from world_gen import SAVE_DIR
-                for p in [SAVE_FILE, player_path, world_path]:
-                    if p.exists():
-                        p.unlink()
-                if SAVE_DIR.exists():
-                    shutil.rmtree(SAVE_DIR)
-                game.new_game()
-                break
-    elif world_path.exists():
-        # 只有世界存档（角色已死）-> 继承世界
-        game.stdscr.erase()
-        h, w = game.stdscr.getmaxyx()
-        msg1 = "发现一个遗留的世界"
-        msg2 = "按任意键以新角色继承..."
-        game.stdscr.addstr(h//2-1, max(0,w//2-15), msg1, curses.A_BOLD)
-        game.stdscr.addstr(h//2+1, max(0,w//2-15), msg2)
-        game.stdscr.refresh()
-        game.stdscr.getch()
-        game.new_game(inherit_world=True)
-    else:
-        game.new_game()
-    game.run()
+    game.engine = Engine(stdscr)
+    game.engine.run(MainMenuState(game))
 
 if __name__ == "__main__":
     curses.wrapper(main)

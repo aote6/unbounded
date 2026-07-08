@@ -1,30 +1,27 @@
-"""存档系统：构建存档数据 / 应用读档数据。
-
-M25: 拆分为 player_data + world_data，支持新格式（player.json + world_meta.json）
-     和旧格式（save.json）两种读写方式，向后兼容。
-"""
-from config import WORLD_SEED
-from inventory import Inventory
+"""存档系统：构建/恢复 + 存档管理 API"""
+import json, shutil
+from pathlib import Path
+from world_gen import SAVE_DIR
 from equipment import EquipmentInstance
+from inventory import Inventory
 import monsters as monsters_mod
 import items as items_mod
 
-
-def _get_load_recipes():
-    from main import load_recipes
-    return load_recipes
-
-
-# ═══════════════════════════════════════════════
-# 序列化
-# ═══════════════════════════════════════════════
+BASE_DIR = Path(__file__).parent.parent
+SAVE_FILE = BASE_DIR / "data" / "save.json"
+PLAYER_PATH = BASE_DIR / "data" / "player.json"
+WORLD_PATH = BASE_DIR / "data" / "world_meta.json"
+LEGACY_SAVE_FILE = BASE_DIR / "data" / "save.json"
 
 CURRENT_SAVE_VERSION = 2
 
+
+def _get_load_recipes():
+    import main as _main
+    return _main.load_recipes
+
+
 def build_save_data(game):
-    """返回 (player_data, world_data) 两个 dict。"""
-    game.world.save_all()
-    
     player_data = {
         "version": CURRENT_SAVE_VERSION,
         "player_x": game.player_x,
@@ -36,32 +33,25 @@ def build_save_data(game):
         "equipment": game.equipment,
         "inventory": game.inventory.to_dict(),
         "skills": game.skills,
-        "skill_levels": game.skill_levels,
         "respawn_x": game.respawn_x,
         "respawn_y": game.respawn_y,
         "bed_x": game.bed_x,
         "bed_y": game.bed_y,
     }
-    
     world_data = {
-        "seed": WORLD_SEED,
         "monsters": [_serialize_monster(m) for m in game.monsters],
         "corpses": {f"{x},{y}": v for (x, y), v in game.corpses.items()},
         "chests": _serialize_chests(game.chests),
         "spawn_counter": game.spawn_counter,
+        "seed": game.world.seed if hasattr(game.world, 'seed') else None,
     }
-    
     return player_data, world_data
 
 
 def _serialize_monster(m):
     return {
-        "name": m["name"],
-        "hp": m["hp"],
-        "max_hp": m["max_hp"],
-        "x": m["x"],
-        "y": m["y"],
-        "faction": m.get("faction", "hostile"),
+        "name": m["name"], "hp": m["hp"], "max_hp": m["max_hp"],
+        "x": m["x"], "y": m["y"], "faction": m.get("faction", "hostile"),
         "tags": m.get("tags", []),
     }
 
@@ -80,41 +70,17 @@ def _serialize_chests(chests):
     return result
 
 
-# ═══════════════════════════════════════════════
-# 反序列化
-# ═══════════════════════════════════════════════
-
 def apply_load_data(game, data):
-    # 检测存档版本，兼容旧格式
     save_version = data.get("player", {}).get("version", data.get("version", 1))
     if save_version < CURRENT_SAVE_VERSION:
         game.message = f"旧版本存档(v{save_version})已自动升级到v{CURRENT_SAVE_VERSION}"
-
-    """恢复存档。兼容新格式 {"player":..., "world":...} 和旧格式（扁平 dict）。"""
     if "player" in data:
         _apply_player_data(game, data["player"])
         _apply_world_data(game, data["world"])
     else:
-        # 旧格式兼容
         _apply_player_data(game, data)
         _apply_world_data(game, data)
-    
-    game.cursor_x, game.cursor_y = game.player_x, game.player_y
-    game.place_mode = None
-    game.last_place = None
-    game.place_item_name = None
-    game.last_place_item_name = None
-    game.dig_progress = None
-    game.look_mode = False
-    game.modified_tiles = {}
-    game.recipes = _get_load_recipes()()
-    game.items = items_mod.load_items()
-    game.monster_data = monsters_mod.load_monsters()
-    
-    inv_summary = (
-        ", ".join(f"{k}:{v}" for k, v in game.inventory.get_materials().items()) or "空"
-    )
-    game.message = f"读档成功。位置 ({game.player_x},{game.player_y})。背包: {inv_summary}"
+    game.message = f"读档成功。位置 ({game.player_x},{game.player_y})。"
 
 
 def _apply_player_data(game, data):
@@ -126,52 +92,27 @@ def _apply_player_data(game, data):
     game.turn = data.get("turn", 0)
     game.equipment = data.get("equipment", {})
     game.skills = data.get("skills", {"digging": 0, "combat": 0, "defense": 0})
-    game.skill_levels = data.get("skill_levels", {"digging": 1, "combat": 1, "defense": 1})
     game.respawn_x = data.get("respawn_x", 0)
     game.respawn_y = data.get("respawn_y", 0)
     game.bed_x = data.get("bed_x")
     game.bed_y = data.get("bed_y")
-    
     inv_data = data.get("inventory", {})
     game.inventory = Inventory.from_dict(inv_data) if inv_data else Inventory()
 
 
 def _apply_world_data(game, data):
-    # 怪物
     game.monsters = []
     game._monster_index = {}
     for md in data.get("monsters", []):
-        template = game.monster_data.get(md["name"], {})
-        m = {
-            "name": md["name"],
-            "char": template.get("char", "?"),
-            "x": md["x"],
-            "y": md["y"],
-            "hp": md.get("hp", template.get("hp", 10)),
-            "max_hp": md.get("max_hp", template.get("hp", 10)),
-            "attack_power": tuple(template.get("attack_power", [1, 3])),
-            "hit_chance": template.get("hit_chance", 0.7),
-            "vision": template.get("vision", 6),
-            "flee_at_hp_ratio": template.get("flee_at_hp_ratio", 0.3),
-            "scores": template.get("scores", {}),
-            "drop": template.get("drop", {}),
-            "corpse_tile": template.get("corpse_tile"),
-            "split_into": template.get("split_into"),
-            "special_behavior": template.get("special_behavior"),
-            "properties": template.get("properties", {}),
-            "tags": template.get("tags", []),
-            "faction": template.get("faction", "hostile"),
-        }
-        game._add_monster(m)
-    
-    # 尸体
+        m = monsters_mod.make_monster(md["name"], md["x"], md["y"], game.monster_data)
+        if m:
+            m["hp"] = md.get("hp", m["max_hp"])
+            game._add_monster(m)
     game.corpses = {}
     for key_str, val in data.get("corpses", {}).items():
         parts = key_str.split(",")
         if len(parts) == 2:
             game.corpses[(int(parts[0]), int(parts[1]))] = val
-    
-    # 箱子
     game.chests = {}
     chests_data = data.get("chests", {})
     if isinstance(chests_data, dict):
@@ -186,5 +127,27 @@ def _apply_world_data(game, data):
                         for ei in cdata.get("equipment_instances", [])
                     ],
                 }
-    
     game.spawn_counter = data.get("spawn_counter", {"count": 5})
+    game.modified_tiles = {}
+
+
+# ═══════════════════════════════════
+# 存档管理 API（供主菜单使用）
+# ═══════════════════════════════════
+
+def check_save_status():
+    """返回存档状态: 'full' / 'world_only' / 'none'"""
+    if PLAYER_PATH.exists() or LEGACY_SAVE_FILE.exists():
+        return 'full'
+    if WORLD_PATH.exists():
+        return 'world_only'
+    return 'none'
+
+
+def clear_all_saves():
+    """清空所有存档"""
+    for p in [LEGACY_SAVE_FILE, PLAYER_PATH, WORLD_PATH]:
+        if p.exists():
+            p.unlink()
+    if SAVE_DIR.exists():
+        shutil.rmtree(SAVE_DIR)
