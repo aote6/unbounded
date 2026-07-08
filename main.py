@@ -518,28 +518,10 @@ class Game:
         self.message = f"放置了 {self.place_mode}（建造模式中，c 退出）"
 
     def _attack_monster(self, monster):
-        if random.random() > PLAYER_BASE_HIT_CHANCE:
-            self.message = f"攻击 {monster['name']}，但未命中！"; self.turn += 1; return
-        dmg = random.randint(PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX)
-        dmg += self._equipment_bonus("attack_bonus")
-        dmg += self._combat_damage_bonus()
-        armor = monster.get("properties", {}).get("natural_armor", 0)
-        dmg = max(1, dmg - armor)
-        monster["hp"] -= dmg
-        # 发送伤害事件（状态效果、吸血等由事件处理器处理）
-        from systems.event_bus import EventBus, EventType, GameEvent
-        bus = EventBus()
-        bus.emit(GameEvent(EventType.DAMAGE_DEALT, {"attacker": "player", "target": monster, "damage": dmg}), self)
-        self._gain_skill("combat")
-        self._gain_skill("combat")
-        if monster["hp"] <= 0:
-            self._kill_monster(monster, cause="attack")
-        else:
-            hp_ratio = monster["hp"] / monster["max_hp"]
-            if hp_ratio < 0.3:
-                self.message = f"攻击 {monster['name']}，造成 {dmg} 点伤害。它快不行了！"
-            else:
-                self.message = f"攻击 {monster['name']}，造成 {dmg} 点伤害。"
+        from systems.combat_system import CombatSystem
+        if not hasattr(self, '_combat_system'):
+            self._combat_system = CombatSystem(self)
+        self._combat_system.attack_monster(monster)
 
     def _kill_monster(self, monster, cause="attack"):
         # M27: 本局击杀计数
