@@ -3,8 +3,7 @@ import json, random
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-ARCHETYPES_FILE = BASE_DIR / "data" / "archetypes.json"
-MATERIALS_FILE = BASE_DIR / "data" / "materials.json"
+ITEMS_FILE = BASE_DIR / "data" / "items.json"
 AFFIXES_FILE = BASE_DIR / "data" / "affixes.json"
 
 RARITY_WEIGHTS = {"common": 10, "rare": 3, "legendary": 1}
@@ -24,8 +23,40 @@ def load_json(path):
 
 class ItemGenerator:
     def __init__(self):
-        self.archetypes = load_json(ARCHETYPES_FILE)
-        self.materials = load_json(MATERIALS_FILE)
+        # 从统一的 items.json 加载
+        all_items = load_json(ITEMS_FILE)
+        # 提取有 equippable 组件的作为原型
+        self.archetypes = {}
+        # 提取有 material 组件的作为材质
+        self.materials = {}
+        for item_id, data in all_items.items():
+            comps = data.get("components", {})
+            if "equippable" in comps:
+                self.archetypes[item_id] = {
+                    "name": data.get("name", item_id),
+                    "slot": comps["equippable"].get("slot"),
+                    "base_damage_min": comps["equippable"].get("base_damage_min"),
+                    "base_damage_max": comps["equippable"].get("base_damage_max"),
+                    "base_defense": comps["equippable"].get("base_defense"),
+                    "base_durability": comps["equippable"].get("base_durability"),
+                    "base_tool_power": comps["equippable"].get("base_tool_power"),
+                    "hit_bonus": comps["equippable"].get("hit_bonus", 0),
+                    "consumable": comps["equippable"].get("consumable", False),
+                    "desc": data.get("desc", ""),
+                }
+                # 去掉 None
+                self.archetypes[item_id] = {k: v for k, v in self.archetypes[item_id].items() if v is not None}
+            if "material" in comps:
+                self.materials[item_id] = {
+                    "name": data.get("name", item_id),
+                    "damage_mult": comps["material"].get("damage_mult", 1.0),
+                    "defense_mult": comps["material"].get("defense_mult", 1.0),
+                    "durability_mult": comps["material"].get("durability_mult", 1.0),
+                    "tool_mult": comps["material"].get("tool_mult", 1.0),
+                    "weight_per_unit": comps["material"].get("weight_per_unit", 1),
+                    "tags": data.get("tags", []),
+                    "desc": data.get("desc", ""),
+                }
         self.affixes = load_json(AFFIXES_FILE)
         self._affix_pool = self._build_affix_pool()
 

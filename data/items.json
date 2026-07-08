@@ -471,31 +471,96 @@
   },
   "剑": {
     "type": "equipment",
-    "desc": "近战武器原型"
+    "desc": "近战武器原型",
+    "components": {
+      "equippable": {
+        "slot": "main_hand",
+        "base_damage_min": 3,
+        "base_damage_max": 6,
+        "base_durability": 80,
+        "hit_bonus": 0,
+        "consumable": false
+      }
+    }
   },
   "斧": {
     "type": "equipment",
-    "desc": "重型武器原型"
+    "desc": "重型武器原型",
+    "components": {
+      "equippable": {
+        "slot": "main_hand",
+        "base_damage_min": 4,
+        "base_damage_max": 8,
+        "base_durability": 60,
+        "hit_bonus": -10,
+        "consumable": false
+      }
+    }
   },
   "镐": {
     "type": "equipment",
-    "desc": "工具原型"
+    "desc": "工具原型",
+    "components": {
+      "equippable": {
+        "slot": "main_hand",
+        "base_damage_min": 1,
+        "base_damage_max": 3,
+        "base_durability": 60,
+        "base_tool_power": 1,
+        "hit_bonus": -5,
+        "consumable": false
+      }
+    }
   },
   "盾": {
     "type": "equipment",
-    "desc": "副手防御原型"
+    "desc": "副手防御原型",
+    "components": {
+      "equippable": {
+        "slot": "off_hand",
+        "base_defense": 2,
+        "base_durability": 50,
+        "hit_bonus": 0,
+        "consumable": false
+      }
+    }
   },
   "甲": {
     "type": "equipment",
-    "desc": "身体护甲原型"
+    "desc": "身体护甲原型",
+    "components": {
+      "equippable": {
+        "slot": "body",
+        "base_defense": 3,
+        "base_durability": 70,
+        "hit_bonus": 0,
+        "consumable": false
+      }
+    }
   },
   "头盔": {
     "type": "equipment",
-    "desc": "头部护甲原型"
+    "desc": "头部护甲原型",
+    "components": {
+      "equippable": {
+        "slot": "accessory",
+        "base_defense": 1,
+        "base_durability": 40,
+        "hit_bonus": 0,
+        "consumable": false
+      }
+    }
   },
   "药水": {
     "type": "equipment",
-    "desc": "消耗品原型"
+    "desc": "消耗品原型",
+    "components": {
+      "equippable": {
+        "base_durability": 1,
+        "hit_bonus": 0,
+        "consumable": true
+      }
+    }
   },
   "木板": {
     "type": "material",
@@ -614,5 +679,114 @@
       "door",
       "flammable"
     ]
+  },
+  "铁": {
+    "type": "material",
+    "name": "铁",
+    "desc": "坚固的金属",
+    "tags": [
+      "metal",
+      "conductive"
+    ],
+    "components": {
+      "material": {
+        "damage_mult": 1.3,
+        "defense_mult": 1.3,
+        "durability_mult": 1.2,
+        "tool_mult": 1.2,
+        "weight_per_unit": 5
+      }
+    }
+  },
+  "钢": {
+    "type": "material",
+    "name": "钢",
+    "desc": "精炼的合金",
+    "tags": [
+      "metal",
+      "conductive",
+      "refined"
+    ],
+    "components": {
+      "material": {
+        "damage_mult": 1.6,
+        "defense_mult": 1.5,
+        "durability_mult": 1.5,
+        "tool_mult": 1.5,
+        "weight_per_unit": 6
+      }
+    }
+  },
+  "黑曜石": {
+    "type": "material",
+    "name": "黑曜石",
+    "desc": "锋利的火山玻璃",
+    "tags": [
+      "stone",
+      "sharp",
+      "brittle",
+      "fire_resist"
+    ],
+    "components": {
+      "material": {
+        "damage_mult": 1.8,
+        "defense_mult": 0.8,
+        "durability_mult": 0.5,
+        "tool_mult": 1.6,
+        "weight_per_unit": 4
+      }
+    }
+  },
+  "骨": {
+    "type": "material",
+    "name": "骨",
+    "desc": "轻便但脆弱",
+    "tags": [
+      "organic",
+      "light"
+    ],
+    "components": {
+      "material": {
+        "damage_mult": 0.9,
+        "defense_mult": 0.7,
+        "durability_mult": 0.6,
+        "tool_mult": 0.7,
+        "weight_per_unit": 2
+      }
+    }
+  },
+  "皮": {
+    "type": "material",
+    "name": "皮",
+    "desc": "柔性材料，不适合做武器",
+    "tags": [
+      "organic",
+      "flexible",
+      "light"
+    ],
+    "components": {
+      "material": {
+        "damage_mult": 0.5,
+        "defense_mult": 0.6,
+        "durability_mult": 0.4,
+        "tool_mult": 0.3,
+        "weight_per_unit": 1
+      }
+    }
+  },
+  "戒指": {
+    "type": "equipment",
+    "name": "戒指",
+    "desc": "提供命中加成",
+    "tags": [],
+    "components": {
+      "equippable": {
+        "slot": "accessory",
+        "base_defense": 0,
+        "base_durability": 30,
+        "hit_bonus": 5,
+        "consumable": false
+      }
+    }
   }
 }
