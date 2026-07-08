@@ -25,6 +25,7 @@ from config import (
     SPAWN_MIN_DISTANCE,
     DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START,
     WORLD_LAYERS, LAYER_DEPTH_OFFSET,
+    ORE_TO_MATERIAL,
 )
 import monsters as monsters_mod
 import items as items_mod
@@ -44,24 +45,7 @@ SKILL_LEVEL_THRESHOLD = 10
 
 
 # 矿石→材质映射表（合成时自动转换）
-ORE_TO_MATERIAL = {
-    "石头": "石头", "泥土": "皮",
-    "煤矿": "铁",        # 煤作为铁的助熔剂，归入铁系
-    "铜矿石": "石头",    # 劣质金属 → 石级
-    "铁矿石": "铁",
-    "银矿石": "铁",      # 银 ≈ 铁级，未来可改
-    "金矿石": "钢",      # 金 → 钢级（精炼金属）
-    "钻石原石": "黑曜石", # 钻石 → 顶级材质
-    "硫磺": "骨",        # 硫磺 → 骨级（轻脆）
-    "盐矿石": "石头",    # 盐 → 石级
-    "黏土": "皮",        # 黏土 → 皮级（柔性）
-    "沙子": "石头",      # 沙 → 石级
-    "石灰岩": "石头",
-    "大理石": "铁",      # 大理石 → 铁级（建筑用）
-    "花岗岩": "铁",      # 花岗岩 → 铁级（硬石）
-    "黑曜石": "黑曜石",
-    "史莱姆凝胶": "骨",
-}
+
 
 def load_recipes():
     if not RECIPES_FILE.exists():
