@@ -1,4 +1,8 @@
-"""游戏渲染器 - 负责绘制游戏画面和HUD"""
+"""游戏渲染器 - 负责绘制游戏画面和HUD
+
+M23: 双缓冲优化 — 地图绘制从逐格 addstr 改为行内合
+并连续同色字符，大幅减少 curses 调用次数。
+"""
 import curses
 from config import VIEW_HEIGHT, VIEW_WIDTH
 from tile_props import get_tile_props, get_tile_char
@@ -22,41 +26,78 @@ TILE_CHARS = {
 SLOT_NAMES = {"main_hand": "主手", "off_hand": "副手", "body": "身体", "accessory": "饰品"}
 
 
+def _compute_cell(game, wx, wy):
+    """计算单个格子的字符和属性，从原 draw() 提取。"""
+    if game._monster_has_position(wx, wy):
+        m = game._monster_at(wx, wy)
+        ch = m["char"]
+        if m["hp"] < m["max_hp"] * 0.5:
+            attr = curses.color_pair(7) | curses.A_BOLD
+        else:
+            attr = curses.color_pair(3) | curses.A_BOLD
+    elif wx == game.player_x and wy == game.player_y:
+        ch, attr = "@", curses.color_pair(3) | curses.A_BOLD
+    elif (game.place_mode or game.look_mode) and wx == game.cursor_x and wy == game.cursor_y:
+        ch, attr = "+", curses.color_pair(8) | curses.A_BOLD
+    else:
+        tile = game.world.get_tile(wx, wy)["tile"]
+        ch = TILE_CHARS.get(tile, get_tile_char(tile))
+        attr = game.tile_attr(tile)
+    return ch, attr
+
+
+def _draw_map_row(game, row, ox, oy, ambient):
+    """将一行地图单元格合并为连续同色段，一次性写入。
+    从 VIEW_WIDTH 次 addstr 降至每行 1-5 次。
+    """
+    segments = []  # [(attr, string)]
+    current_attr = None
+    current_chars = []
+
+    wy = oy + row
+    for col in range(VIEW_WIDTH):
+        wx = ox + col
+        ch, attr = _compute_cell(game, wx, wy)
+
+        # 夜晚全局压暗
+        if ambient <= 2:
+            attr = curses.color_pair(4)
+
+        if attr != current_attr:
+            if current_chars:
+                segments.append((current_attr, ''.join(current_chars)))
+            current_attr = attr
+            current_chars = [ch]
+        else:
+            current_chars.append(ch)
+
+    if current_chars:
+        segments.append((current_attr, ''.join(current_chars)))
+
+    # 写入该行
+    x = 0
+    for attr, text in segments:
+        try:
+            game.stdscr.addstr(row, x, text, attr)
+        except curses.error:
+            pass
+        x += len(text)
+
+
 def draw(game):
-    """绘制整个游戏画面：地图 + HUD"""
+    """绘制整个游戏画面：地图 + HUD。
+    
+    M23: 地图使用行内合并策略，消除逐格 addstr 的闪烁。
+    """
     if not game._check_terminal_size():
         return
     game.stdscr.erase()
     ox, oy = game.get_viewport_origin()
     time_name, ambient = game._get_time_of_day()
 
-    # 绘制地图
+    # 绘制地图（行合并优化）
     for row in range(VIEW_HEIGHT):
-        wy = oy + row
-        for col in range(VIEW_WIDTH):
-            wx = ox + col
-            if game._monster_has_position(wx, wy):
-                m = game._monster_at(wx, wy)
-                ch = m["char"]
-                if m["hp"] < m["max_hp"] * 0.5:
-                    attr = curses.color_pair(7) | curses.A_BOLD
-                else:
-                    attr = curses.color_pair(3) | curses.A_BOLD
-            elif wx == game.player_x and wy == game.player_y:
-                ch, attr = "@", curses.color_pair(3) | curses.A_BOLD
-            elif (game.place_mode or game.look_mode) and wx == game.cursor_x and wy == game.cursor_y:
-                ch, attr = "+", curses.color_pair(8) | curses.A_BOLD
-            else:
-                tile = game.world.get_tile(wx, wy)["tile"]
-                ch = TILE_CHARS.get(tile, get_tile_char(tile))
-                attr = game.tile_attr(tile)
-            # 夜晚全局压暗
-            if ambient <= 2:
-                attr = curses.color_pair(4)
-            try:
-                game.stdscr.addstr(row, col, ch, attr)
-            except curses.error:
-                pass
+        _draw_map_row(game, row, ox, oy, ambient)
 
     # 绘制 HUD
     mats = " ".join(f"{k}:{v}" for k, v in game.inventory.get_materials().items()) or "（空）"
@@ -72,7 +113,7 @@ def draw(game):
     sk_str = f"挖掘:{game.skill_levels['digging']} 战斗:{game.skill_levels['combat']} 防御:{game.skill_levels['defense']}"
     zone = game._get_geology_zone(game.player_y)
     goal_names = {"build_first_room": "建造第一个房间", "explore_cave": "深入地下探索",
-          "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
+                  "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
     goal_text = goal_names.get(game.goal, game.goal)
     s1 = f"[{time_name}] {zone} | {hp_str} | 技能 {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text}"
     if game.place_mode:
