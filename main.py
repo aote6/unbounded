@@ -106,8 +106,10 @@ class Game:
         from systems.status_system import register as register_status
         register_status()
         from systems.buff_system import create_buff_manager
+        from systems.buff_system import create_buff_manager
         self.buff_manager = create_buff_manager()
         # 订阅方块变更事件 → 房间检测
+        from systems.event_bus import EventBus, EventType
         EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: g._check_room_formation())
         # M27: 跨局遗产统计
         self._monsters_killed_this_life = 0
@@ -283,8 +285,10 @@ class Game:
         # M27: 应用跨局遗产增益
         from systems.legacy_system import apply_legacy_perks
         apply_legacy_perks(self)
+        from systems.buff_system import create_buff_manager
         self.buff_manager = create_buff_manager()
         # 订阅方块变更事件 → 房间检测
+        from systems.event_bus import EventBus, EventType
         EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: g._check_room_formation())
         self.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
         self.place_mode = None; self.last_place = None
