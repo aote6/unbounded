@@ -35,7 +35,8 @@
       "slime",
       "split_on_death",
       "flammable"
-    ]
+    ],
+    "faction": "hostile"
   },
   "巨型史莱姆": {
     "char": "M",
@@ -78,7 +79,8 @@
       "slime",
       "split_on_death",
       "flammable"
-    ]
+    ],
+    "faction": "hostile"
   },
   "洞穴蝙蝠": {
     "char": "B",
@@ -117,7 +119,8 @@
       "winged",
       "erratic",
       "flammable"
-    ]
+    ],
+    "faction": "hostile"
   },
   "岩石傀儡": {
     "char": "G",
@@ -157,7 +160,8 @@
       "golem",
       "heavy",
       "fire_resist"
-    ]
+    ],
+    "faction": "hostile"
   },
   "暗影史莱姆": {
     "char": "S",
@@ -194,7 +198,8 @@
       "shadow",
       "slime",
       "incorporeal"
-    ]
+    ],
+    "faction": "hostile"
   },
   "地穴蜘蛛": {
     "char": "S",
@@ -233,7 +238,8 @@
       "arachnid",
       "erratic",
       "flammable"
-    ]
+    ],
+    "faction": "hostile"
   },
   "熔岩傀儡": {
     "char": "G",
@@ -273,6 +279,110 @@
       "golem",
       "obsidian",
       "heat_source"
+    ],
+    "faction": "hostile"
+  },
+  "兔子": {
+    "char": "r",
+    "hp": 5,
+    "max_hp": 5,
+    "attack_power": [
+      1,
+      1
+    ],
+    "hit_chance": 0.1,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.8,
+    "spawn_weight": 0,
+    "scores": {
+      "flee": 10,
+      "wander": 3
+    },
+    "faction": "neutral",
+    "tags": [
+      "animal",
+      "prey",
+      "flammable"
+    ],
+    "drop": {
+      "生肉": 80
+    },
+    "corpse_tile": "兔子尸体",
+    "properties": {},
+    "special_behavior": "always_flee",
+    "depth_range": [
+      -5,
+      15
+    ]
+  },
+  "鹿": {
+    "char": "R",
+    "hp": 20,
+    "max_hp": 20,
+    "attack_power": [
+      2,
+      4
+    ],
+    "hit_chance": 0.2,
+    "vision": 10,
+    "flee_at_hp_ratio": 0.7,
+    "spawn_weight": 0,
+    "scores": {
+      "flee": 12,
+      "wander": 2
+    },
+    "faction": "neutral",
+    "tags": [
+      "animal",
+      "prey",
+      "large",
+      "flammable"
+    ],
+    "drop": {
+      "生肉": 80,
+      "皮革": 40
+    },
+    "corpse_tile": "鹿尸体",
+    "properties": {},
+    "special_behavior": "always_flee",
+    "depth_range": [
+      -5,
+      15
+    ]
+  },
+  "狐狸": {
+    "char": "f",
+    "hp": 8,
+    "max_hp": 8,
+    "attack_power": [
+      3,
+      5
+    ],
+    "hit_chance": 0.4,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.5,
+    "spawn_weight": 0,
+    "scores": {
+      "chase": 6,
+      "flee": 8,
+      "wander": 4
+    },
+    "faction": "neutral",
+    "tags": [
+      "animal",
+      "predator",
+      "flammable"
+    ],
+    "drop": {
+      "生肉": 80,
+      "狐狸皮": 40
+    },
+    "corpse_tile": "狐狸尸体",
+    "properties": {},
+    "special_behavior": "hunt_prey",
+    "depth_range": [
+      -5,
+      30
     ]
   }
 }

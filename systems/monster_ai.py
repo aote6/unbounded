@@ -5,6 +5,7 @@ M21: tick_status_effects 改为委托 BuffManager.tick_all()，
 """
 
 import monsters as monsters_mod
+import random
 
 
 def tick_monsters(game):
@@ -27,6 +28,9 @@ def tick_monsters(game):
                 game._gain_skill("defense")
             else:
                 msgs.append(f"{m['name']} 的攻击落空了。")
+    # M22: 怪物攻击附近的中立生物
+    _tick_monster_vs_neutral(game)
+
     if msgs:
         game.message = " ".join(msgs[-2:])
 
@@ -47,6 +51,33 @@ def try_spawn_monster(game):
             game.buff_manager.migrate_legacy(m)
         game._add_monster(m)
         game.message = f"一只 {m['name']} 出现了！"
+
+    # M22: 中立生物生成
+    _try_spawn_neutral(game)
+
+
+def _try_spawn_neutral(game):
+    """每回合有概率在玩家远处生成中立生物"""
+    import random as _random
+    if _random.random() > 0.25:  # 25% 概率
+        return
+    neutral_type = monsters_mod._pick_neutral_type(game.player_y)
+    if not neutral_type:
+        return
+    for _ in range(20):
+        sx = game.player_x + _random.randint(-15, 15)
+        sy = game.player_y + _random.randint(-10, 10)
+        if abs(sx - game.player_x) < 8 or abs(sy - game.player_y) < 8:
+            continue
+        if game.world.get_tile(sx, sy)["tile"] != 0:  # TILE_AIR
+            continue
+        if (sx, sy) in game._monster_index:
+            continue
+        nm = monsters_mod.make_monster(neutral_type, sx, sy, game.monster_data)
+        if hasattr(game, 'buff_manager'):
+            game.buff_manager.migrate_legacy(nm)
+        game._add_monster(nm)
+        break
 
 
 
@@ -79,3 +110,21 @@ def tick_status_effects(game):
         # 极端回退：如果 buff_manager 不存在（不应发生），
         # 不做任何处理，避免重复扣血逻辑。
         pass
+
+
+def _tick_monster_vs_neutral(game):
+    """每回合: 敌对怪物攻击相邻的中立生物"""
+    for m in game.monsters:
+        if m.get("faction") != "hostile":
+            continue
+        mx, my = m["x"], m["y"]
+        for dx, dy in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+            nx, ny = mx + dx, my + dy
+            target = game._monster_index.get((nx, ny))
+            if target and target.get("faction") == "neutral":
+                ap = m.get("attack_power", [1, 3])
+                dmg = random.randint(ap[0], ap[1])
+                target["hp"] -= dmg
+                if target["hp"] <= 0:
+                    game._kill_monster(target, cause="predator")
+                break

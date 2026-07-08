@@ -251,6 +251,8 @@ def make_monster(name, x, y, monster_data):
         "split_into": t.get("split_into"),
         "special_behavior": t.get("special_behavior"),
         "properties": t.get("properties", {}),
+        "tags": t.get("tags", []),
+        "faction": t.get("faction", "hostile"),
     }
 
 def get_split_spawns(monster, monster_data):
@@ -302,3 +304,57 @@ def generate_loot_for(depth, monster_name=None):
     if item:
         return item["name"], item
     return None, None
+
+
+# ═══════════════════════════════════════════════
+# M22: 中立生物 AI
+# ═══════════════════════════════════════════════
+
+def _ai_neutral(monster, world, px, py, turn, monster_index):
+    """中立生物 AI: 逃跑或随机移动, 不攻击玩家"""
+    mx, my = monster["x"], monster["y"]
+    dist = chebyshev(mx, my, px, py)
+    vis = monster.get("vision", 6)
+    
+    if dist <= 3:
+        return _move_away(monster, px, py, world, monster_index, px, py)
+    
+    if dist <= vis and monster["hp"] < monster["max_hp"] * monster.get("flee_at_hp_ratio", 0.5):
+        return _move_away(monster, px, py, world, monster_index, px, py)
+    
+    if turn % 3 == 0:
+        return _move_random(monster, world, monster_index, px, py)
+    
+    return ""
+
+
+def _behavior_always_flee(monster, world, px, py, monster_index):
+    """中立生物: 始终与玩家保持距离"""
+    mx, my = monster["x"], monster["y"]
+    dist = chebyshev(mx, my, px, py)
+    vis = monster.get("vision", 8)
+    if dist <= vis:
+        return _move_away(monster, px, py, world, monster_index, px, py)
+    return _move_random(monster, world, monster_index, px, py)
+
+
+def _ai_hunt_prey(monster, world, px, py, monster_index):
+    """狐狸 AI: 猎杀中立生物, 躲开玩家"""
+    mx, my = monster["x"], monster["y"]
+    dist_to_player = chebyshev(mx, my, px, py)
+    
+    if dist_to_player <= 4:
+        return _move_away(monster, px, py, world, monster_index, px, py)
+    
+    return _move_random(monster, world, monster_index, px, py)
+
+
+def _pick_neutral_type(depth=0):
+    """根据深度选择中立生物类型"""
+    import random
+    if -5 <= depth <= 15:
+        return random.choices(["兔子", "鹿", "狐狸"], weights=[5, 2, 1])[0]
+    elif depth <= 30:
+        return "狐狸" if random.random() < 0.3 else None
+    else:
+        return None
