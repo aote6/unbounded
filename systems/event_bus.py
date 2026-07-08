@@ -5,6 +5,7 @@ from enum import Enum, auto
 
 
 class EventType(Enum):
+    TURN_START = auto()       # 回合开始
     DAMAGE_DEALT = auto()      # 造成伤害（攻击者, 目标, 伤害值, 伤害类型）
     MONSTER_KILLED = auto()    # 怪物死亡（怪物, 死因）
     PLAYER_HEALED = auto()     # 玩家回血（回复量, 来源）

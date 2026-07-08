@@ -3,19 +3,29 @@
     "type": "material",
     "desc": "普通的泥土。",
     "weight": 1,
-    "properties": {}
+    "properties": {},
+    "tags": [
+      "earth"
+    ]
   },
   "石头": {
     "type": "material",
     "desc": "坚硬的石头。",
     "weight": 2,
-    "properties": {}
+    "properties": {},
+    "tags": [
+      "stone"
+    ]
   },
   "史莱姆凝胶": {
     "type": "material",
     "desc": "黏糊糊的凝胶。",
     "weight": 1,
-    "properties": {}
+    "properties": {},
+    "tags": [
+      "slime",
+      "organic"
+    ]
   },
   "石剑": {
     "type": "weapon",
@@ -27,7 +37,12 @@
       "material": "stone",
       "durability": 80,
       "durability_max": 80
-    }
+    },
+    "tags": [
+      "stone",
+      "brittle",
+      "weapon"
+    ]
   },
   "石镐": {
     "type": "tool",
@@ -39,7 +54,12 @@
       "material": "stone",
       "durability": 60,
       "durability_max": 60
-    }
+    },
+    "tags": [
+      "stone",
+      "brittle",
+      "tool"
+    ]
   },
   "木盾": {
     "type": "shield",
@@ -51,7 +71,12 @@
       "material": "wood",
       "durability": 40,
       "durability_max": 40
-    }
+    },
+    "tags": [
+      "wood",
+      "flammable",
+      "shield"
+    ]
   },
   "皮甲": {
     "type": "armor",
@@ -63,7 +88,12 @@
       "material": "leather",
       "durability": 50,
       "durability_max": 50
-    }
+    },
+    "tags": [
+      "leather",
+      "flexible",
+      "armor"
+    ]
   },
   "石墙": {
     "type": "placeable",
@@ -75,7 +105,12 @@
     "weight": 2,
     "properties": {
       "material": "stone"
-    }
+    },
+    "tags": [
+      "stone",
+      "brittle",
+      "wall"
+    ]
   },
   "木墙": {
     "type": "placeable",
@@ -87,7 +122,12 @@
     "weight": 1,
     "properties": {
       "material": "wood"
-    }
+    },
+    "tags": [
+      "wood",
+      "flammable",
+      "wall"
+    ]
   },
   "火把": {
     "type": "placeable",
@@ -97,7 +137,12 @@
     "properties": {
       "material": "wood",
       "light": 5
-    }
+    },
+    "tags": [
+      "wood",
+      "heat_source",
+      "light"
+    ]
   },
   "石灰岩墙": {
     "type": "placeable",
@@ -109,7 +154,12 @@
     "weight": 3,
     "properties": {
       "material": "stone"
-    }
+    },
+    "tags": [
+      "stone",
+      "brittle",
+      "wall"
+    ]
   },
   "大理石柱": {
     "type": "placeable",
@@ -121,7 +171,12 @@
     "weight": 4,
     "properties": {
       "material": "stone"
-    }
+    },
+    "tags": [
+      "stone",
+      "brittle",
+      "wall"
+    ]
   },
   "花岗岩砖": {
     "type": "placeable",
@@ -133,12 +188,22 @@
     "weight": 5,
     "properties": {
       "material": "stone"
-    }
+    },
+    "tags": [
+      "stone",
+      "brittle",
+      "wall"
+    ]
   },
   "玻璃窗": {
     "type": "placeable",
     "place_tile": "玻璃窗",
-    "desc": "透明玻璃窗"
+    "desc": "透明玻璃窗",
+    "tags": [
+      "glass",
+      "brittle",
+      "wall"
+    ]
   },
   "砖墙": {
     "type": "placeable",
@@ -150,7 +215,12 @@
     "weight": 3,
     "properties": {
       "material": "brick"
-    }
+    },
+    "tags": [
+      "brick",
+      "brittle",
+      "wall"
+    ]
   },
   "砂岩墙": {
     "type": "placeable",
@@ -162,7 +232,11 @@
     "weight": 2,
     "properties": {
       "material": "sand"
-    }
+    },
+    "tags": [
+      "sand",
+      "wall"
+    ]
   },
   "盐灯": {
     "type": "placeable",
@@ -175,7 +249,11 @@
     "properties": {
       "material": "salt",
       "light": 3
-    }
+    },
+    "tags": [
+      "salt",
+      "light"
+    ]
   },
   "硫磺灯": {
     "type": "placeable",
@@ -188,7 +266,11 @@
     "properties": {
       "material": "sulfur",
       "light": 3
-    }
+    },
+    "tags": [
+      "sulfur",
+      "light"
+    ]
   },
   "木箱": {
     "type": "placeable",
@@ -200,50 +282,96 @@
     "weight": 8,
     "properties": {
       "material": "wood"
-    }
+    },
+    "tags": [
+      "wood",
+      "flammable",
+      "container"
+    ]
   },
   "蜘蛛丝": {
     "type": "material",
-    "desc": "地穴蜘蛛的丝，可织成丝绸"
+    "desc": "地穴蜘蛛的丝，可织成丝绸",
+    "tags": [
+      "silk",
+      "flexible"
+    ]
   },
   "丝绸": {
     "type": "material",
-    "desc": "光滑的丝绸，做墙纸用"
+    "desc": "光滑的丝绸，做墙纸用",
+    "tags": [
+      "silk",
+      "flexible"
+    ]
   },
   "蝙蝠翅膀": {
     "type": "material",
-    "desc": "薄如蝉翼"
+    "desc": "薄如蝉翼",
+    "tags": [
+      "flesh",
+      "organic"
+    ]
   },
   "骨头": {
     "type": "material",
-    "desc": "可做骨墙"
+    "desc": "可做骨墙",
+    "tags": [
+      "bone",
+      "organic"
+    ]
   },
   "石砖": {
     "type": "material",
-    "desc": "石头烧制的砖块"
+    "desc": "石头烧制的砖块",
+    "tags": [
+      "stone"
+    ]
   },
   "玻璃": {
     "type": "material",
-    "desc": "沙子烧制的透明玻璃"
+    "desc": "沙子烧制的透明玻璃",
+    "tags": [
+      "glass"
+    ]
   },
   "骨墙": {
     "type": "placeable",
     "place_tile": "骨墙",
-    "desc": "阴森的骨墙"
+    "desc": "阴森的骨墙",
+    "tags": [
+      "bone",
+      "organic",
+      "wall"
+    ]
   },
   "丝绸墙纸": {
     "type": "placeable",
     "place_tile": "丝绸墙纸",
-    "desc": "华丽的丝绸墙纸"
+    "desc": "华丽的丝绸墙纸",
+    "tags": [
+      "silk",
+      "flexible",
+      "wall"
+    ]
   },
   "石砖墙": {
     "type": "placeable",
     "place_tile": "石砖墙",
-    "desc": "坚固的石砖墙"
+    "desc": "坚固的石砖墙",
+    "tags": [
+      "stone",
+      "brittle",
+      "wall"
+    ]
   },
   "地毯": {
     "type": "placeable",
     "place_tile": "地毯",
-    "desc": "柔软的地毯"
+    "desc": "柔软的地毯",
+    "tags": [
+      "fabric",
+      "flammable"
+    ]
   }
 }

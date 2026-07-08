@@ -29,6 +29,12 @@
     "depth_range": [
       -50,
       10
+    ],
+    "tags": [
+      "flesh",
+      "slime",
+      "split_on_death",
+      "flammable"
     ]
   },
   "巨型史莱姆": {
@@ -66,6 +72,12 @@
     "depth_range": [
       -40,
       10
+    ],
+    "tags": [
+      "flesh",
+      "slime",
+      "split_on_death",
+      "flammable"
     ]
   },
   "洞穴蝙蝠": {
@@ -99,6 +111,12 @@
     "depth_range": [
       -60,
       20
+    ],
+    "tags": [
+      "flesh",
+      "winged",
+      "erratic",
+      "flammable"
     ]
   },
   "岩石傀儡": {
@@ -133,6 +151,12 @@
     "depth_range": [
       -100,
       -10
+    ],
+    "tags": [
+      "stone",
+      "golem",
+      "heavy",
+      "fire_resist"
     ]
   },
   "暗影史莱姆": {
@@ -165,7 +189,12 @@
       "material": "shadow",
       "body_type": "slime",
       "natural_armor": 1
-    }
+    },
+    "tags": [
+      "shadow",
+      "slime",
+      "incorporeal"
+    ]
   },
   "地穴蜘蛛": {
     "char": "S",
@@ -198,7 +227,13 @@
       "material": "chitin",
       "body_type": "arachnid",
       "natural_armor": 2
-    }
+    },
+    "tags": [
+      "chitin",
+      "arachnid",
+      "erratic",
+      "flammable"
+    ]
   },
   "熔岩傀儡": {
     "char": "G",
@@ -232,6 +267,12 @@
       "material": "obsidian",
       "body_type": "golem",
       "natural_armor": 8
-    }
+    },
+    "tags": [
+      "fire",
+      "golem",
+      "obsidian",
+      "heat_source"
+    ]
   }
 }

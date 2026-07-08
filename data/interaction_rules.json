@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "name": "燃烧传播",
+      "source_tags": [
+        "heat_source"
+      ],
+      "target_tags": [
+        "flammable"
+      ],
+      "effect": "apply_burning",
+      "duration": 3,
+      "damage_per_turn": 2
+    }
+  ]
+}

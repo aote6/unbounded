@@ -15,6 +15,7 @@ from systems.save_system import build_save_data, apply_load_data
 from ui.equipment_ui import equipment_menu
 from ui.game_renderer import draw
 from ui.crafting_ui import crafting_menu
+from systems.tag_system import load_rules, check_interaction
 from config import (
     VIEW_WIDTH, VIEW_HEIGHT, WORLD_SEED,
     PLAYER_INITIAL_HP,
@@ -155,6 +156,7 @@ class Game:
         self.monsters = []
         self._monster_index = {}
         self.spawn_counter = {"count": SPAWN_INITIAL_COUNTDOWN}
+        load_rules()  # 加载交互规则矩阵
         self.corpses = {}
         self.modified_tiles = {}
         self.chests = {}  # {(x,y): {"materials": {}, "equipment_instances": [...]}}
@@ -170,8 +172,8 @@ class Game:
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
         # 事件总线
         from systems.event_bus import EventBus
-        from systems.combat_effects import register_combat_handlers
-        register_combat_handlers()
+        from systems.status_system import register as register_status
+        register_status()
 
     # ── 材料系统（堆叠物品） ──
     def _count_material(self, name):
@@ -572,8 +574,18 @@ class Game:
 
     def _tick_status_effects(self):
         for m in list(self.monsters):
+            # 旧版 on_fire
             if m.get("on_fire", 0) > 0:
                 m["hp"] -= 2; m["on_fire"] -= 1
+                if m["hp"] <= 0:
+                    self._kill_monster(m, cause="burn"); continue
+            # 新版 burning（标签系统触发）
+            burn = m.get("burning")
+            if burn and burn.get("duration", 0) > 0:
+                m["hp"] -= burn.get("damage_per_turn", 2)
+                burn["duration"] -= 1
+                if burn["duration"] <= 0:
+                    del m["burning"]
                 if m["hp"] <= 0:
                     self._kill_monster(m, cause="burn"); continue
             if m.get("poisoned", 0) > 0:
