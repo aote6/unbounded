@@ -305,5 +305,61 @@
       "fabric",
       "flammable"
     ]
+  },
+  "剑": {
+    "type": "equipment",
+    "desc": "近战武器原型"
+  },
+  "斧": {
+    "type": "equipment",
+    "desc": "重型武器原型"
+  },
+  "镐": {
+    "type": "equipment",
+    "desc": "工具原型"
+  },
+  "盾": {
+    "type": "equipment",
+    "desc": "副手防御原型"
+  },
+  "甲": {
+    "type": "equipment",
+    "desc": "身体护甲原型"
+  },
+  "头盔": {
+    "type": "equipment",
+    "desc": "头部护甲原型"
+  },
+  "药水": {
+    "type": "equipment",
+    "desc": "消耗品原型"
+  },
+  "木板": {
+    "type": "material",
+    "desc": "木材加工成的板材"
+  },
+  "木地板": {
+    "type": "placeable",
+    "desc": "木质地板"
+  },
+  "木门": {
+    "type": "placeable",
+    "desc": "可开关的木门"
+  },
+  "木桌": {
+    "type": "placeable",
+    "desc": "木质桌子"
+  },
+  "木椅": {
+    "type": "placeable",
+    "desc": "木质椅子"
+  },
+  "木墙(简易)": {
+    "type": "placeable",
+    "desc": "简易木墙"
+  },
+  "木门(简易)": {
+    "type": "placeable",
+    "desc": "简易木门"
   }
 }

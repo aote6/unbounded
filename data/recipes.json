@@ -467,19 +467,15 @@
     "category": "护甲"
   },
   "大理石柱": {
-    "desc": "装饰石柱",
+    "desc": "放置大理石柱",
     "ingredients": {
       "大理石": 2
     },
+    "category": "建筑",
     "result": {
-      "type": "equipment",
-      "affix_chance": 0.05,
-      "generator_args": {
-        "archetype": "盾",
-        "material": "大理石"
-      }
-    },
-    "category": "护甲"
+      "type": "placeable",
+      "name": "大理石柱"
+    }
   },
   "硫磺药剂": {
     "desc": "投掷用硫磺",
@@ -559,86 +555,6 @@
       "type": "placeable",
       "place_tile": "火把",
       "consume_item": "火把"
-    }
-  },
-  "石灰岩墙配方": {
-    "desc": "放置石灰岩墙",
-    "ingredients": {
-      "石灰岩": 2
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "大理石柱配方": {
-    "desc": "放置大理石柱",
-    "ingredients": {
-      "大理石": 2
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "花岗岩砖配方": {
-    "desc": "放置花岗岩砖",
-    "ingredients": {
-      "花岗岩": 2
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "玻璃窗配方": {
-    "desc": "放置透明玻璃窗",
-    "ingredients": {
-      "沙子": 3
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "砖墙配方": {
-    "desc": "放置砖墙",
-    "ingredients": {
-      "黏土": 3
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "砂岩墙配方": {
-    "desc": "放置砂岩墙",
-    "ingredients": {
-      "沙子": 2
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "盐灯配方": {
-    "desc": "放置盐灯（微光）",
-    "ingredients": {
-      "盐矿石": 2
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
-    }
-  },
-  "硫磺灯配方": {
-    "desc": "放置硫磺灯（微光）",
-    "ingredients": {
-      "硫磺": 2
-    },
-    "category": "建筑",
-    "result": {
-      "type": "placeable"
     }
   },
   "木箱": {
@@ -770,13 +686,14 @@
     }
   },
   "玻璃窗": {
-    "category": "建筑",
+    "desc": "放置透明玻璃窗",
     "ingredients": {
-      "玻璃": 2
+      "沙子": 3
     },
-    "desc": "透明的窗户",
+    "category": "建筑",
     "result": {
-      "type": "placeable"
+      "type": "placeable",
+      "name": "玻璃窗"
     }
   },
   "丝绸": {
@@ -820,6 +737,72 @@
     "desc": "柔软的地毯",
     "result": {
       "type": "placeable"
+    }
+  },
+  "石灰岩墙": {
+    "desc": "放置石灰岩墙",
+    "ingredients": {
+      "石灰岩": 2
+    },
+    "category": "建筑",
+    "result": {
+      "type": "placeable",
+      "name": "石灰岩墙"
+    }
+  },
+  "花岗岩砖": {
+    "desc": "放置花岗岩砖",
+    "ingredients": {
+      "花岗岩": 2
+    },
+    "category": "建筑",
+    "result": {
+      "type": "placeable",
+      "name": "花岗岩砖"
+    }
+  },
+  "砖墙": {
+    "desc": "放置砖墙",
+    "ingredients": {
+      "黏土": 3
+    },
+    "category": "建筑",
+    "result": {
+      "type": "placeable",
+      "name": "砖墙"
+    }
+  },
+  "砂岩墙": {
+    "desc": "放置砂岩墙",
+    "ingredients": {
+      "沙子": 2
+    },
+    "category": "建筑",
+    "result": {
+      "type": "placeable",
+      "name": "砂岩墙"
+    }
+  },
+  "盐灯": {
+    "desc": "放置盐灯（微光）",
+    "ingredients": {
+      "盐矿石": 2
+    },
+    "category": "建筑",
+    "result": {
+      "type": "placeable",
+      "name": "盐灯"
+    }
+  },
+  "硫磺灯": {
+    "desc": "放置硫磺灯（微光）",
+    "ingredients": {
+      "硫磺": 2
+    },
+    "category": "建筑",
+    "result": {
+      "type": "placeable",
+      "name": "硫磺灯"
     }
   }
 }
