@@ -11,7 +11,9 @@ from world_gen import (
 )
 from tile_props import get_tile_props, get_tile_char, get_dig_turns
 from systems.interaction import get_nearby_chest, open_chest_menu
+from systems.save_system import build_save_data, apply_load_data
 from ui.equipment_ui import equipment_menu
+from ui.game_renderer import draw
 from ui.crafting_ui import crafting_menu
 from config import (
     VIEW_WIDTH, VIEW_HEIGHT, WORLD_SEED,
@@ -26,41 +28,7 @@ import monsters as monsters_mod
 import items as items_mod
 from inventory import Inventory
 
-from dataclasses import dataclass, field
-from typing import List, Optional
-
-
-@dataclass
-class EquipmentInstance:
-    """装备实例。独立于模板数据，每个实例拥有自己的属性。"""
-    name: str
-    slot: Optional[str] = None
-    attack_bonus: int = 0
-    defense_bonus: int = 0
-    tool_bonus: int = 0
-    damage_min: int = 0
-    damage_max: int = 0
-    hit_bonus: int = 0
-    affixes: List[str] = field(default_factory=list)
-    on_attack: List[str] = field(default_factory=list)
-    lifesteal: int = 0
-    speed_bonus: int = 0
-
-    def to_dict(self) -> dict:
-        """序列化为普通 dict（用于 JSON 存档）。"""
-        return {
-            "name": self.name, "slot": self.slot,
-            "attack_bonus": self.attack_bonus, "defense_bonus": self.defense_bonus,
-            "tool_bonus": self.tool_bonus, "damage_min": self.damage_min,
-            "damage_max": self.damage_max, "hit_bonus": self.hit_bonus,
-            "affixes": self.affixes, "on_attack": self.on_attack,
-            "lifesteal": self.lifesteal, "speed_bonus": self.speed_bonus,
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> "EquipmentInstance":
-        """从 dict 反序列化。"""
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+from equipment import EquipmentInstance
 
 
 BASE_DIR = Path(__file__).parent
@@ -72,29 +40,6 @@ CORPSE_DECAY_TURNS = 50
 CHUNK_KEEP_RADIUS = 3
 SKILL_LEVEL_THRESHOLD = 10
 
-TILE_CHARS = {
-    TILE_AIR: " ", TILE_DIRT: ".", TILE_STONE: "#",
-    TILE_COAL: "\u263b", TILE_COPPER: "\u25cb", TILE_IRON: "\u2642",
-    TILE_SILVER: "\u263c", TILE_GOLD: "\u2600", TILE_DIAMOND: "\u2666",
-    TILE_SULFUR: "\u263f", TILE_SALT: "\u25a1", TILE_CLAY: "\u2248",
-    TILE_SAND: "\u2591", TILE_LIMESTONE: "\u2593", TILE_MARBLE: "\u2592",
-    TILE_GRANITE: "\u2588", TILE_OBSIDIAN: "\u25a0",
-    "石墙": "\u2588", "木墙": "\u2593", "火把": "\u2020",
-    "史莱姆尸体": "%", "巨型史莱姆尸体": "%", "蝙蝠尸体": ",",
-    "岩石傀儡残骸": "\u2588",
-    "楼梯下": ">",
-    "楼梯上": "<",
-    TILE_WATER: "~",
-    TILE_TREE: "T",
-}
-
-DIRECTIONS = {
-    curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
-    curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
-    ord('h'): (-1,0), ord('l'): (1,0), ord('k'): (0,-1), ord('j'): (0,1),
-}
-
-SLOT_NAMES = {"main_hand":"主手","off_hand":"副手","body":"身体","accessory":"饰品"}
 
 # 矿石→材质映射表（合成时自动转换）
 ORE_TO_MATERIAL = {
@@ -182,6 +127,12 @@ def place_menu(stdscr, game):
 # ═══════════════════════════════════
 # Game 类
 # ═══════════════════════════════════
+
+DIRECTIONS = {
+    curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
+    curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
+    ord("h"): (-1,0), ord("l"): (1,0), ord("k"): (0,-1), ord("j"): (0,1),
+}
 class Game:
     def __init__(self, stdscr):
         self.stdscr = stdscr
@@ -217,6 +168,10 @@ class Game:
         self.goals_completed = []
         self.goal_message_shown = False
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
+        # 事件总线
+        from systems.event_bus import EventBus
+        from systems.combat_effects import register_combat_handlers
+        register_combat_handlers()
 
     # ── 材料系统（堆叠物品） ──
     def _count_material(self, name):
@@ -372,27 +327,8 @@ class Game:
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
 
     def save_game(self):
-        # 先让 World 保存所有脏 chunk 到磁盘
-        self.world.save_all()
-        # 只保存玩家状态和怪物数据，地形修改全部由 chunk 管理
-        data = {
-            "seed": WORLD_SEED,
-            "player_x": self.player_x, "player_y": self.player_y,
-            "player_z": self.player_z,
-            "player_hp": self.player_hp, "player_max_hp": self.player_max_hp,
-            "turn": self.turn,
-            "inventory": self.inventory.to_dict(),
-            "equipment": self.equipment,
-            "skills": self.skills, "skill_levels": self.skill_levels,
-            "spawn_counter": self.spawn_counter,
-            "corpses": {f"{x},{y}": v for (x, y), v in self.corpses.items()},
-            "monsters": [{"name": m["name"], "x": m["x"], "y": m["y"],
-                          "hp": m["hp"], "max_hp": m["max_hp"]} for m in self.monsters],
-                        "chests": {f"{x},{y}": {
-                "materials": c["materials"],
-                "equipment_instances": [inst.to_dict() for inst in c["equipment_instances"]]
-            } for (x,y), c in self.chests.items()},
-        }
+        """保存游戏状态到磁盘。"""
+        data = build_save_data(self)
         try:
             SAVE_FILE.parent.mkdir(parents=True, exist_ok=True)
             with open(SAVE_FILE, "w", encoding="utf-8") as f:
@@ -400,222 +336,7 @@ class Game:
             self.message = "游戏已保存。"
         except Exception as e:
             self.message = f"存档失败: {e}"
-
-    def load_game(self):
-        if not SAVE_FILE.exists():
-            self.message = "没有找到存档文件。"; return False
-        try:
-            with open(SAVE_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception as e:
-            self.message = f"读档失败: {e}"; return False
-        self.world = generate_world(seed=data.get("seed", WORLD_SEED), decorate=False)
-        self.player_x = data["player_x"]; self.player_y = data["player_y"]
-        self.player_z = data.get("player_z", 0)
-        self.cursor_x, self.cursor_y = self.player_x, self.player_y
-        self.player_hp = data["player_hp"]; self.player_max_hp = data["player_max_hp"]
-        self.turn = data["turn"]
-        self.inventory = Inventory.from_dict(data.get("inventory", {}))
-        self.equipment = data.get("equipment", {})
-        self.skills = data.get("skills", {"digging": 0, "combat": 0, "defense": 0})
-        self.skill_levels = data.get("skill_levels", {"digging": 1, "combat": 1, "defense": 1})
-        self.spawn_counter = data.get("spawn_counter", {"count": SPAWN_INITIAL_COUNTDOWN})
-        self.modified_tiles = {}  # 保留兼容，但不再主动使用
-        self.corpses = {}
-        for key, val in data.get("corpses", {}).items():
-            x_str, y_str = key.split(",")
-            self.corpses[(int(x_str), int(y_str))] = val
-        self.monsters = []
-        self._monster_index = {}
-        for md in data.get("monsters", []):
-            template = self.monster_data.get(md["name"], {})
-            m = {
-                "name": md["name"], "char": template.get("char", "?"),
-                "x": md["x"], "y": md["y"], "hp": md["hp"], "max_hp": md["max_hp"],
-                "attack_power": tuple(template.get("attack_power", [1, 3])),
-                "hit_chance": template.get("hit_chance", 0.7),
-                "vision": template.get("vision", 6),
-                "flee_at_hp_ratio": template.get("flee_at_hp_ratio", 0.3),
-                "scores": template.get("scores", {}),
-                "drop": template.get("drop", {}),
-                "corpse_tile": template.get("corpse_tile"),
-                "split_into": template.get("split_into"),
-                "special_behavior": template.get("special_behavior"),
-                "properties": template.get("properties", {}),
-            }
-            self.monsters.append(m)
-        self.place_mode = None; self.last_place = None
-        self.place_item_name = None; self.last_place_item_name = None
-        self.dig_progress = None; self.look_mode = False
-        self.recipes = load_recipes(); self.items = items_mod.load_items()
-        self.monster_data = monsters_mod.load_monsters()
-        # 地形修改已在 World._load_chunk 时从磁盘恢复，无需遍历
-        self.chests = {}
-        for key, cdata in data.get("chests", {}).items():
-            x_str, y_str = key.split(",")
-            self.chests[(int(x_str), int(y_str))] = {
-                "materials": cdata.get("materials", {}),
-                "equipment_instances": [
-                    EquipmentInstance.from_dict(d) if isinstance(d, dict) else d
-                    for d in cdata.get("equipment_instances", [])
-                ]
-            }
-        self._build_monster_index()
-        inv_summary = ", ".join(f"{k}:{v}" for k,v in self.inventory.get_materials().items()) or "空"
-        self.message = f"读档成功。位置 ({self.player_x},{self.player_y})。背包: {inv_summary}"
-        return True
-
-    # ── 箱子系统 ──
-    def _get_nearby_chest(self):
-        """检查玩家四周是否有箱子，返回坐标或 None"""
-        for dx, dy in [(0,-1),(0,1),(-1,0),(1,0),(-1,-1),(1,-1),(-1,1),(1,1)]:
-            cx, cy = self.player_x + dx, self.player_y + dy
-            if (cx, cy) in self.chests:
-                return (cx, cy)
-        return None
-
-    def open_chest_menu(self):
-        """打开箱子界面"""
-        chest_pos = self._get_nearby_chest()
-        if chest_pos is None:
-            self.message = "附近没有箱子。站到箱子旁边按 o 打开。"
-            self.draw()
-            return
-
-        chest = self.chests[chest_pos]
-        self.message = "箱子：←→切换左右 | ↑↓选物品 | Enter存取 | >全部转移 | o关闭"
-        self.draw()
-
-        # 构建显示列表
-        viewing_chest = True  # True=看箱子, False=看背包
-        chest_mats = list(chest["materials"].items())
-        chest_equips = [(inst.name, inst) for inst in chest["equipment_instances"]]
-        backpack_mats = list(self.inventory.get_materials().items())
-        backpack_equips = [(inst.name, inst) for inst in self.inventory.get_equipment()]
-
-        selected = 0
-        while True:
-            # 计算当前视图
-            if viewing_chest:
-                items = []
-                for k, v in chest_mats:
-                    items.append(("material", k, v))
-                for name, inst in chest_equips:
-                    affix = " [" + "|".join(inst.affixes) + "]" if inst.affixes else ""
-                    items.append(("equip", f"{name}{affix}", inst))
-                title = "箱子内容"
-            else:
-                items = []
-                for k, v in backpack_mats:
-                    items.append(("material", k, v))
-                for name, inst in backpack_equips:
-                    affix = " [" + "|".join(inst.affixes) + "]" if inst.affixes else ""
-                    items.append(("equip", f"{name}{affix}", inst))
-                title = "你的背包"
-
-            h = max(len(items) + 5, 6)
-            w = 45
-            y, x = max(0, (curses.LINES - h) // 2), max(0, (curses.COLS - w) // 2)
-            win = curses.newwin(h, w, y, x)
-            win.keypad(True)
-
-            if selected >= max(1, len(items)):
-                selected = 0
-
-            win.erase()
-            win.box()
-            win.addstr(0, 2, f" {title} ")
-            win.addstr(1, 2, ",切换 | Enter取/存 | 全部存入=+ | o 关闭")
-
-            if not items:
-                win.addstr(3, 2, "（空）")
-            else:
-                for i, item in enumerate(items):
-                    if item[0] == "material":
-                        line = f"  {item[1]} x{item[2]}"
-                    else:
-                        line = f"  {item[1]}"
-                    attr = curses.A_REVERSE if i == selected else curses.A_NORMAL
-                    win.addstr(3 + i, 2, line[:w-4], attr)
-
-            win.refresh()
-
-            key = win.getch()
-            if key in (ord('o'), ord('q')):
-                break
-            elif key == ord(','):  # Tab
-                viewing_chest = not viewing_chest
-                selected = 0
-                # 刷新列表
-                chest_mats = list(chest["materials"].items())
-                chest_equips = [(inst.name, inst) for inst in chest["equipment_instances"]]
-                backpack_mats = list(self.inventory.get_materials().items())
-                backpack_equips = [(inst.name, inst) for inst in self.inventory.get_equipment()]
-            elif key == curses.KEY_UP:
-                selected = (selected - 1) % max(1, len(items))
-            elif key == curses.KEY_DOWN:
-                selected = (selected + 1) % max(1, len(items))
-            elif key == ord('+'):
-                # 全部存入箱子
-                if viewing_chest:
-                    # 全部存入：背包 → 箱子
-                    for item_id, item in list(self.inventory.all_items()):
-                        if item.item_type in ("material", "placeable"):
-                            chest["materials"][item_id] = chest["materials"].get(item_id, 0) + item.count
-                            self.inventory.remove(item_id, item.count)
-                        elif item.item_type == "equipment":
-                            chest["equipment_instances"].append(item.instance)
-                            self.inventory.remove(item_id)
-                    self.message = "所有物品已存入箱子。"
-                    backpack_mats = []
-                    backpack_equips = []
-                else:
-                    # 全部取出：箱子 → 背包
-                    for k, v in list(chest["materials"].items()):
-                        self._add_material(k, v)
-                        del chest["materials"][k]
-                    for inst in list(chest["equipment_instances"]):
-                        self._add_equipment_instance(inst.name, inst)
-                        chest["equipment_instances"].remove(inst)
-                    self.message = "箱内所有物品已取出。"
-                    chest_mats = []
-                    chest_equips = []
-                selected = 0
-            elif key in (curses.KEY_ENTER, 10, 13) and items:
-                item = items[selected]
-                if viewing_chest:
-                    # 从箱子取到背包
-                    if item[0] == "material":
-                        mat_name, count = item[1], item[2]
-                        self._add_material(mat_name, count)
-                        del chest["materials"][mat_name]
-                        chest_mats = list(chest["materials"].items())
-                    else:
-                        inst = item[2]
-                        self._add_equipment_instance(inst.name, inst)
-                        chest["equipment_instances"].remove(inst)
-                        chest_equips = [(i.name, i) for i in chest["equipment_instances"]]
-                    self.message = "已取出。"
-                else:
-                    # 从背包存到箱子
-                    if item[0] == "material":
-                        mat_name, count = item[1], item[2]
-                        chest["materials"][mat_name] = chest["materials"].get(mat_name, 0) + count
-                        self._remove_material(mat_name, count)
-                        backpack_mats = list(self.inventory.get_materials().items())
-                    else:
-                        inst = item[2]
-                        chest["equipment_instances"].append(inst)
-                        self.inventory.remove(inst.name)
-                        backpack_equips = [(i.name, i) for i in self.inventory.get_equipment()]
-                    self.message = "已存入。"
-                selected = 0
-
-            self.draw()
-
-        del win
-        self.stdscr.touchwin()
-        self.stdscr.refresh()
+            self.message = f"存档失败: {e}"
 
     def _setup_curses(self):
         curses.curs_set(0); curses.noecho(); curses.start_color(); curses.use_default_colors()
@@ -629,10 +350,36 @@ class Game:
         curses.init_pair(8,curses.COLOR_MAGENTA,-1)
         curses.init_pair(9,curses.COLOR_BLACK,curses.COLOR_YELLOW)
         self.stdscr.keypad(True)
-        self.stdscr.nodelay(False)  # getch 阻塞等待，但不缓冲重复按键
+        self.stdscr.nodelay(False)
 
     def _check_terminal_size(self):
         term_h, term_w = self.stdscr.getmaxyx()
+        if term_h < MIN_TERM_H or term_w < MIN_TERM_W:
+            self.stdscr.erase()
+            msg1 = "终端窗口太小！"
+            msg2 = f"当前: {term_w}x{term_h} 需要至少: {MIN_TERM_W}x{MIN_TERM_H}"
+            msg3 = "请缩小字号、横屏或调整窗口大小后按任意键..."
+            h, w = term_h, term_w
+            self.stdscr.addstr(max(0,h//2-1), max(0,w//2-len(msg1)//2), msg1, curses.A_BOLD)
+            self.stdscr.addstr(max(0,h//2), max(0,w//2-len(msg2)//2), msg2)
+            self.stdscr.addstr(max(0,h//2+1), max(0,w//2-len(msg3)//2), msg3)
+            self.stdscr.refresh(); self.stdscr.getch()
+            return False
+        return True
+    def load_game(self):
+        """从磁盘读取存档并恢复游戏状态。"""
+        if not SAVE_FILE.exists():
+            self.message = "没有找到存档文件。"
+            return False
+        try:
+            with open(SAVE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception as e:
+            self.message = f"读档失败: {e}"
+            return False
+        self.world = generate_world(seed=data.get("seed", WORLD_SEED), decorate=False)
+        apply_load_data(self, data)
+        return True
         if term_h < MIN_TERM_H or term_w < MIN_TERM_W:
             self.stdscr.erase()
             msg1 = "终端窗口太小！"
@@ -776,18 +523,11 @@ class Game:
         armor = monster.get("properties", {}).get("natural_armor", 0)
         dmg = max(1, dmg - armor)
         monster["hp"] -= dmg
-        effects = self._collect_attack_effects()
-        for effect in effects:
-            if effect == "fire":
-                monster["on_fire"] = 3
-            elif effect == "poison":
-                monster["poisoned"] = 5
-        lifesteal_total = 0
-        for item_name in self.equipment.values():
-            lifesteal_total += self._get_item_attr(item_name, "lifesteal")
-        if lifesteal_total > 0:
-            heal = min(lifesteal_total, dmg)
-            self.player_hp = min(self.player_max_hp, self.player_hp + heal)
+        # 发送伤害事件（状态效果、吸血等由事件处理器处理）
+        from systems.event_bus import EventBus, EventType, GameEvent
+        bus = EventBus()
+        bus.emit(GameEvent(EventType.DAMAGE_DEALT, {"attacker": "player", "target": monster, "damage": dmg}), self)
+        self._gain_skill("combat")
         self._gain_skill("combat")
         if monster["hp"] <= 0:
             self._kill_monster(monster, cause="attack")
@@ -801,6 +541,8 @@ class Game:
     def _kill_monster(self, monster, cause="attack"):
         mx, my = monster["x"], monster["y"]
         mname = monster["name"]
+        from systems.event_bus import EventBus, EventType, GameEvent
+        EventBus().emit(GameEvent(EventType.MONSTER_KILLED, {"monster": monster, "cause": cause}), self)
         corpse_tile = monster.get("corpse_tile")
         splits = monsters_mod.get_split_spawns(monster, self.monster_data)
         drop_name, drop_obj = monsters_mod.generate_loot_for(self.player_y, mname)
@@ -1096,75 +838,6 @@ class Game:
         else:
             return "夜晚", 1
 
-    def draw(self):
-        if not self._check_terminal_size():
-            return
-        self.stdscr.erase()
-        ox, oy = self.get_viewport_origin()
-        time_name, ambient = self._get_time_of_day()
-
-        for row in range(VIEW_HEIGHT):
-            wy = oy + row
-            for col in range(VIEW_WIDTH):
-                wx = ox + col
-                if self._monster_has_position(wx, wy):
-                    m = self._monster_at(wx, wy); ch = m["char"]
-                    if m["hp"] < m["max_hp"] * 0.5:
-                        attr = curses.color_pair(7) | curses.A_BOLD
-                    else:
-                        attr = curses.color_pair(3) | curses.A_BOLD
-                elif wx == self.player_x and wy == self.player_y:
-                    ch, attr = "@", curses.color_pair(3) | curses.A_BOLD
-                elif (self.place_mode or self.look_mode) and wx == self.cursor_x and wy == self.cursor_y:
-                    ch, attr = "+", curses.color_pair(8) | curses.A_BOLD
-                else:
-                    tile = self.world.get_tile(wx, wy)["tile"]
-                    ch = TILE_CHARS.get(tile, get_tile_char(tile))
-                    attr = self.tile_attr(tile)  # 树的颜色已在 tile_attr 内处理，不再重复判断
-                # 夜晚全局压暗
-                if ambient <= 2:
-                    attr = curses.color_pair(4)
-                try:
-                    self.stdscr.addstr(row, col, ch, attr)
-                except curses.error:
-                    pass
-
-        mats = " ".join(f"{k}:{v}" for k, v in self.inventory.get_materials().items()) or "（空）"
-        eq_parts = []
-        for slot_id in ("main_hand", "off_hand", "body", "accessory"):
-            eq = self.equipment.get(slot_id, "空")
-            eq_parts.append(f"{SLOT_NAMES[slot_id]}:{eq}")
-        eq_str = " | ".join(eq_parts)
-        def_bonus = self._player_defense()
-        hp_str = f"HP: {self.player_hp}/{self.player_max_hp}"
-        if def_bonus > 0:
-            hp_str += f" 防:{def_bonus}"
-        sk_str = f"挖掘:{self.skill_levels['digging']} 战斗:{self.skill_levels['combat']} 防御:{self.skill_levels['defense']}"
-        zone = self._get_geology_zone(self.player_y)
-        goal_names = {"build_first_room": "建造第一个房间", "explore_cave": "深入地下探索", 
-              "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
-        goal_text = goal_names.get(self.goal, self.goal)
-        s1 = f"[{time_name}] {zone} | {hp_str} | 技能 {sk_str} | ({self.player_x},{self.player_y}) | 目标:{goal_text}"
-        if self.place_mode:
-            s1 += f" | [建造: {self.place_mode}]"
-        if self.dig_progress:
-            s1 += f" | [挖掘中 {self.dig_progress['remaining']}/{self.dig_progress['total']}]"
-        s1 += f" | 怪物:{len(self.monsters)} 尸体:{len(self.corpses)}"
-        s2 = f"装备: {eq_str}"
-        equips = [inst.name for inst in self.inventory.get_equipment() if inst]
-        equip_str = " | ".join(equips) if equips else "无"
-        s3 = f"材料: {mats} | 装备: {equip_str}"
-        try:
-            self.stdscr.addstr(VIEW_HEIGHT+1, 0, s1, curses.A_BOLD)
-            self.stdscr.addstr(VIEW_HEIGHT+2, 0, s2)
-            self.stdscr.addstr(VIEW_HEIGHT+3, 0, s3)
-            self.stdscr.addstr(VIEW_HEIGHT+4, 0, self.message)
-            self.stdscr.addstr(VIEW_HEIGHT+6, 0,
-                "移动 | c 合成 | e 装备 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | < > 换层 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出")
-        except curses.error:
-            pass
-        self.stdscr.refresh()
-
     def advance_turn(self):
         self._tick_corpses()
         self._tick_monsters()
@@ -1228,8 +901,118 @@ class Game:
                     self.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
                 break
 
+    def _handle_open_chest(self):
+        self.open_chest_menu()
+
+    def _handle_craft(self):
+        if self.place_mode:
+            if self.place_item_name:
+                self.message = f"退出了建造模式，{self.place_item_name} 仍在背包里。"
+                self.place_mode = None
+                self.place_item_name = None
+            else:
+                ingredients = self.recipes.get(self.place_mode, {}).get("ingredients", {})
+                if not ingredients:
+                    for rname, rdata in self.recipes.items():
+                        if rname == self.place_mode or rdata.get("result", {}).get("archetype") == self.place_mode:
+                            ingredients = rdata.get("ingredients", {})
+                            break
+                if ingredients:
+                    for mat, count in ingredients.items():
+                        self._add_material(mat, count)
+                    self.message = f"取消建造 {self.place_mode}，材料已退还。"
+                else:
+                    self.message = "退出了建造模式。"
+                self.place_mode = None
+        else:
+            crafting_menu(self.stdscr, self)
+
+    def _handle_equip(self):
+        equipment_menu(self.stdscr, self)
+
+    def _handle_place_menu(self):
+        place_menu(self.stdscr, self)
+
+    def _handle_confirm_place(self):
+        if self.place_mode:
+            self._do_place()
+            return True
+        return False
+
+    def _handle_repeat_build(self):
+        if self.last_place:
+            self.place_mode = self.last_place
+            self.place_item_name = self.last_place_item_name
+            self.cursor_x, self.cursor_y = self.player_x, self.player_y
+            self.message = f"建造模式：放置 {self.last_place}，方向键移动光标，回车放置，c 取消。"
+        else:
+            self.message = "还没有建造过任何东西。合成一个石墙，或按 b 放置背包里的木箱。"
+
+    def _handle_reload(self):
+        self.recipes = load_recipes()
+        self.items = items_mod.load_items()
+        self.monster_data = monsters_mod.load_monsters()
+        self.message = "数据已重载"
+
+    def _handle_save(self):
+        self.save_game()
+
+    def _handle_load(self):
+        self.load_game()
+
+    def _handle_look_mode(self):
+        self.look_mode = True
+        self.cursor_x, self.cursor_y = self.player_x, self.player_y
+        self.message = "查看模式：方向键移动光标(+)，显示光标处信息，其他键退出。"
+        draw(self)
+        while True:
+            cx, cy = self.cursor_x, self.cursor_y
+            tile = self.world.get_tile(cx, cy)
+            tile_id = tile["tile"]
+            props = get_tile_props(tile_id)
+            name = props.get("name", "未知")
+            hardness = props.get("hardness", 0)
+            drop = props.get("drop", "无")
+            diggable = props.get("diggable", False)
+            extra = tile.get("extra", {})
+            info = f"({cx},{cy}) {name}"
+            if diggable:
+                info += f" | 可挖 | 硬度:{hardness}"
+                if drop: info += f" | 掉落:{drop}"
+            else:
+                info += " | 不可挖"
+            if extra: info += f" | {extra}"
+            mon = self._monster_at(cx, cy)
+            if mon:
+                info += f" | {mon["name"]} HP:{mon["hp"]}/{mon["max_hp"]}"
+            self.message = info
+            draw(self)
+            key2 = self.stdscr.getch()
+            if key2 in DIRECTIONS:
+                dx, dy = DIRECTIONS[key2]
+                ox2, oy2 = self.get_viewport_origin()
+                nx, ny = self.cursor_x + dx, self.cursor_y + dy
+                if ox2 <= nx < ox2 + VIEW_WIDTH and oy2 <= ny < oy2 + VIEW_HEIGHT:
+                    self.cursor_x, self.cursor_y = nx, ny
+            else:
+                self.look_mode = False
+                self.message = "退出查看模式。"
+                break
+
+    def _handle_dig_mode(self):
+        self.message = "挖掘模式：按方向键选择要拆除的方块（包括尸体），其他键取消。"
+        draw(self)
+        key2 = self.stdscr.getch()
+        if key2 in DIRECTIONS:
+            dx, dy = DIRECTIONS[key2]
+            self.dig_adjacent(dx, dy)
+            return True
+        else:
+            self.message = "取消挖掘。"
+            return False
     def run(self):
-        self.draw()
+        """主循环：获取按键 → 分发处理 → 推进回合。"""
+        draw(self)
         while True:
             if self.check_death():
                 self.show_death_screen()
@@ -1244,119 +1027,39 @@ class Game:
                 self.new_game()
                 continue
             key = self.stdscr.getch()
-            curses.flushinp()  # 清空输入缓冲，防止松手后残留按键
+            curses.flushinp()
             acted = False
-            if key in (ord('q'), ord('Q')): break
-            elif key in (ord('o'), ord('O')):
-                self.open_chest_menu()
-                self.draw()
-                continue
-            elif key in (ord('c'), ord('C')):
-                if self.place_mode:
-                    if self.place_item_name:
-                        # 这次放置来自背包已有物品，材料本来就没被扣，取消不用退还
-                        self.message = f"退出了建造模式，{self.place_item_name} 仍在背包里。"
-                        self.place_mode = None
-                        self.place_item_name = None
-                    else:
-                        # 合成后立即建造：取消时退还配方材料
-                        ingredients = self.recipes.get(self.place_mode, {}).get("ingredients", {})
-                        if not ingredients:
-                            # 尝试用配方名匹配
-                            for rname, rdata in self.recipes.items():
-                                if rname == self.place_mode or rdata.get("result", {}).get("archetype") == self.place_mode:
-                                    ingredients = rdata.get("ingredients", {})
-                                    break
-                        if ingredients:
-                            for mat, count in ingredients.items():
-                                self._add_material(mat, count)
-                            self.message = f"取消建造 {self.place_mode}，材料已退还。"
-                        else:
-                            self.message = "退出了建造模式。"
-                        self.place_mode = None
-                else:
-                    crafting_menu(self.stdscr, self); self.draw(); continue
-            elif key == ord('e'):
-                equipment_menu(self.stdscr, self); self.draw(); continue
-            elif key == ord('b'):
-                place_menu(self.stdscr, self); self.draw(); continue
+            if key in (ord("q"), ord("Q")):
+                break
+            elif key in (ord("o"), ord("O")):
+                self._handle_open_chest()
+            elif key in (ord("c"), ord("C")):
+                self._handle_craft()
+            elif key == ord("e"):
+                self._handle_equip()
+            elif key == ord("b"):
+                self._handle_place_menu()
             elif key in (curses.KEY_ENTER, 10, 13):
-                if self.place_mode: self._do_place(); acted = True
-                self.draw(); continue
-            elif key == ord('.'):
-                if self.last_place:
-                    self.place_mode = self.last_place
-                    self.place_item_name = self.last_place_item_name
-                    self.cursor_x, self.cursor_y = self.player_x, self.player_y
-                    self.message = f"建造模式：放置 {self.last_place}，方向键移动光标，回车放置，c 取消。"
-                else:
-                    self.message = "还没有建造过任何东西。合成一个石墙，或按 b 放置背包里的木箱。"
-                self.draw(); continue
-            elif key in (ord('r'), ord('R')):
-                self.recipes = load_recipes()
-                self.items = items_mod.load_items()
-                self.monster_data = monsters_mod.load_monsters()
-                self.message = "数据已重载"
-                self.draw(); continue
-            elif key in (ord('s'), ord('S')):
-                self.save_game(); self.draw(); continue
-            elif key in (ord('l'), ord('L')):
-                if self.load_game(): pass
-                self.draw(); continue
-            elif key == ord('x'):
-                self.look_mode = True
-                self.cursor_x, self.cursor_y = self.player_x, self.player_y
-                self.message = "查看模式：方向键移动光标(+)，显示光标处信息，其他键退出。"
-                self.draw()
-                while True:
-                    cx, cy = self.cursor_x, self.cursor_y
-                    tile = self.world.get_tile(cx, cy)
-                    tile_id = tile["tile"]
-                    props = get_tile_props(tile_id)
-                    name = props.get("name", "未知")
-                    hardness = props.get("hardness", 0)
-                    drop = props.get("drop", "无")
-                    diggable = props.get("diggable", False)
-                    extra = tile.get("extra", {})
-                    info = f"({cx},{cy}) {name}"
-                    if diggable:
-                        info += f" | 可挖 | 硬度:{hardness}"
-                        if drop: info += f" | 掉落:{drop}"
-                    else:
-                        info += " | 不可挖"
-                    if extra: info += f" | {extra}"
-                    mon = self._monster_at(cx, cy)
-                    if mon:
-                        info += f" | {mon['name']} HP:{mon['hp']}/{mon['max_hp']}"
-                    self.message = info
-                    self.draw()
-                    key2 = self.stdscr.getch()
-                    if key2 in DIRECTIONS:
-                        dx, dy = DIRECTIONS[key2]
-                        ox2, oy2 = self.get_viewport_origin()
-                        nx, ny = self.cursor_x + dx, self.cursor_y + dy
-                        if ox2 <= nx < ox2 + VIEW_WIDTH and oy2 <= ny < oy2 + VIEW_HEIGHT:
-                            self.cursor_x, self.cursor_y = nx, ny
-                    else:
-                        self.look_mode = False
-                        self.message = "退出查看模式。"
-                        break
-                self.draw(); continue
-            elif key == ord('d'):
-                self.message = "挖掘模式：按方向键选择要拆除的方块（包括尸体），其他键取消。"
-                self.draw()
-                key2 = self.stdscr.getch()
-                if key2 in DIRECTIONS:
-                    dx, dy = DIRECTIONS[key2]; self.dig_adjacent(dx, dy); acted = True
-                else:
-                    self.message = "取消挖掘。"
-                self.draw(); continue
+                acted = self._handle_confirm_place()
+            elif key == ord("."):
+                self._handle_repeat_build()
+            elif key in (ord("r"), ord("R")):
+                self._handle_reload()
+            elif key in (ord("s"), ord("S")):
+                self._handle_save()
+            elif key in (ord("l"), ord("L")):
+                self._handle_load()
+            elif key == ord("x"):
+                self._handle_look_mode()
+            elif key == ord("d"):
+                acted = self._handle_dig_mode()
             elif key in DIRECTIONS:
-                dx, dy = DIRECTIONS[key]; self.try_move_or_dig(dx, dy); acted = True
+                dx, dy = DIRECTIONS[key]
+                self.try_move_or_dig(dx, dy)
+                acted = True
             if acted:
                 self.advance_turn()
-                self.draw()
-
+                draw(self)
 def main(stdscr):
     game = Game(stdscr)
     # 检查是否有存档
