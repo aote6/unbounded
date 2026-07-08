@@ -92,7 +92,7 @@ class Game:
         self.player_hp = PLAYER_INITIAL_HP
         self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
-        self.equipment = {}                # 装备槽: {"main_hand": "石剑"}
+        self.equipment = {}  # slot_name -> EquipmentInstance or None                # 装备槽: {"main_hand": "石剑"}
         self.message = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
         self.place_item_name = None; self.last_place_item_name = None
@@ -175,28 +175,36 @@ class Game:
                if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name)
 
     def _get_item_attr(self, item_name, field_name):
-        """获取装备实例的属性，兼容旧 items dict。"""
+        """获取装备实例的属性。优先从装备槽查找（O(1)）。"""
+        # 先从装备槽查找
+        for inst in self.equipment.values():
+            if inst and inst.name == item_name:
+                return getattr(inst, field_name, 0)
+        # 回退：遍历背包（兼容非装备槽中的物品）
         inst = self._get_equipment_instance(item_name)
         if inst:
             return getattr(inst, field_name, 0)
-        return self.items.get(item_name, {}).get(field_name, 0)
+        return 0
 
     def _get_nearby_chest(self):
         return get_nearby_chest(self)
 
 
     def _equipment_bonus(self, field_name):
+        """从装备槽实例直接读取属性（O(1)，不再遍历背包）。"""
         total = 0
-        for item_name in self.equipment.values():
+        for inst in self.equipment.values():
+            if inst is None:
+                continue
             if field_name == "attack_bonus":
-                dmg_min = self._get_item_attr(item_name, "damage_min")
-                dmg_max = self._get_item_attr(item_name, "damage_max")
+                dmg_min = getattr(inst, "damage_min", 0)
+                dmg_max = getattr(inst, "damage_max", 0)
                 if dmg_max > 0:
                     total += (dmg_min + dmg_max) // 2
                 else:
-                    total += self._get_item_attr(item_name, "attack_bonus")
+                    total += getattr(inst, "attack_bonus", 0)
             else:
-                total += self._get_item_attr(item_name, field_name)
+                total += getattr(inst, field_name, 0)
         return total
 
     def _best_equipped_tool_bonus(self):
@@ -285,7 +293,7 @@ class Game:
         self.player_hp = PLAYER_INITIAL_HP; self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
         self.inventory = Inventory()
-        self.equipment = {}
+        self.equipment = {}  # slot_name -> EquipmentInstance or None
         # M27: 应用跨局遗产增益
         from systems.legacy_system import apply_legacy_perks
         apply_legacy_perks(self)
@@ -645,9 +653,8 @@ class Game:
         # 简化实现：把掉落物信息存在消息里，物品暂不丢失（后续可改进为墓碑容器）
         lost_items = self.inventory.to_dict()
         self.inventory = Inventory()
-        # 卸下装备
-        for slot in list(self.equipment.keys()):
-            self.equipment.pop(slot, None)
+        # 清空装备槽
+        self.equipment = {}  # slot_name -> EquipmentInstance or None
         self.message = f"你的物品散落在 ({x},{y}) 附近。"
     
     def _place_grave(self, x, y):

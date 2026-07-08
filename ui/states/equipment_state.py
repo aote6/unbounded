@@ -105,12 +105,15 @@ class EquipmentState(State):
             old = game.equipment.get(self._slot_id)
             if chosen == "__unequip__":
                 if old:
-                    game.equipment.pop(self._slot_id, None)
-                game.message = f"卸下了 {old}。"
+                    game.equipment[self._slot_id] = None
+                old_name = old.name if hasattr(old, 'name') else str(old)
+                game.message = f"卸下了 {old_name}。"
             else:
+                # 从背包获取装备实例对象
+                inst = game._get_equipment_instance(chosen)
                 if old:
-                    game.equipment.pop(self._slot_id, None)
-                game.equipment[self._slot_id] = chosen
+                    game.equipment[self._slot_id] = None
+                game.equipment[self._slot_id] = inst if inst else chosen
                 game.message = f"装备了 {chosen} 到{self._slot_name}。"
             self._choosing = False
             del self.sub_win
@@ -131,10 +134,13 @@ class EquipmentState(State):
 
         h, w = self.win.getmaxyx()
         for i, (slot_id, slot_name) in enumerate(SLOTS):
-            equipped = self.game.equipment.get(slot_id, "（空）")
-            line = f" {slot_name}: {equipped}"
-            if equipped != "（空）":
-                inst = self.game._get_equipment_instance(equipped)
+            inst = self.game.equipment.get(slot_id)
+            if inst and hasattr(inst, 'name'):
+                line = f" {slot_name}: {inst.name}"
+            else:
+                line = f" {slot_name}: （空）"
+                inst = None
+            if inst:
                 if inst and inst.affixes:
                     line += " [" + "|".join(inst.affixes) + "]"
             attr = curses.A_REVERSE if i == self.sel_slot else curses.A_NORMAL
