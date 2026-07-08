@@ -6,10 +6,12 @@
       "泥土": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "石头",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "石头"
+      }
     },
     "category": "工具"
   },
@@ -19,10 +21,12 @@
       "石头": 4
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "石头",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "石头"
+      }
     },
     "category": "武器"
   },
@@ -32,10 +36,12 @@
       "石头": 5
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "斧",
-      "material": "石头",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "斧",
+        "material": "石头"
+      }
     },
     "category": "武器"
   },
@@ -45,10 +51,12 @@
       "石头": 8
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "甲",
-      "material": "石头",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "甲",
+        "material": "石头"
+      }
     },
     "category": "护甲"
   },
@@ -58,10 +66,12 @@
       "石头": 4
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "头盔",
-      "material": "石头",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "头盔",
+        "material": "石头"
+      }
     },
     "category": "护甲"
   },
@@ -71,10 +81,12 @@
       "泥土": 6
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "盾",
-      "material": "泥土",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "盾",
+        "material": "泥土"
+      }
     },
     "category": "护甲"
   },
@@ -84,10 +96,12 @@
       "泥土": 8
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "甲",
-      "material": "泥土",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "甲",
+        "material": "泥土"
+      }
     },
     "category": "护甲"
   },
@@ -98,10 +112,12 @@
       "泥土": 2
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "头盔",
-      "material": "史莱姆凝胶",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "头盔",
+        "material": "史莱姆凝胶"
+      }
     },
     "category": "护甲"
   },
@@ -111,10 +127,12 @@
       "铜矿石": 3
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "铜矿石",
-      "affix_chance": 0.06
+      "type": "equipment",
+      "affix_chance": 0.06,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "铜矿石"
+      }
     },
     "category": "工具"
   },
@@ -124,10 +142,12 @@
       "铜矿石": 4
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "铜矿石",
-      "affix_chance": 0.06
+      "type": "equipment",
+      "affix_chance": 0.06,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "铜矿石"
+      }
     },
     "category": "武器"
   },
@@ -137,10 +157,12 @@
       "铜矿石": 5
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "斧",
-      "material": "铜矿石",
-      "affix_chance": 0.06
+      "type": "equipment",
+      "affix_chance": 0.06,
+      "generator_args": {
+        "archetype": "斧",
+        "material": "铜矿石"
+      }
     },
     "category": "武器"
   },
@@ -151,10 +173,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "铁矿石",
-      "affix_chance": 0.08
+      "type": "equipment",
+      "affix_chance": 0.08,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "铁矿石"
+      }
     },
     "category": "工具"
   },
@@ -165,10 +189,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "铁矿石",
-      "affix_chance": 0.08
+      "type": "equipment",
+      "affix_chance": 0.08,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "铁矿石"
+      }
     },
     "category": "武器"
   },
@@ -179,10 +205,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "斧",
-      "material": "铁矿石",
-      "affix_chance": 0.08
+      "type": "equipment",
+      "affix_chance": 0.08,
+      "generator_args": {
+        "archetype": "斧",
+        "material": "铁矿石"
+      }
     },
     "category": "武器"
   },
@@ -193,10 +221,12 @@
       "煤矿": 2
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "甲",
-      "material": "铁矿石",
-      "affix_chance": 0.08
+      "type": "equipment",
+      "affix_chance": 0.08,
+      "generator_args": {
+        "archetype": "甲",
+        "material": "铁矿石"
+      }
     },
     "category": "护甲"
   },
@@ -207,10 +237,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "头盔",
-      "material": "铁矿石",
-      "affix_chance": 0.08
+      "type": "equipment",
+      "affix_chance": 0.08,
+      "generator_args": {
+        "archetype": "头盔",
+        "material": "铁矿石"
+      }
     },
     "category": "护甲"
   },
@@ -221,10 +253,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "盾",
-      "material": "铁矿石",
-      "affix_chance": 0.08
+      "type": "equipment",
+      "affix_chance": 0.08,
+      "generator_args": {
+        "archetype": "盾",
+        "material": "铁矿石"
+      }
     },
     "category": "护甲"
   },
@@ -235,10 +269,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "银矿石",
-      "affix_chance": 0.1
+      "type": "equipment",
+      "affix_chance": 0.1,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "银矿石"
+      }
     },
     "category": "武器"
   },
@@ -249,10 +285,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "银矿石",
-      "affix_chance": 0.1
+      "type": "equipment",
+      "affix_chance": 0.1,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "银矿石"
+      }
     },
     "category": "工具"
   },
@@ -263,10 +301,12 @@
       "煤矿": 2
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "甲",
-      "material": "银矿石",
-      "affix_chance": 0.1
+      "type": "equipment",
+      "affix_chance": 0.1,
+      "generator_args": {
+        "archetype": "甲",
+        "material": "银矿石"
+      }
     },
     "category": "护甲"
   },
@@ -277,10 +317,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "金矿石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "金矿石"
+      }
     },
     "category": "武器"
   },
@@ -291,10 +333,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "金矿石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "金矿石"
+      }
     },
     "category": "工具"
   },
@@ -305,10 +349,12 @@
       "煤矿": 2
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "甲",
-      "material": "金矿石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "甲",
+        "material": "金矿石"
+      }
     },
     "category": "护甲"
   },
@@ -319,10 +365,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "头盔",
-      "material": "金矿石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "头盔",
+        "material": "金矿石"
+      }
     },
     "category": "护甲"
   },
@@ -333,10 +381,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "钻石原石",
-      "affix_chance": 0.2
+      "type": "equipment",
+      "affix_chance": 0.2,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "钻石原石"
+      }
     },
     "category": "武器"
   },
@@ -347,10 +397,12 @@
       "煤矿": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "钻石原石",
-      "affix_chance": 0.2
+      "type": "equipment",
+      "affix_chance": 0.2,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "钻石原石"
+      }
     },
     "category": "工具"
   },
@@ -360,10 +412,12 @@
       "黑曜石": 4
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "剑",
-      "material": "黑曜石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "剑",
+        "material": "黑曜石"
+      }
     },
     "category": "武器"
   },
@@ -373,10 +427,12 @@
       "黑曜石": 3
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "镐",
-      "material": "黑曜石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "镐",
+        "material": "黑曜石"
+      }
     },
     "category": "工具"
   },
@@ -386,10 +442,12 @@
       "黑曜石": 5
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "斧",
-      "material": "黑曜石",
-      "affix_chance": 0.12
+      "type": "equipment",
+      "affix_chance": 0.12,
+      "generator_args": {
+        "archetype": "斧",
+        "material": "黑曜石"
+      }
     },
     "category": "武器"
   },
@@ -399,10 +457,12 @@
       "花岗岩": 2
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "盾",
-      "material": "花岗岩",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "盾",
+        "material": "花岗岩"
+      }
     },
     "category": "护甲"
   },
@@ -412,10 +472,12 @@
       "大理石": 2
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "盾",
-      "material": "大理石",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "盾",
+        "material": "大理石"
+      }
     },
     "category": "护甲"
   },
@@ -426,10 +488,12 @@
       "泥土": 1
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "药水",
-      "material": "硫磺",
-      "affix_chance": 0
+      "type": "equipment",
+      "affix_chance": 0,
+      "generator_args": {
+        "archetype": "药水",
+        "material": "硫磺"
+      }
     },
     "category": "工具"
   },
@@ -439,10 +503,12 @@
       "黏土": 4
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "盾",
-      "material": "黏土",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "盾",
+        "material": "黏土"
+      }
     },
     "category": "护甲"
   },
@@ -452,10 +518,12 @@
       "石灰岩": 3
     },
     "result": {
-      "type": "generated_equipment",
-      "archetype": "头盔",
-      "material": "石灰岩",
-      "affix_chance": 0.05
+      "type": "equipment",
+      "affix_chance": 0.05,
+      "generator_args": {
+        "archetype": "头盔",
+        "material": "石灰岩"
+      }
     },
     "category": "护甲"
   },
