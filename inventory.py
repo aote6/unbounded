@@ -144,6 +144,17 @@ class Inventory:
                 instance=instance,
                 properties=item_data.get("properties", {})
             )
+        # 恢复 _id_counter 到最大值+1，避免读档后ID碰撞
+        max_id = 0
+        for k in inv._items:
+            if "#" in k:
+                try:
+                    n = int(k.split("#")[1])
+                    if n > max_id:
+                        max_id = n
+                except ValueError:
+                    pass
+        inv._id_counter = max_id
         return inv
     
     def _next_id(self):

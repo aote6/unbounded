@@ -55,8 +55,8 @@ def _on_damage_dealt(event, game):
             target["burning"] = {"duration": duration, "damage_per_turn": dpt}
             game.message = f"{target.get('name', '目标')} 燃烧起来了！"
 
-    # ── 吸血 ──
-    if damage > 0:
+    # ── 吸血（仅玩家攻击时触发）──
+    if attacker == "player" and damage > 0:
         lifesteal_total = 0
         for item_name in game.equipment.values():
             lifesteal_total += game._get_item_attr(item_name, "lifesteal")

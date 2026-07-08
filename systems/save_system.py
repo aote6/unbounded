@@ -122,6 +122,18 @@ def apply_load_data(game, data):
     game.items = items_mod.load_items()
     game.monster_data = monsters_mod.load_monsters()
 
+    # 恢复箱子
+    game.chests = {}
+    for cdata in data.get("chests", []):
+        cx, cy = cdata["x"], cdata["y"]
+        game.chests[(cx, cy)] = {
+            "materials": cdata.get("materials", {}),
+            "equipment_instances": [
+                game.inventory.from_dict(ei) if isinstance(ei, dict) else ei
+                for ei in cdata.get("equipment_instances", [])
+            ],
+        }
+
     inv_summary = (
         ", ".join(f"{k}:{v}" for k, v in game.inventory.get_materials().items()) or "空"
     )
