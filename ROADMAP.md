@@ -32,3 +32,8 @@ M28: 自定义键位 ✅
 - 配方: 61个
 - 词缀: 15个
 - 按键: 20+可配置
+
+Step 2: ItemCategory枚举 ✅ (2026-07-08)
+  - inventory.py: ItemCategory(str, Enum) 替代 ITEM_TYPE 字典
+  - main.py/crafting_state.py/items.py/legacy_system.py: 字符串硬编码替换为枚举
+  - 共修改6个文件，枚举继承str保证JSON兼容

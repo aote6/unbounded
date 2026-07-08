@@ -1,4 +1,5 @@
 """ items.py 道具与装备系统。数据从 data/items.json 加载。"""
+from inventory import ItemCategory
 import json
 from pathlib import Path
 
@@ -17,7 +18,7 @@ def load_items():
         return {}
 
 def is_placeable(items, name):
-    return items.get(name, {}).get("type") == "placeable"
+    return items.get(name, {}).get("type") == ItemCategory.PLACEABLE
 
 def get_place_tile(items, name):
     return items.get(name, {}).get("place_tile", name)

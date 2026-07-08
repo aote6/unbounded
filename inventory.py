@@ -4,13 +4,15 @@ from typing import Optional, List, Dict, Any
 import json
 
 # 物品类型枚举
-ITEM_TYPE = {
-    "material": "材料（堆叠）",
-    "placeable": "可放置物（堆叠）",
-    "equipment": "装备（独立实例）",
-    "consumable": "消耗品（堆叠，预留）",
-    "container": "容器（预留）",
-}
+from enum import Enum
+
+
+class ItemCategory(str, Enum):
+    MATERIAL = "material"
+    PLACEABLE = "placeable"
+    EQUIPMENT = "equipment"
+    CONSUMABLE = "consumable"
+    CONTAINER = "container"
 
 @dataclass
 class InventoryItem:
@@ -29,12 +31,12 @@ class Inventory:
         self._id_counter = 0
     
     # ── 核心操作 ──
-    def add(self, item_id: str, count: int = 1, item_type: str = "material", 
+    def add(self, item_id: str, count: int = 1, item_type: str = ItemCategory.MATERIAL, 
             instance: Any = None, **kwargs):
         """添加物品。已存在的堆叠物品自动合并。"""
         if item_id in self._items:
             existing = self._items[item_id]
-            if existing.item_type in ("material", "placeable", "consumable"):
+            if existing.item_type in (ItemCategory.MATERIAL, ItemCategory.PLACEABLE, ItemCategory.CONSUMABLE):
                 existing.count += count
             else:
                 # equipment 类型不堆叠，用编号区分
@@ -83,17 +85,17 @@ class Inventory:
         """获取所有堆叠材料的 {名称: 数量} 字典（兼容旧代码）。"""
         return {item.item_id: item.count 
                 for item in self._items.values() 
-                if item.item_type in ("material", "placeable", "consumable")}
+                if item.item_type in (ItemCategory.MATERIAL, ItemCategory.PLACEABLE, ItemCategory.CONSUMABLE)}
     
     def get_equipment(self) -> List[Any]:
         """获取所有装备实例列表（兼容旧代码）。"""
         return [item.instance for item in self._items.values() 
-                if item.item_type == "equipment" and item.instance is not None]
+                if item.item_type == ItemCategory.EQUIPMENT and item.instance is not None]
     
     def is_placeable(self, item_id: str) -> bool:
         """检查物品是否可放置。"""
         item = self._items.get(item_id)
-        return item is not None and item.item_type == "placeable"
+        return item is not None and item.item_type == ItemCategory.PLACEABLE
     
     # ── 迭代 ──
     def all_items(self):
@@ -139,7 +141,7 @@ class Inventory:
                 instance = EquipmentInstance.from_dict(instance)
             inv._items[item_id] = InventoryItem(
                 item_id=item_data.get("item_id", item_id),
-                item_type=item_data.get("item_type", "material"),
+                item_type=item_data.get("item_type", ItemCategory.MATERIAL),
                 count=item_data.get("count", 1),
                 instance=instance,
                 properties=item_data.get("properties", {})

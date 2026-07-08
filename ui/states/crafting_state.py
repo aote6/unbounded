@@ -4,6 +4,7 @@ import curses
 import random
 from core.state_machine import State
 from equipment import EquipmentInstance
+from inventory import ItemCategory
 import items as items_mod
 
 
@@ -104,7 +105,7 @@ class CraftingState(State):
         result_def = r.get("result", {})
         result_type = result_def.get("type", "") if result_def else ""
 
-        if result_type == "generated_equipment":
+        if result_type == ItemCategory.EQUIPMENT:
             from item_generator import get_generator
             gen = get_generator()
             arch = result_def.get("archetype")
@@ -135,13 +136,13 @@ class CraftingState(State):
                 affix_str = " [" + "|".join(inst.affixes) + "]"
             self.status_msg = f"合成了 {inst.name}{affix_str}！(slot={inst.slot})"
 
-        elif result_type == "material":
+        elif result_type == ItemCategory.MATERIAL:
             mat_name = result_def.get("name", name)
             mat_count = result_def.get("count", 1)
             game._add_material(mat_name, mat_count)
             self.status_msg = f"合成了 {mat_name} x{mat_count}（共 {game._count_material(mat_name)}）"
 
-        elif result_type == "placeable":
+        elif result_type == ItemCategory.PLACEABLE:
             # 统一处理：先加材料到背包，让玩家按 b 放置
             game._add_material(name, 1)
             self.status_msg = f"合成了 {name} x1（共 {game._count_material(name)}）。按 b 放置。"

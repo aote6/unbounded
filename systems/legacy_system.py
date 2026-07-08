@@ -1,4 +1,5 @@
 """跨局遗产系统：死亡积累点数，新角色兑换增益"""
+from inventory import ItemCategory
 import json
 from pathlib import Path
 
@@ -25,7 +26,7 @@ PERKS = {
         "name": "食物开局",
         "cost": 1,
         "desc": "新角色出生时携带5个面包",
-        "type": "material",
+        "type": ItemCategory.MATERIAL,
         "item_name": "面包",
         "count": 5,
     },
@@ -147,7 +148,7 @@ def apply_legacy_perks(game):
         
         if perk["type"] == "item":
             game._add_equipment_instance(perk["item_name"])
-        elif perk["type"] == "material":
+        elif perk["type"] == ItemCategory.MATERIAL:
             game._add_material(perk["item_name"], perk.get("count", 1))
         elif perk["type"] == "skill":
             game.skills[perk["skill"]] = game.skills.get(perk["skill"], 0) + perk["bonus"]

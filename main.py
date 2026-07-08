@@ -28,7 +28,7 @@ from config import (
 )
 import monsters as monsters_mod
 import items as items_mod
-from inventory import Inventory
+from inventory import Inventory, ItemCategory
 
 from equipment import EquipmentInstance
 
@@ -162,17 +162,17 @@ class Game:
             inst = instance_data
         else:
             inst = EquipmentInstance.from_dict(instance_data)
-        self.inventory.add(name, item_type="equipment", instance=inst)
+        self.inventory.add(name, item_type=ItemCategory.EQUIPMENT, instance=inst)
 
     def _get_equipment_instance(self, name):
         for item_id, item in self.inventory.all_items():
-            if item.item_type == "equipment" and item.instance and item.instance.name == name:
+            if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name:
                 return item.instance
         return None
 
     def _count_equipment(self, name):
         return sum(1 for _, item in self.inventory.all_items() 
-               if item.item_type == "equipment" and item.instance and item.instance.name == name)
+               if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name)
 
     def _get_item_attr(self, item_name, field_name):
         """获取装备实例的属性，兼容旧 items dict。"""
