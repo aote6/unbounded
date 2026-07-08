@@ -123,6 +123,8 @@ class Game:
         register_status()
         from systems.buff_system import create_buff_manager
         self.buff_manager = create_buff_manager()
+        # 订阅方块变更事件 → 房间检测
+        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: g._check_room_formation())
         # M27: 跨局遗产统计
         self._monsters_killed_this_life = 0
         self._blocks_placed_this_life = 0
@@ -298,6 +300,8 @@ class Game:
         from systems.legacy_system import apply_legacy_perks
         apply_legacy_perks(self)
         self.buff_manager = create_buff_manager()
+        # 订阅方块变更事件 → 房间检测
+        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: g._check_room_formation())
         self.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
         self.place_mode = None; self.last_place = None
         self.place_item_name = None; self.last_place_item_name = None
@@ -421,8 +425,11 @@ class Game:
                 self.message = f"挖到了 {drop} x1（共 {self._count_material(drop)}）"
             else:
                 self.message = f"挖掉了 {props['name']}。"
+            old_tile = self.world.get_tile(x, y)["tile"]
             self.world.set_tile(x, y, TILE_AIR)
             self.modified_tiles[(x, y)] = TILE_AIR
+            from systems.event_bus import EventBus, EventType, GameEvent
+            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": x, "y": y, "old": old_tile, "new": TILE_AIR}), self)
             if (x, y) in self.corpses:
                 del self.corpses[(x, y)]
             self.dig_progress = None
@@ -504,8 +511,11 @@ class Game:
                     self.player_x, self.player_y = px, py; pushed = True; break
             if not pushed:
                 self.message = "玩家没有空间后退，无法在脚下放置。"; return
+        old_tile = self.world.get_tile(bx, by)["tile"]
         self.world.set_tile(bx, by, self.place_mode)
         self.modified_tiles[(bx, by)] = self.place_mode
+        from systems.event_bus import EventBus, EventType, GameEvent
+        EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": bx, "y": by, "old": old_tile, "new": self.place_mode}), self)
         # 如果放置的是箱子，初始化空箱子
         # M27: 本局放置计数
         self._blocks_placed_this_life += 1
@@ -560,7 +570,10 @@ class Game:
                 self._add_equipment_instance(drop_name, drop_obj)
         self._remove_monster(monster)
         if corpse_tile and self.world.get_tile(mx, my)["tile"] == TILE_AIR:
+            old_tile = self.world.get_tile(mx, my)["tile"]
             self.world.set_tile(mx, my, corpse_tile)
+            from systems.event_bus import EventBus, EventType, GameEvent
+            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": mx, "y": my, "old": old_tile, "new": corpse_tile}), self)
             self.modified_tiles[(mx, my)] = corpse_tile
             self.corpses[(mx, my)] = CORPSE_DECAY_TURNS
         if splits:
@@ -593,8 +606,11 @@ class Game:
             self._maybe_cancel_dig(nx, ny)
             for d, c in drop_info.items():
                 self._add_material(d, c)
+            old_tile = self.world.get_tile(nx, ny)["tile"]
             self.world.set_tile(nx, ny, TILE_AIR)
             self.modified_tiles[(nx, ny)] = TILE_AIR
+            from systems.event_bus import EventBus, EventType, GameEvent
+            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": nx, "y": ny, "old": old_tile, "new": TILE_AIR}), self)
             if (nx, ny) in self.corpses:
                 del self.corpses[(nx, ny)]
             # 如果拆除的是箱子，掉落里面所有物品到地上
@@ -662,8 +678,11 @@ class Game:
         from world_gen import TILE_AIR
         tile = self.world.get_tile(x, y).get("tile", TILE_AIR)
         if tile == TILE_AIR:
+            old_tile = self.world.get_tile(x, y)["tile"]
             self.world.set_tile(x, y, "墓碑")
             self.modified_tiles[(x, y)] = "墓碑"
+            from systems.event_bus import EventBus, EventType, GameEvent
+            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": x, "y": y, "old": old_tile, "new": "墓碑"}), self)
 
     def _save_world_on_death(self):
         """M26: 死亡时保存世界状态"""
@@ -857,8 +876,6 @@ class Game:
         self._tick_monsters()
         self._try_spawn_monster()
         self.world.keep_radius(self.player_x, self.player_y, CHUNK_KEEP_RADIUS)
-        if self.turn % 10 == 0:
-            self._check_room_formation()
         # 目标推进
         self._check_goals()
     
