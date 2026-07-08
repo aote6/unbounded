@@ -137,3 +137,7 @@ class BuildState(State):
                 attr = curses.A_REVERSE if i == self._selected else curses.A_NORMAL
                 self.win.addstr(3 + i, 2, line[:w - 4], attr)
             self.win.refresh()
+        else:
+            # 建造模式：渲染地图，显示光标
+            from ui.game_renderer import draw
+            draw(self.game)

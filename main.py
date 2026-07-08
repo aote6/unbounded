@@ -16,6 +16,9 @@ from ui.equipment_ui import equipment_menu
 from ui.game_renderer import draw
 from ui.crafting_ui import crafting_menu
 from systems.tag_system import load_rules, check_interaction
+from systems.scent_map import rebuild_scent_map
+from systems.tile_interaction import tick_tile_interactions, tick_burning_tiles
+from systems.monster_ai import tick_monsters, try_spawn_monster, tick_corpses, tick_status_effects
 from config import (
     VIEW_WIDTH, VIEW_HEIGHT, WORLD_SEED,
     PLAYER_INITIAL_HP,
@@ -85,8 +88,17 @@ def equipment_menu(stdscr, game):
     _ui(stdscr, game)
 
 # ═══════════════════════════════════
-# 放置菜单（从背包挑一个可放置物进入建造模式）
+
+DIRECTIONS = {
+    curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
+    curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
+    ord("h"): (-1,0), ord("l"): (1,0), ord("k"): (0,-1), ord("j"): (0,1),
+}
+
 # ═══════════════════════════════════
+# Game 类
+# ═══════════════════════════════════
+class Game:
     def __init__(self, stdscr):
         self.stdscr = stdscr
         self._setup_curses()
@@ -694,20 +706,19 @@ def equipment_menu(stdscr, game):
         self.stdscr.erase()
         m1, m2 = "你死了。", f"物品掉落在 ({self.player_x},{self.player_y})"
         m3 = "世界保留，新角色将继承一切。"
-        m4 = "按任意键以新角色继续..."
+        m4 = "按任意键打开遗产商店..."
         h, w = self.stdscr.getmaxyx()
         self.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
         self.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
         self.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
         self.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
         self.stdscr.refresh(); self.stdscr.getch()
-        self.new_game(inherit_world=True)
-
-    def get_viewport_origin(self):
-        # M27: 打开遗产商店
+        # 打开遗产商店
         from ui.states.legacy_state import LegacyState
         if self.engine:
             self.engine.push_state(LegacyState(self))
+
+    def get_viewport_origin(self):
         vx = self.player_x - VIEW_WIDTH // 2
         vy = self.player_y - VIEW_HEIGHT // 2
         return vx, vy

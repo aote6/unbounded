@@ -54,18 +54,6 @@ class PlayState(State):
             return EquipmentState(game)
         elif key == KEY_BUILD:
             return BuildState(game)
-        elif key in (curses.KEY_ENTER, 10, 13):
-            if game.place_mode:
-                game._do_place()
-                acted = True
-        elif key == KEY_REPEAT:
-            if game.last_place:
-                game.place_mode = game.last_place
-                game.place_item_name = game.last_place_item_name
-                game.cursor_x, game.cursor_y = game.player_x, game.player_y
-                game.message = f"建造模式：放置 {game.last_place}，方向键移动光标，回车放置，c 取消。"
-            else:
-                game.message = "还没有建造过任何东西。"
         elif key in (KEY_RELOAD, KEY_RELOAD_UPPER):
             game._handle_reload()
         elif key in (KEY_SAVE, KEY_SAVE_UPPER):
