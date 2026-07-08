@@ -26,6 +26,7 @@ class Inventory:
     
     def __init__(self):
         self._items: Dict[str, InventoryItem] = {}
+        self._id_counter = 0
     
     # ── 核心操作 ──
     def add(self, item_id: str, count: int = 1, item_type: str = "material", 
@@ -147,7 +148,8 @@ class Inventory:
     
     def _next_id(self):
         """生成唯一编号。"""
-        return len([k for k in self._items if "#" in k]) + 1
+        self._id_counter += 1
+        return self._id_counter
 
 # 单例（可选）
 _inventory_instance = None

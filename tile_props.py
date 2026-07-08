@@ -197,6 +197,7 @@ PLACEABLE_PROPS = {
     "木椅": {
         "name": "木椅", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u2534",
+    },
 
     "骨墙": {
         "name": "骨墙", "passable": False, "transparent": False,
@@ -215,7 +216,6 @@ PLACEABLE_PROPS = {
         "blocks_vision": False, "diggable": False, "hardness": 0.5, "char": "\u2248",
     },
     },
-}
 
 
 def get_tile_props(tile):

@@ -382,18 +382,6 @@ class Game:
         self.world = generate_world(seed=data.get("seed", WORLD_SEED), decorate=False)
         apply_load_data(self, data)
         return True
-        if term_h < MIN_TERM_H or term_w < MIN_TERM_W:
-            self.stdscr.erase()
-            msg1 = "终端窗口太小！"
-            msg2 = f"当前: {term_w}x{term_h} 需要至少: {MIN_TERM_W}x{MIN_TERM_H}"
-            msg3 = "请缩小字号、横屏或调整窗口大小后按任意键..."
-            h, w = term_h, term_w
-            self.stdscr.addstr(max(0,h//2-1), max(0,w//2-len(msg1)//2), msg1, curses.A_BOLD)
-            self.stdscr.addstr(max(0,h//2), max(0,w//2-len(msg2)//2), msg2)
-            self.stdscr.addstr(max(0,h//2+1), max(0,w//2-len(msg3)//2), msg3)
-            self.stdscr.refresh(); self.stdscr.getch()
-            return False
-        return True
 
 
 
