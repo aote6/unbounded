@@ -42,3 +42,25 @@ def check_terminal_size(stdscr):
         stdscr.getch()
         return False
     return True
+
+def tile_attr(game, tile):
+    """根据方块类型返回 curses 颜色属性。"""
+    import curses
+    from tile_props import get_tile_props
+    props = get_tile_props(tile)
+    name = props["name"]
+    if name == "树木":
+        return curses.color_pair(6) | curses.A_BOLD
+    from systems.time_system import get_time_of_day
+    _, ambient = get_time_of_day(game.turn)
+    if ambient <= 2:
+        return curses.color_pair(4)
+    elif name == "石头":
+        return curses.color_pair(1)
+    elif name == "泥土":
+        return curses.color_pair(2)
+    elif "尸体" in name or "残骸" in name:
+        return curses.color_pair(9) | curses.A_BOLD
+    elif not props["passable"]:
+        return curses.color_pair(4) | curses.A_BOLD
+    return curses.A_NORMAL

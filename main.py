@@ -2,14 +2,18 @@
 import curses, json, random, traceback, os
 from pathlib import Path
 from world_gen import (
+    SAVE_DIR,
     generate_world, find_spawn, World,
     TILE_AIR, TILE_DROPS, CHUNK_SIZE,
     TILE_WATER, TILE_TREE,
 )
 from tile_props import get_tile_props
-from systems.save_system import build_save_data, apply_load_data
+from systems.save_system import build_save_data, apply_load_data, _apply_world_data
 from ui.game_renderer import draw
 from systems.tag_system import load_rules
+from systems.event_bus import EventBus, EventType, GameEvent
+from systems.buff_system import create_buff_manager
+from systems.status_system import register as register_status
 from systems.scent_map import rebuild_scent_map
 
 from systems.monster_ai import tick_monsters, try_spawn_monster, tick_corpses, tick_status_effects
@@ -30,7 +34,7 @@ from systems.goal_system import check_goals, check_special_location
 from systems.player_action import dig_adjacent, do_place, dig_any_tile, try_move_or_dig
 from systems.time_system import get_time_of_day, get_geology_zone
 from systems.skill_system import gain_skill, digging_speed_bonus, combat_damage_bonus, defense_reduction
-from systems.legacy_system import drop_items_on_ground, place_grave, save_world_on_death, check_death, show_death_screen
+from systems.legacy_system import drop_items_on_ground, place_grave, save_world_on_death, check_death, show_death_screen, apply_legacy_perks
 from systems.player_items import add_equipment_instance, get_equipment_instance, count_equipment, get_item_attr, equipment_bonus, best_equipped_tool_bonus, collect_attack_effects
 from systems.monster_index import build_monster_index, monster_at, monster_has_position, monster_moved, add_monster, remove_monster
 from ui.terminal import setup_curses, check_terminal_size
@@ -57,6 +61,7 @@ class Game:
         self.player_hp = PLAYER_INITIAL_HP
         self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
+        self.inventory = Inventory()
         self.equipment = {}  # slot_name -> EquipmentInstance or None                # 装备槽: {"main_hand": "石剑"}
         self.message = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。S 存档，L 读档。"
         self.place_mode = None; self.last_place = None
@@ -83,15 +88,9 @@ class Game:
         self.goal_message_shown = False
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
         # 事件总线
-        from systems.event_bus import EventBus
-        from systems.status_system import register as register_status
         register_status()
-        from systems.buff_system import create_buff_manager
-        from systems.buff_system import create_buff_manager
         self.buff_manager = create_buff_manager()
-        # 订阅方块变更事件 → 房间检测
-        from systems.event_bus import EventBus, EventType
-        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: g._check_room_formation())
+        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
         # M27: 跨局遗产统计
         self._monsters_killed_this_life = 0
         self._blocks_placed_this_life = 0
@@ -150,7 +149,6 @@ class Game:
     def new_game(self, inherit_world=False):
         # M26: inherit_world=True 保留世界 Chunk 和世界状态
         import shutil, json
-        from world_gen import SAVE_DIR
         
         if not inherit_world:
             if SAVE_DIR.exists():
@@ -164,7 +162,6 @@ class Game:
                     world_data = json.load(f)
                 seed = world_data.get("seed", WORLD_SEED)
                 self.world = generate_world(seed=seed)
-                from systems.save_system import _apply_world_data
                 _apply_world_data(self, world_data)
             else:
                 if SAVE_DIR.exists():
@@ -184,15 +181,13 @@ class Game:
         self.player_hp = PLAYER_INITIAL_HP; self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
         self.inventory = Inventory()
+        self.inventory = Inventory()
         self.equipment = {}  # slot_name -> EquipmentInstance or None
         # M27: 应用跨局遗产增益
-        from systems.legacy_system import apply_legacy_perks
         apply_legacy_perks(self)
-        from systems.buff_system import create_buff_manager
         self.buff_manager = create_buff_manager()
         # 订阅方块变更事件 → 房间检测
-        from systems.event_bus import EventBus, EventType
-        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: g._check_room_formation())
+        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
         self.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
         self.place_mode = None; self.last_place = None
         self.place_item_name = None; self.last_place_item_name = None
@@ -275,18 +270,6 @@ class Game:
     def _dig_any_tile(self, x, y):
         return dig_any_tile(self, x, y)
 
-    def _gain_skill(self, skill_name):
-        gain_skill(self, skill_name)
-
-    def _digging_speed_bonus(self):
-        return digging_speed_bonus(self.skill_levels)
-
-    def _combat_damage_bonus(self):
-        return combat_damage_bonus(self.skill_levels)
-
-    def _defense_reduction(self):
-        return defense_reduction(self.skill_levels)
-
     def _dig_natural_tile(self, x, y):
         tile = self.world.get_tile(x, y)["tile"]
         if tile not in TILE_DROPS and not ("尸体" in str(tile) or "残骸" in str(tile)):
@@ -310,7 +293,6 @@ class Game:
         self._monsters_killed_this_life += 1
         mx, my = monster["x"], monster["y"]
         mname = monster["name"]
-        from systems.event_bus import EventBus, EventType, GameEvent
         EventBus().emit(GameEvent(EventType.MONSTER_KILLED, {"monster": monster, "cause": cause}), self)
         corpse_tile = monster.get("corpse_tile")
         splits = monsters_mod.get_split_spawns(monster, self.monster_data)
@@ -324,7 +306,6 @@ class Game:
         if corpse_tile and self.world.get_tile(mx, my)["tile"] == TILE_AIR:
             old_tile = self.world.get_tile(mx, my)["tile"]
             self.world.set_tile(mx, my, corpse_tile)
-            from systems.event_bus import EventBus, EventType, GameEvent
             EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": mx, "y": my, "old": old_tile, "new": corpse_tile}), self)
             self.modified_tiles[(mx, my)] = corpse_tile
             self.corpses[(mx, my)] = CORPSE_DECAY_TURNS
@@ -342,51 +323,17 @@ class Game:
             cause_msg += f"掉落了 {drop_name}。"
         self.message = cause_msg
 
-    def _tick_status_effects(self):
-        tick_status_effects(self)
-
-    def _tick_corpses(self):
-        tick_corpses(self)
-
     def dig_adjacent(self, dx, dy):
         dig_adjacent(self, dx, dy)
-
-    def _player_defense(self):
-        return self._equipment_bonus("defense_bonus") + defense_reduction(self.skill_levels)
-
-    def _tick_monsters(self):
-        tick_monsters(self)
-
-    def _try_spawn_monster(self):
-        try_spawn_monster(self)
 
     def _drop_items_on_ground(self, x, y):
         drop_items_on_ground(self, x, y)
     
-    def _place_grave(self, x, y):
-        place_grave(self, x, y)
-
-    def _save_world_on_death(self):
-        save_world_on_death(self)
-
     def check_death(self):
         return check_death(self)
 
     def show_death_screen(self):
-        self.stdscr.erase()
-        m1, m2 = "你死了。", f"物品掉落在 ({self.player_x},{self.player_y})"
-        m3 = "世界保留，新角色将继承一切。"
-        m4 = "按任意键打开遗产商店..."
-        h, w = self.stdscr.getmaxyx()
-        self.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
-        self.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
-        self.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
-        self.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
-        self.stdscr.refresh(); self.stdscr.getch()
-        # 打开遗产商店
-        from ui.states.legacy_state import LegacyState
-        if self.engine:
-            self.engine.push_state(LegacyState(self))
+        show_death_screen(self)
 
     def get_viewport_origin(self):
         vx = self.player_x - VIEW_WIDTH // 2
@@ -394,42 +341,22 @@ class Game:
         return vx, vy
 
     def tile_attr(self, tile):
-        props = get_tile_props(tile); name = props["name"]
-        if name == "树木":
-            return curses.color_pair(6) | curses.A_BOLD  # 绿色加粗，不受夜晚压暗影响
-        _, ambient = self._get_time_of_day()
-        if ambient <= 2:
-            return curses.color_pair(4)
-        elif name == "石头":
-            return curses.color_pair(1)
-        elif name == "泥土":
-            return curses.color_pair(2)
-        elif "尸体" in name or "残骸" in name:
-            return curses.color_pair(9) | curses.A_BOLD
-        elif not props["passable"]:
-            return curses.color_pair(4) | curses.A_BOLD
-        return curses.A_NORMAL
-
-    def _get_geology_zone(self, y):
-        return get_geology_zone(y)
+        return _tile_attr_fn(self, tile)
 
     
     def _check_room_formation(self):
         return check_room_formation(self)
     
     
-    def _get_time_of_day(self):
-        return get_time_of_day(self.turn)
-
     def advance_turn(self):
         rebuild_scent_map(self)
         self.buff_manager.tick_all(self)
-        self._tick_corpses()
-        self._tick_monsters()
-        self._try_spawn_monster()
+        tick_corpses(self)
+        tick_monsters(self)
+        try_spawn_monster(self)
         self.world.keep_radius(self.player_x, self.player_y, CHUNK_KEEP_RADIUS)
         # 目标推进
-        self._check_goals()
+        check_goals(self)
     
     def _check_goals(self):
         check_goals(self)
@@ -456,13 +383,8 @@ class Game:
         self.message = "挖掘模式：按方向键选择要拆除的方块（包括尸体），其他键取消。"
         draw(self)
         key2 = self.stdscr.getch()
-        dirs = {
-            curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
-            curses.KEY_UP: (0,-1), curses.KEY_DOWN: (0,1),
-            ord("h"): (-1,0), ord("l"): (1,0), ord("k"): (0,-1), ord("j"): (0,1),
-        }
-        if key2 in dirs:
-            dx, dy = dirs[key2]
+        if key2 in DIRECTIONS:
+            dx, dy = DIRECTIONS[key2]
             self.dig_adjacent(dx, dy)
             return True
         else:
