@@ -395,36 +395,8 @@ class Game:
             self.dig_progress = None
 
     def _dig_any_tile(self, x, y):
-        tile = self.world.get_tile(x, y)["tile"]
-        props = get_tile_props(tile)
-        if not props["diggable"]:
-            return False
-        if not (self.dig_progress and self.dig_progress["x"] == x and self.dig_progress["y"] == y):
-            tool_power = 1 + self._best_equipped_tool_bonus()
-            base_turns = get_dig_turns(tile, tool_power)
-            speed_bonus = self._digging_speed_bonus()
-            total = max(1, base_turns - speed_bonus)
-            self.dig_progress = {"x": x, "y": y, "remaining": total, "total": total}
-        self.dig_progress["remaining"] -= 1
-        if self.dig_progress["remaining"] <= 0:
-            drop = props.get("drop")
-            if drop:
-                self._add_material(drop, 1)
-                self.message = f"挖到了 {drop} x1（共 {self._count_material(drop)}）"
-            else:
-                self.message = f"挖掉了 {props['name']}。"
-            old_tile = self.world.get_tile(x, y)["tile"]
-            self.world.set_tile(x, y, TILE_AIR)
-            self.modified_tiles[(x, y)] = TILE_AIR
-            from systems.event_bus import EventBus, EventType, GameEvent
-            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": x, "y": y, "old": old_tile, "new": TILE_AIR}), self)
-            if (x, y) in self.corpses:
-                del self.corpses[(x, y)]
-            self.dig_progress = None
-            self._gain_skill("digging")
-        else:
-            self.message = f"挖掘中...还需 {self.dig_progress['remaining']} 回合"
-        return True
+        from systems.player_action import dig_any_tile
+        return dig_any_tile(self, x, y)
 
     def _gain_skill(self, skill_name):
         self.skills[skill_name] += 1
@@ -450,33 +422,8 @@ class Game:
 
 
     def try_move_or_dig(self, dx, dy):
-        nx, ny = self.player_x + dx, self.player_y + dy
-        tile = self.world.get_tile(nx, ny)["tile"]
-        mon = self._monster_at(nx, ny)
-        if self.place_mode is not None:
-            self._move_cursor(dx, dy); return
-        if mon:
-            self._maybe_cancel_dig(nx, ny); self._attack_monster(mon); return
-        props = get_tile_props(tile)
-        if props["passable"]:
-            # 树虽然可穿过，但应该自动挖掘
-            from world_gen import TILE_TREE
-            if tile == TILE_TREE:
-                self._dig_any_tile(nx, ny)
-                return
-            if self._monster_has_position(nx, ny):
-                return
-            self._maybe_cancel_dig(nx, ny)
-            self.player_x, self.player_y = nx, ny
-            # 检查是否进入特殊地貌
-            self._check_special_location()
-        elif props["diggable"]:
-            self._dig_natural_tile(nx, ny)
-
-    def _move_cursor(self, dx, dy):
-        nx, ny = self.cursor_x + dx, self.cursor_y + dy
-        self.cursor_x, self.cursor_y = nx, ny
-        self.message = f"建造光标 ({self.cursor_x},{self.cursor_y})，回车放置，c 退出。"
+        from systems.player_action import try_move_or_dig
+        try_move_or_dig(self, dx, dy)
 
     def _do_place(self):
         if self.place_item_name and self.inventory.count(self.place_item_name) <= 0:

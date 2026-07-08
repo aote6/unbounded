@@ -93,3 +93,77 @@ def do_place(game):
             return
 
     game.message = f"放置了 {game.place_mode}（建造模式中，c 退出）"
+
+
+def dig_any_tile(game, x, y):
+    """挖掘任意方块（含连续挖掘进度）。"""
+    from world_gen import TILE_AIR
+    from tile_props import get_tile_props, get_dig_turns
+
+    tile = game.world.get_tile(x, y)["tile"]
+    props = get_tile_props(tile)
+    if not props["diggable"]:
+        return False
+
+    if not (game.dig_progress and game.dig_progress["x"] == x and game.dig_progress["y"] == y):
+        tool_power = 1 + game._best_equipped_tool_bonus()
+        base_turns = get_dig_turns(tile, tool_power)
+        speed_bonus = game._digging_speed_bonus()
+        total = max(1, base_turns - speed_bonus)
+        game.dig_progress = {"x": x, "y": y, "remaining": total, "total": total}
+
+    game.dig_progress["remaining"] -= 1
+    if game.dig_progress["remaining"] <= 0:
+        drop = props.get("drop")
+        if drop:
+            game._add_material(drop, 1)
+            game.message = f"挖到了 {drop} x1（共 {game._count_material(drop)}）"
+        else:
+            game.message = f"挖掉了 {props['name']}。"
+        old_tile = game.world.get_tile(x, y)["tile"]
+        game.world.set_tile(x, y, TILE_AIR)
+        game.modified_tiles[(x, y)] = TILE_AIR
+        from systems.event_bus import EventBus, EventType, GameEvent
+        EventBus().emit(GameEvent(EventType.TILE_CHANGED,
+            {"x": x, "y": y, "old": old_tile, "new": TILE_AIR}), game)
+        if (x, y) in game.corpses:
+            del game.corpses[(x, y)]
+        game.dig_progress = None
+        game._gain_skill("digging")
+    else:
+        game.message = f"挖掘中...还需 {game.dig_progress['remaining']} 回合"
+    return True
+
+
+def try_move_or_dig(game, dx, dy):
+    """尝试移动或挖掘/攻击。"""
+    from world_gen import TILE_TREE
+    from tile_props import get_tile_props
+
+    nx, ny = game.player_x + dx, game.player_y + dy
+    tile = game.world.get_tile(nx, ny)["tile"]
+    mon = game._monster_at(nx, ny)
+
+    if game.place_mode is not None:
+        game.cursor_x += dx
+        game.cursor_y += dy
+        game.message = f"建造光标 ({game.cursor_x},{game.cursor_y})，回车放置，c 退出。"
+        return
+
+    if mon:
+        game._maybe_cancel_dig(nx, ny)
+        game._attack_monster(mon)
+        return
+
+    props = get_tile_props(tile)
+    if props["passable"]:
+        if tile == TILE_TREE:
+            dig_any_tile(game, nx, ny)
+            return
+        if game._monster_has_position(nx, ny):
+            return
+        game._maybe_cancel_dig(nx, ny)
+        game.player_x, game.player_y = nx, ny
+        game._check_special_location()
+    elif props["diggable"]:
+        dig_any_tile(game, nx, ny)
