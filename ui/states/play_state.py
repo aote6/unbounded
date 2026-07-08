@@ -61,9 +61,11 @@ class PlayState(State):
         elif key in (KEY_LOAD, KEY_LOAD_UPPER):
             game._handle_load()
         elif key == KEY_LOOK:
-            game._handle_look_mode()
+            from ui.states.look_state import LookState
+            return LookState(game)
         elif key == KEY_DIG:
-            acted = game._handle_dig_mode()
+            from ui.states.dig_state import DigState
+            return DigState(game)
         elif key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
             game.try_move_or_dig(dx, dy)

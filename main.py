@@ -913,45 +913,6 @@ class Game:
     def _handle_load(self):
         self.load_game()
 
-    def _handle_look_mode(self):
-        self.look_mode = True
-        self.cursor_x, self.cursor_y = self.player_x, self.player_y
-        self.message = "查看模式：方向键移动光标(+)，显示光标处信息，其他键退出。"
-        draw(self)
-        while True:
-            cx, cy = self.cursor_x, self.cursor_y
-            tile = self.world.get_tile(cx, cy)
-            tile_id = tile["tile"]
-            props = get_tile_props(tile_id)
-            name = props.get("name", "未知")
-            hardness = props.get("hardness", 0)
-            drop = props.get("drop", "无")
-            diggable = props.get("diggable", False)
-            extra = tile.get("extra", {})
-            info = f"({cx},{cy}) {name}"
-            if diggable:
-                info += f" | 可挖 | 硬度:{hardness}"
-                if drop: info += f" | 掉落:{drop}"
-            else:
-                info += " | 不可挖"
-            if extra: info += f" | {extra}"
-            mon = self._monster_at(cx, cy)
-            if mon:
-                info += f" | {mon['name']} HP:{mon['hp']}/{mon['max_hp']}"
-            self.message = info
-            draw(self)
-            key2 = self.stdscr.getch()
-            if key2 in DIRECTIONS:
-                dx, dy = DIRECTIONS[key2]
-                ox2, oy2 = self.get_viewport_origin()
-                nx, ny = self.cursor_x + dx, self.cursor_y + dy
-                if ox2 <= nx < ox2 + VIEW_WIDTH and oy2 <= ny < oy2 + VIEW_HEIGHT:
-                    self.cursor_x, self.cursor_y = nx, ny
-            else:
-                self.look_mode = False
-                self.message = "退出查看模式。"
-                break
-
     def _handle_dig_mode(self):
         self.message = "挖掘模式：按方向键选择要拆除的方块（包括尸体），其他键取消。"
         draw(self)
