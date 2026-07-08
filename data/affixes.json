@@ -3,7 +3,8 @@
     "rarity": "common",
     "damage_bonus": 2,
     "durability_penalty": -10,
-    "desc": "攻击力+2，耐久-10"
+    "desc": "攻击力+2，耐久-10",
+    "tags": []
   },
   "沉重的": {
     "rarity": "common",
@@ -57,7 +58,9 @@
   },
   "燃烧的": {
     "rarity": "rare",
-    "on_attack": ["fire"],
+    "on_attack": [
+      "fire"
+    ],
     "desc": "攻击时点燃目标"
   },
   "吸血的": {

@@ -17,6 +17,10 @@ def validate_all():
         items = json.load(f)
     with open(BASE_DIR / "data" / "recipes.json", encoding="utf-8") as f:
         recipes = json.load(f)
+    with open(BASE_DIR / "data" / "monsters.json", encoding="utf-8") as f:
+        monsters = json.load(f)
+    with open(BASE_DIR / "data" / "interaction_rules.json", encoding="utf-8") as f:
+        rules_data = json.load(f)
 
     # 1. 检查 items.json 每个条目都有合法 type
     valid_types = set(e.value for e in ItemCategory)
@@ -67,6 +71,38 @@ def validate_all():
                     f"recipes.json: '{recipe_name}' 引用原型 '{archetype}'，"
                     f"但 items.json 中不存在该原型"
                 )
+
+    # 3. 词缀 tags 合法性检查（轻量防呆）
+    affixes_path = BASE_DIR / "data" / "affixes.json"
+    if affixes_path.exists():
+        with open(affixes_path, encoding="utf-8") as f:
+            affixes_data = json.load(f)
+
+        # 收集所有已知的合法 tags（怪物 + 方块 + 规则矩阵 + 通用分类）
+        valid_tags = set()
+        for mdata in monsters.values():
+            valid_tags.update(mdata.get("tags", []))
+        for rule in rules_data.get("rules", []):
+            valid_tags.update(rule.get("source_tags", []))
+            valid_tags.update(rule.get("target_tags", []))
+        # 通用分类 tags
+        valid_tags |= {
+            "stone", "wood", "metal", "organic", "cloth", "bone", "glass",
+            "brittle", "sharp", "flexible", "light", "heavy", "refined",
+            "conductive", "fire_resist", "weapon", "tool", "armor", "shield",
+            "wall", "floor", "door", "decor", "container", "stairs",
+            "prey", "predator", "large", "animal",
+            "burning", "heat_source", "flammable", "nonflammable",
+            "light", "wet", "water",
+        }
+
+        for affix_name, affix_data in affixes_data.items():
+            for tag in affix_data.get("tags", []):
+                if tag not in valid_tags:
+                    errors.append(
+                        f"affixes.json: 词缀 '{affix_name}' 的 tag '{tag}' "
+                        f"未在任何怪物/方块/规则中定义，可能静默失效"
+                    )
 
     if errors:
         msg = "实体验证失败，以下引用不一致:\n" + "\n".join(f"  - {e}" for e in errors)
