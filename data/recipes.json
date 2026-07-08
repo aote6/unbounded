@@ -642,21 +642,34 @@
     "ingredients": {
       "石头": 3
     },
-    "desc": "石头烧制成砖"
+    "desc": "石头烧制成砖",
+    "result": {
+      "type": "material",
+      "name": "石砖",
+      "count": 2
+    }
   },
   "石砖墙": {
     "category": "建筑",
     "ingredients": {
       "石砖": 2
     },
-    "desc": "坚固美观的石砖墙"
+    "desc": "坚固美观的石砖墙",
+    "result": {
+      "type": "placeable"
+    }
   },
   "玻璃": {
     "category": "建筑",
     "ingredients": {
       "沙子": 2
     },
-    "desc": "透明玻璃"
+    "desc": "透明玻璃",
+    "result": {
+      "type": "material",
+      "name": "玻璃",
+      "count": 2
+    }
   },
   "玻璃窗": {
     "category": "建筑",
@@ -670,14 +683,22 @@
     "ingredients": {
       "蜘蛛丝": 3
     },
-    "desc": "蜘蛛丝织成丝绸"
+    "desc": "蜘蛛丝织成丝绸",
+    "result": {
+      "type": "material",
+      "name": "丝绸",
+      "count": 2
+    }
   },
   "丝绸墙纸": {
     "category": "建筑",
     "ingredients": {
       "丝绸": 2
     },
-    "desc": "华丽墙纸"
+    "desc": "华丽墙纸",
+    "result": {
+      "type": "placeable"
+    }
   },
   "骨墙": {
     "category": "建筑",
