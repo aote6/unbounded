@@ -18,6 +18,7 @@ class EquipmentInstance:
     on_attack: List[str] = field(default_factory=list)
     lifesteal: int = 0
     speed_bonus: int = 0
+    tags: List[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """序列化为普通 dict（用于 JSON 存档）。"""
@@ -28,6 +29,7 @@ class EquipmentInstance:
             "damage_max": self.damage_max, "hit_bonus": self.hit_bonus,
             "affixes": self.affixes, "on_attack": self.on_attack,
             "lifesteal": self.lifesteal, "speed_bonus": self.speed_bonus,
+            "tags": self.tags,
         }
 
     @classmethod

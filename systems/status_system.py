@@ -19,11 +19,18 @@ def _tags_of(entity):
 
 
 def _player_attack_tags(game):
-    """获取玩家当前攻击的标签。"""
+    """获取玩家当前攻击的标签。优先从装备实例读，回退到 items.json。"""
     tags = []
-    weapon = game.equipment.get("main_hand")
-    if weapon and weapon in game.items:
-        tags.extend(game.items[weapon].get("tags", []))
+    weapon_name = game.equipment.get("main_hand")
+    if not weapon_name:
+        return tags
+    # 优先从装备实例读 tags（新系统）
+    inst = game._get_equipment_instance(weapon_name)
+    if inst and hasattr(inst, 'tags') and inst.tags:
+        tags.extend(inst.tags)
+    # 回退到 items.json（旧存档兼容）
+    elif weapon_name in game.items:
+        tags.extend(game.items[weapon_name].get("tags", []))
     return tags
 
 
