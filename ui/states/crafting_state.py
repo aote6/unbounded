@@ -142,24 +142,17 @@ class CraftingState(State):
             self.status_msg = f"合成了 {mat_name} x{mat_count}（共 {game._count_material(mat_name)}）"
 
         elif result_type == "placeable":
+            # 统一处理：先加材料到背包，让玩家按 b 放置
             game._add_material(name, 1)
             self.status_msg = f"合成了 {name} x1（共 {game._count_material(name)}）。按 b 放置。"
 
-        elif items_mod.is_placeable(game.items, name):
-            if name == "木箱":
-                game._add_material(name, 1)
-                self.status_msg = f"合成了 {name}！按 b 从背包选择放置位置（共 {game._count_material(name)}）。"
-            else:
-                game.place_mode = items_mod.get_place_tile(game.items, name)
-                game.place_item_name = None
-                game.last_place = game.place_mode
-                game.last_place_item_name = None
-                game.cursor_x, game.cursor_y = game.player_x, game.player_y
-                game.message = f"合成了 {name}！建造模式：方向键移动光标，回车放置，c 退出。"
-                self.game.engine.pop_state()
         else:
-            game._add_equipment_instance(name)
-            self.status_msg = f"合成了 {name} x1（共 {game._count_equipment(name)}）"
+            # 兜底分支改为报错，不再静默生成垃圾装备
+            raise ValueError(
+                f"配方 '{name}' 的 result.type='{result_type}' 不合法。"
+                f"合法值: generated_equipment, material, placeable。"
+                f"请检查 data/recipes.json。"
+            )
 
     def update(self):
         pass

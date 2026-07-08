@@ -464,7 +464,10 @@
     "ingredients": {
       "石头": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "木墙": {
     "category": "建筑",
@@ -495,63 +498,90 @@
     "ingredients": {
       "石灰岩": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "大理石柱配方": {
     "desc": "放置大理石柱",
     "ingredients": {
       "大理石": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "花岗岩砖配方": {
     "desc": "放置花岗岩砖",
     "ingredients": {
       "花岗岩": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "玻璃窗配方": {
     "desc": "放置透明玻璃窗",
     "ingredients": {
       "沙子": 3
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "砖墙配方": {
     "desc": "放置砖墙",
     "ingredients": {
       "黏土": 3
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "砂岩墙配方": {
     "desc": "放置砂岩墙",
     "ingredients": {
       "沙子": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "盐灯配方": {
     "desc": "放置盐灯（微光）",
     "ingredients": {
       "盐矿石": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "硫磺灯配方": {
     "desc": "放置硫磺灯（微光）",
     "ingredients": {
       "硫磺": 2
     },
-    "category": "建筑"
+    "category": "建筑",
+    "result": {
+      "type": "placeable"
+    }
   },
   "木箱": {
     "desc": "存放物品的箱子",
     "ingredients": {
       "泥土": 4
     },
-    "category": "其他"
+    "category": "其他",
+    "result": {
+      "type": "placeable"
+    }
   },
   "木板": {
     "category": "建筑",
@@ -676,7 +706,10 @@
     "ingredients": {
       "玻璃": 2
     },
-    "desc": "透明的窗户"
+    "desc": "透明的窗户",
+    "result": {
+      "type": "placeable"
+    }
   },
   "丝绸": {
     "category": "建筑",
@@ -705,7 +738,10 @@
     "ingredients": {
       "骨头": 3
     },
-    "desc": "骨头搭的墙"
+    "desc": "骨头搭的墙",
+    "result": {
+      "type": "placeable"
+    }
   },
   "地毯": {
     "category": "建筑",
@@ -713,6 +749,9 @@
       "史莱姆凝胶": 2,
       "蜘蛛丝": 1
     },
-    "desc": "柔软的地毯"
+    "desc": "柔软的地毯",
+    "result": {
+      "type": "placeable"
+    }
   }
 }
