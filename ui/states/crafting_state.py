@@ -95,6 +95,11 @@ class CraftingState(State):
 
         for m, c in r.get("ingredients", {}).items():
             game._remove_material(m, c)
+        # M27: 记录合成配方
+        if not hasattr(game, "_crafted_this_life"):
+            game._crafted_this_life = []
+        if name not in game._crafted_this_life:
+            game._crafted_this_life.append(name)
 
         result_def = r.get("result", {})
         result_type = result_def.get("type", "") if result_def else ""
@@ -103,9 +108,6 @@ class CraftingState(State):
             from item_generator import get_generator
             gen = get_generator()
             arch = result_def.get("archetype")
-            mat = result_def.get("material")
-            mat = ORE_TO_MATERIAL.get(mat, mat)
-            affix_chance = result_def.get("affix_chance", 0.0)
             if affix_chance > 0 and random.random() < affix_chance:
                 item_dict = gen.generate(archetype_name=arch, material_name=mat)
             else:

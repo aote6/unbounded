@@ -128,6 +128,10 @@ def equipment_menu(stdscr, game):
         register_status()
         from systems.buff_system import create_buff_manager
         self.buff_manager = create_buff_manager()
+        # M27: 跨局遗产统计
+        self._monsters_killed_this_life = 0
+        self._blocks_placed_this_life = 0
+        self._crafted_this_life = []
         self.engine = None  # 状态机引擎，由 run() 设置
 
     # ── 材料系统（堆叠物品） ──
@@ -287,6 +291,9 @@ def equipment_menu(stdscr, game):
         self.turn = 0
         self.inventory = Inventory()
         self.equipment = {}
+        # M27: 应用跨局遗产增益
+        from systems.legacy_system import apply_legacy_perks
+        apply_legacy_perks(self)
         self.buff_manager = create_buff_manager()
         self.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
         self.place_mode = None; self.last_place = None
@@ -497,6 +504,8 @@ def equipment_menu(stdscr, game):
         self.world.set_tile(bx, by, self.place_mode)
         self.modified_tiles[(bx, by)] = self.place_mode
         # 如果放置的是箱子，初始化空箱子
+        # M27: 本局放置计数
+        self._blocks_placed_this_life += 1
         if self.place_mode == "木箱":
             self.chests[(bx, by)] = {"materials": {}, "equipment_instances": []}
         if self.place_item_name:
@@ -532,6 +541,8 @@ def equipment_menu(stdscr, game):
                 self.message = f"攻击 {monster['name']}，造成 {dmg} 点伤害。"
 
     def _kill_monster(self, monster, cause="attack"):
+        # M27: 本局击杀计数
+        self._monsters_killed_this_life += 1
         mx, my = monster["x"], monster["y"]
         mname = monster["name"]
         from systems.event_bus import EventBus, EventType, GameEvent
@@ -671,6 +682,10 @@ def equipment_menu(stdscr, game):
             self._drop_items_on_ground(self.player_x, self.player_y)
             self._place_grave(self.player_x, self.player_y)
             self._save_world_on_death()
+            # M27: 记录遗产
+            from systems.legacy_system import record_death
+            points = record_death(self)
+            self.message = f"你死了。获得 {points} 遗产点数。世界保留。"
             self.message = "你死了。世界保留，新角色继承一切。"
             return True
         return False
@@ -689,6 +704,10 @@ def equipment_menu(stdscr, game):
         self.new_game(inherit_world=True)
 
     def get_viewport_origin(self):
+        # M27: 打开遗产商店
+        from ui.states.legacy_state import LegacyState
+        if self.engine:
+            self.engine.push_state(LegacyState(self))
         vx = self.player_x - VIEW_WIDTH // 2
         vy = self.player_y - VIEW_HEIGHT // 2
         return vx, vy
