@@ -40,9 +40,19 @@
     },
     "tags": [
       "stone",
-      "brittle",
-      "wall"
-    ]
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "█",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 5.0
+      }
+    }
   },
   "木墙": {
     "type": "placeable",
@@ -57,9 +67,19 @@
     },
     "tags": [
       "wood",
-      "flammable",
-      "wall"
-    ]
+      "wall",
+      "flammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "▓",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 2.0
+      }
+    }
   },
   "火把": {
     "type": "placeable",
@@ -71,10 +91,19 @@
       "light": 5
     },
     "tags": [
-      "wood",
-      "heat_source",
-      "light"
-    ]
+      "light",
+      "heat_source"
+    ],
+    "components": {
+      "placeable": {
+        "char": "†",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 0.5
+      }
+    }
   },
   "石灰岩墙": {
     "type": "placeable",
@@ -89,9 +118,19 @@
     },
     "tags": [
       "stone",
-      "brittle",
-      "wall"
-    ]
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "▓",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 4.0
+      }
+    }
   },
   "大理石柱": {
     "type": "placeable",
@@ -106,9 +145,19 @@
     },
     "tags": [
       "stone",
-      "brittle",
-      "wall"
-    ]
+      "decor",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "▒",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 4.0
+      }
+    }
   },
   "花岗岩砖": {
     "type": "placeable",
@@ -123,9 +172,19 @@
     },
     "tags": [
       "stone",
-      "brittle",
-      "wall"
-    ]
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "█",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 6.0
+      }
+    }
   },
   "玻璃窗": {
     "type": "placeable",
@@ -133,9 +192,20 @@
     "desc": "透明玻璃窗",
     "tags": [
       "glass",
-      "brittle",
-      "wall"
-    ]
+      "wall",
+      "transparent",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "░",
+        "passable": false,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 1.0
+      }
+    }
   },
   "砖墙": {
     "type": "placeable",
@@ -149,10 +219,20 @@
       "material": "brick"
     },
     "tags": [
-      "brick",
-      "brittle",
-      "wall"
-    ]
+      "stone",
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "█",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 5.0
+      }
+    }
   },
   "砂岩墙": {
     "type": "placeable",
@@ -166,9 +246,20 @@
       "material": "sand"
     },
     "tags": [
-      "sand",
-      "wall"
-    ]
+      "stone",
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "░",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 3.0
+      }
+    }
   },
   "盐灯": {
     "type": "placeable",
@@ -183,9 +274,19 @@
       "light": 3
     },
     "tags": [
-      "salt",
-      "light"
-    ]
+      "light",
+      "decor"
+    ],
+    "components": {
+      "placeable": {
+        "char": "☼",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 0.5
+      }
+    }
   },
   "硫磺灯": {
     "type": "placeable",
@@ -200,9 +301,20 @@
       "light": 3
     },
     "tags": [
-      "sulfur",
-      "light"
-    ]
+      "light",
+      "heat_source",
+      "flammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "☿",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 0.5
+      }
+    }
   },
   "木箱": {
     "type": "placeable",
@@ -217,9 +329,19 @@
     },
     "tags": [
       "wood",
-      "flammable",
-      "container"
-    ]
+      "container",
+      "flammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "□",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 1.0
+      }
+    }
   },
   "蜘蛛丝": {
     "type": "material",
@@ -273,19 +395,39 @@
     "desc": "阴森的骨墙",
     "tags": [
       "bone",
-      "organic",
-      "wall"
-    ]
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "☺",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 3.0
+      }
+    }
   },
   "丝绸墙纸": {
     "type": "placeable",
     "place_tile": "丝绸墙纸",
     "desc": "华丽的丝绸墙纸",
     "tags": [
-      "silk",
-      "flexible",
-      "wall"
-    ]
+      "cloth",
+      "wall",
+      "flammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "░",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 1.0
+      }
+    }
   },
   "石砖墙": {
     "type": "placeable",
@@ -293,18 +435,39 @@
     "desc": "坚固的石砖墙",
     "tags": [
       "stone",
-      "brittle",
-      "wall"
-    ]
+      "wall",
+      "nonflammable"
+    ],
+    "components": {
+      "placeable": {
+        "char": "█",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 6.0
+      }
+    }
   },
   "地毯": {
     "type": "placeable",
     "place_tile": "地毯",
     "desc": "柔软的地毯",
     "tags": [
-      "fabric",
+      "cloth",
+      "floor",
       "flammable"
-    ]
+    ],
+    "components": {
+      "placeable": {
+        "char": "≈",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 0.5
+      }
+    }
   },
   "剑": {
     "type": "equipment",
@@ -340,26 +503,116 @@
   },
   "木地板": {
     "type": "placeable",
-    "desc": "木质地板"
+    "desc": "木质地板",
+    "components": {
+      "placeable": {
+        "char": "=",
+        "passable": true,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 1.5
+      }
+    },
+    "tags": [
+      "wood",
+      "floor",
+      "flammable"
+    ]
   },
   "木门": {
     "type": "placeable",
-    "desc": "可开关的木门"
+    "desc": "可开关的木门",
+    "components": {
+      "placeable": {
+        "char": "+",
+        "passable": true,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 2.0
+      }
+    },
+    "tags": [
+      "wood",
+      "door",
+      "flammable"
+    ]
   },
   "木桌": {
     "type": "placeable",
-    "desc": "木质桌子"
+    "desc": "木质桌子",
+    "components": {
+      "placeable": {
+        "char": "┼",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 1.5
+      }
+    },
+    "tags": [
+      "wood",
+      "decor",
+      "flammable"
+    ]
   },
   "木椅": {
     "type": "placeable",
-    "desc": "木质椅子"
+    "desc": "木质椅子",
+    "components": {
+      "placeable": {
+        "char": "┴",
+        "passable": true,
+        "transparent": true,
+        "blocks_vision": false,
+        "diggable": false,
+        "hardness": 1.0
+      }
+    },
+    "tags": [
+      "wood",
+      "decor",
+      "flammable"
+    ]
   },
   "木墙(简易)": {
     "type": "placeable",
-    "desc": "简易木墙"
+    "desc": "简易木墙",
+    "components": {
+      "placeable": {
+        "char": "▓",
+        "passable": false,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 1.5
+      }
+    },
+    "tags": [
+      "wood",
+      "wall",
+      "flammable"
+    ]
   },
   "木门(简易)": {
     "type": "placeable",
-    "desc": "简易木门"
+    "desc": "简易木门",
+    "components": {
+      "placeable": {
+        "char": "+",
+        "passable": true,
+        "transparent": false,
+        "blocks_vision": true,
+        "diggable": false,
+        "hardness": 1.5
+      }
+    },
+    "tags": [
+      "wood",
+      "door",
+      "flammable"
+    ]
   }
 }

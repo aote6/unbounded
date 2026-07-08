@@ -106,7 +106,32 @@ TILE_PROPS = {
     },
 }
 
-PLACEABLE_PROPS = {
+def _build_placeable_props():
+    """从 items.json 自动生成 PLACEABLE_PROPS，不再手动维护两份。"""
+    import json
+    from pathlib import Path
+    items_path = Path(__file__).parent / "data" / "items.json"
+    with open(items_path, encoding="utf-8") as f:
+        items = json.load(f)
+    props = {}
+    for name, data in items.items():
+        if data.get("type") == "placeable":
+            comp = data.get("components", {}).get("placeable", {})
+            props[name] = {
+                "name": data.get("name", name),
+                "passable": comp.get("passable", False),
+                "transparent": comp.get("transparent", False),
+                "blocks_vision": comp.get("blocks_vision", True),
+                "diggable": comp.get("diggable", False),
+                "hardness": comp.get("hardness", 1.0),
+                "char": comp.get("char", "?"),
+                "tags": data.get("tags", []),
+            }
+    # 系统生成的方块（尸体/楼梯/火）仍手动维护
+    props.update(_SYSTEM_TILES)
+    return props
+
+_SYSTEM_TILES = {
     "石墙": {
         "name": "石墙", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": False, "hardness": 5.0, "char": "\u2588",
@@ -243,6 +268,8 @@ PLACEABLE_PROPS = {
         "char": "\u2668", "tags": ["burning", "heat_source", "light"],
     },
 }
+
+PLACEABLE_PROPS = _build_placeable_props()
 
 
 def get_tile_props(tile):
