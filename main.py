@@ -12,9 +12,7 @@ from world_gen import (
 from tile_props import get_tile_props, get_tile_char, get_dig_turns
 from systems.interaction import get_nearby_chest
 from systems.save_system import build_save_data, apply_load_data
-from ui.equipment_ui import equipment_menu
 from ui.game_renderer import draw
-from ui.crafting_ui import crafting_menu
 from systems.tag_system import load_rules, check_interaction
 from systems.scent_map import rebuild_scent_map
 from systems.tile_interaction import tick_tile_interactions, tick_burning_tiles
@@ -73,21 +71,6 @@ def load_recipes():
             return json.load(f)
     except Exception as e:
         print(f"[recipes] JSON 解析失败: {e}"); return {}
-
-# ═══════════════════════════════════
-# 合成菜单
-# ═══════════════════════════════════
-def crafting_menu(stdscr, game):
-    from ui.crafting_ui import crafting_menu as _ui
-    _ui(stdscr, game)
-# ═══════════════════════════════════
-# 装备菜单
-# ═══════════════════════════════════
-def equipment_menu(stdscr, game):
-    from ui.equipment_ui import equipment_menu as _ui
-    _ui(stdscr, game)
-
-# ═══════════════════════════════════
 
 DIRECTIONS = {
     curses.KEY_LEFT: (-1,0), curses.KEY_RIGHT: (1,0),
@@ -960,7 +943,7 @@ class Game:
             if extra: info += f" | {extra}"
             mon = self._monster_at(cx, cy)
             if mon:
-                info += f" | {mon["name"]} HP:{mon["hp"]}/{mon["max_hp"]}"
+                info += f" | {mon['name']} HP:{mon['hp']}/{mon['max_hp']}"
             self.message = info
             draw(self)
             key2 = self.stdscr.getch()
