@@ -25,19 +25,65 @@
 
 ## 架构演进（2026-07-08）
 
-### 事件总线作为副作用通道
+### 当前状态：事件总线作为副作用通道
 
 M16（路线C）之后，所有状态效果通过事件总线统一分发：
 
-_attack_monster → DAMAGE_DEALT → status_system（燃烧/中毒/吸血）
-advance_turn   → TURN_START    → status_system（持续伤害）
-_kill_monster  → MONSTER_KILLED → status_system（死亡特效，预留）
+_attack_monster -> DAMAGE_DEALT -> status_system（燃烧/中毒/吸血）
+advance_turn   -> TURN_START    -> status_system（持续伤害）
+_kill_monster  -> MONSTER_KILLED -> status_system（死亡特效，预留）
 
-事件总线从外挂变成**唯一的副作用通道**。_attack_monster 不再硬编码 on_fire/poison/lifesteal，_tick_status_effects 清空。所有状态变更集中在 status_system 中处理。
+事件总线从外挂变成**唯一的副作用通道**。_attack_monster 不再硬编码 on_fire/poison/lifesteal，_tick_status_effects 清空。
 
-### 下一步：状态机 → Action 模式
+### 下一步：状态机驱动架构（M17）
 
-路线 C 清理副作用后，run() 的 _handle_xxx() 方法可以拆为独立的 State 对象（M17），每个 State 只负责按键→Action。Action 执行后通过事件总线驱动副作用。这是路线 A 的踏脚石。
+将 run() 中的 if/elif 输入分发链重构为 State 栈：
+
+Engine.run()
+  +-- state_stack[-1].handle_input(key)  -> 返回新 State 或 None
+  +-- state_stack[-1].update()           -> 逻辑更新
+  +-- state_stack[-1].render(stdscr)     -> 渲染
+
+State 类型：
+- PlayState：移动/攻击/挖掘/查看
+- InventoryState：背包/装备
+- CraftingState：合成菜单
+- BuildState：建造模式
+- ChestState：箱子交互
+- DialogState：确认弹窗/死亡画面
+
+每个 State 自己处理输入和渲染，状态切换通过 push/pop 栈实现。菜单叠加（如在游戏中打开背包）天然支持，不需要 while True 嵌套阻塞。
+
+### 中期：气味地图寻路（M19）
+
+当前怪物 AI 使用贪心直线逼近，在复杂洞穴地形会卡墙角。计划引入 Dijkstra 气味场（Flow Map）：
+
+- 玩家每回合作为气味源，BFS 扩散气味梯度场
+- 怪物只需检查周围 8 格的气味值，向最高处移动
+- 天然解决绕墙问题，性能优于每怪独立 A*
+- 可扩展：不同怪物对气味敏感度不同，隐身/潜行机制的基础
+
+### 中期：Tag 系统扩展到环境方块
+
+当前 Tag 交互只用于武器到怪物的燃烧效果。下一步扩展到方块：
+
+- 木墙[flammable] + 火把[heat_source] -> 点燃方块
+- 火焰向相邻可燃方块传播
+- 水[wet] + 电[electric] -> 连锁伤害
+- 事件总线是承载这种涌现交互的天然载体
+
+### 远期：存档分离与永久世界
+
+当引入多角色/遗产机制时，分离存档：
+
+- player.json：角色属性、背包、跨局继承点数
+- world chunks/：世界地形差分（永久保留）
+- 角色死亡 -> 只删除 player.json，世界保留
+- 新角色 -> 继承被前代改造过的世界
+
+### 近期：按键常量集中化（M18）
+
+将散落在代码中的按键常量集中到 config.py，统一管理。
 
 ## 信息不对称机制
 
@@ -49,20 +95,20 @@ _kill_monster  → MONSTER_KILLED → status_system（死亡特效，预留）
 - 发现机制：环境线索在接近时自动提示
 - 元规则层：玩家不知道可燃+热源=着火，直到第一次触发
 
-## 涌现案例（设计目标，非全部实现）
+## 涌现案例
 
 ### 案例1：火把 + 木墙 = 意外火灾
-玩家放置火把照亮木屋，火把有[heat_source]标签，木墙有[flammable]标签，规则矩阵匹配导致木墙着火。火焰沿可燃方块蔓延，烧掉半个基地。玩家学到：建造需要防火隔离带。
+玩家放置火把照亮木屋，火把有[heat_source]标签，木墙有[flammable]标签，规则矩阵匹配导致木墙着火。火焰沿可燃方块蔓延，烧掉半个基地。
 
 ### 案例2：熔岩傀儡 + 蜘蛛网 = 区域控制
-熔岩傀儡[heat_source]穿过蜘蛛网[flammable]区域，蜘蛛网燃烧堵住追兵路线。玩家可以利用环境怪物实现战术效果。
+熔岩傀儡[heat_source]穿过蜘蛛网[flammable]区域，蜘蛛网燃烧堵住追兵路线。
 
 ### 案例3：水 + 电 = 范围伤害
-史莱姆[wet]在水里，玩家用带电武器攻击。导电规则触发，水中所有生物受到连锁伤害。单一规则×环境状态=范围效果。
+史莱姆[wet]在水里，玩家用带电武器攻击。导电规则触发，水中所有生物受到连锁伤害。
 
 ## 文件结构
 
-main.py              # 主循环、Game类（1111行，68个方法）
+main.py              # 主循环、Game类（1111行）
 config.py            # 全局参数
 inventory.py         # 统一背包系统
 equipment.py         # 装备实例数据类
@@ -72,8 +118,8 @@ items.py             # 物品加载
 item_generator.py    # 三层物品组装引擎
 tile_props.py        # 方块属性查询
 systems/
-    event_bus.py     # 事件总线（单例，5种事件类型）
-    status_system.py # 统一状态管理（燃烧/中毒/吸血）
+    event_bus.py     # 事件总线（6种事件类型）
+    status_system.py # 统一状态管理
     tag_system.py    # 标签系统+规则矩阵
     interaction.py   # 箱子交互
     save_system.py   # 存档构建/恢复
@@ -82,20 +128,27 @@ ui/
     equipment_ui.py  # 装备界面
     crafting_ui.py   # 合成界面
 data/
-    monsters.json    # 怪物定义（7种，含tags）
-    items.json       # 物品定义（29种，含tags）
+    monsters.json    # 怪物定义（含tags）
+    items.json       # 物品定义（含tags）
     interaction_rules.json  # 规则矩阵
-    materials.json   # 材质定义（含tags）
-    recipes.json     # 合成配方（61个）
-    archetypes.json  # 装备原型（8个）
-    affixes.json     # 词缀（15个）
+    materials.json   # 材质定义
+    recipes.json     # 合成配方
+    archetypes.json  # 装备原型
+    affixes.json     # 词缀
 
 ## 当前架构状态（2026-07-08）
 
 Game.run()
-  ├── 输入分发：11个 _handle_xxx() 方法
-  ├── 战斗：_attack_monster → DAMAGE_DEALT事件 → status_system
-  ├── 回合：advance_turn → TURN_START事件 → status_system
-  ├── 怪物AI：_tick_monsters（效用评分驱动）
-  ├── 世界：World对象（Perlin噪声无限生成）
-  └── 存储：Inventory统一背包 / Chunk差分存档
+  +-- 输入分发：11个 _handle_xxx() 方法
+  +-- 战斗：_attack_monster -> DAMAGE_DEALT事件 -> status_system
+  +-- 回合：advance_turn -> TURN_START事件 -> status_system
+  +-- 怪物AI：_tick_monsters（效用评分驱动）
+  +-- 世界：World对象（Perlin噪声无限生成）
+  +-- 存储：Inventory统一背包 / Chunk差分存档
+
+## 技术债务与已知限制
+
+- systems/interaction.py 中 curses 渲染未剥离到 ui/ 层
+- 怪物寻路使用贪心算法，复杂地形会卡墙角
+- 输入按键散落在代码中，未集中管理
+- Game 类仍为 God Object（1111行），需状态机拆分

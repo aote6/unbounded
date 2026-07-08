@@ -1029,29 +1029,29 @@ class Game:
             key = self.stdscr.getch()
             curses.flushinp()
             acted = False
-            if key in (ord("q"), ord("Q")):
+            if key in (KEY_QUIT, KEY_QUIT_UPPER):
                 break
-            elif key in (ord("o"), ord("O")):
+            elif key in (KEY_CHEST, KEY_CHEST_UPPER):
                 self._handle_open_chest()
-            elif key in (ord("c"), ord("C")):
+            elif key in (KEY_CRAFT, KEY_CRAFT_UPPER):
                 self._handle_craft()
-            elif key == ord("e"):
+            elif key == KEY_EQUIP:
                 self._handle_equip()
-            elif key == ord("b"):
+            elif key == KEY_BUILD:
                 self._handle_place_menu()
             elif key in (curses.KEY_ENTER, 10, 13):
                 acted = self._handle_confirm_place()
-            elif key == ord("."):
+            elif key == KEY_REPEAT:
                 self._handle_repeat_build()
-            elif key in (ord("r"), ord("R")):
+            elif key in (KEY_RELOAD, KEY_RELOAD_UPPER):
                 self._handle_reload()
-            elif key in (ord("s"), ord("S")):
+            elif key in (KEY_SAVE, KEY_SAVE_UPPER):
                 self._handle_save()
-            elif key in (ord("l"), ord("L")):
+            elif key in (KEY_LOAD, KEY_LOAD_UPPER):
                 self._handle_load()
-            elif key == ord("x"):
+            elif key == KEY_LOOK:
                 self._handle_look_mode()
-            elif key == ord("d"):
+            elif key == KEY_DIG:
                 acted = self._handle_dig_mode()
             elif key in DIRECTIONS:
                 dx, dy = DIRECTIONS[key]

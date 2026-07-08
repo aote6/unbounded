@@ -31,3 +31,35 @@ DAWN_START = 0
 DAY_START = 300
 DUSK_START = 1200
 NIGHT_START = 1500
+
+
+# ═══════════════════════════════════════════
+# 按键绑定（集中管理，M18）
+# ═══════════════════════════════════════════
+KEY_QUIT = ord('q')
+KEY_QUIT_UPPER = ord('Q')
+KEY_CRAFT = ord('c')
+KEY_CRAFT_UPPER = ord('C')
+KEY_EQUIP = ord('e')
+KEY_BUILD = ord('b')
+KEY_REPEAT = ord('.')
+KEY_RELOAD = ord('r')
+KEY_RELOAD_UPPER = ord('R')
+KEY_SAVE = ord('s')
+KEY_SAVE_UPPER = ord('S')
+KEY_LOAD = ord('l')
+KEY_LOAD_UPPER = ord('L')
+KEY_LOOK = ord('x')
+KEY_DIG = ord('d')
+KEY_CHEST = ord('o')
+KEY_CHEST_UPPER = ord('O')
+KEY_NEW_GAME = ord('n')
+KEY_NEW_GAME_UPPER = ord('N')
+KEY_CLOSE = ord('c')
+KEY_CLOSE_UPPER = ord('q')  # 兼容
+KEY_ENTER = ord('\n')
+KEY_ENTER_ALT = ord('\r')
+KEY_LEFT = ord('h')
+KEY_RIGHT = ord('l')
+KEY_UP = ord('k')
+KEY_DOWN = ord('j')
