@@ -250,7 +250,7 @@ def equipment_menu(stdscr, game):
         self._monster_index.pop((monster["x"], monster["y"]), None)
 
     def new_game(self):
-        # 清理旧存档的 chunk 差分数据，防止跨存档污染
+        # 清理旧存档，防止跨存档污染
         import shutil
         from world_gen import SAVE_DIR
         if SAVE_DIR.exists():
@@ -258,6 +258,12 @@ def equipment_menu(stdscr, game):
         SAVE_DIR.mkdir(parents=True, exist_ok=True)
         if SAVE_FILE.exists():
             SAVE_FILE.unlink()
+        player_path = BASE_DIR / "data" / "player.json"
+        world_path = BASE_DIR / "data" / "world_meta.json"
+        if player_path.exists():
+            player_path.unlink()
+        if world_path.exists():
+            world_path.unlink()
         self.world = generate_world(seed=WORLD_SEED)
         sx, sy = find_spawn(self.world, start_x=0)
         self.player_x, self.player_y = sx, sy
@@ -283,15 +289,25 @@ def equipment_menu(stdscr, game):
         self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
 
     def save_game(self):
-        """保存游戏状态到磁盘。"""
-        data = build_save_data(self)
+        """保存游戏状态到磁盘。M25: 拆分为 player.json + world_meta.json + save.json 兼容。"""
+        player_data, world_data = build_save_data(self)
+        save_data = {"player": player_data, "world": world_data}
+        
+        player_path = BASE_DIR / "data" / "player.json"
+        world_path = BASE_DIR / "data" / "world_meta.json"
+        
         try:
             SAVE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            # 新格式：独立文件
+            with open(player_path, "w", encoding="utf-8") as f:
+                json.dump(player_data, f, ensure_ascii=False, indent=2)
+            with open(world_path, "w", encoding="utf-8") as f:
+                json.dump(world_data, f, ensure_ascii=False, indent=2)
+            # 保留旧格式兼容
             with open(SAVE_FILE, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+                json.dump(save_data, f, ensure_ascii=False, indent=2)
             self.message = "游戏已保存。"
         except Exception as e:
-            self.message = f"存档失败: {e}"
             self.message = f"存档失败: {e}"
 
     def _setup_curses(self):
@@ -323,17 +339,33 @@ def equipment_menu(stdscr, game):
             return False
         return True
     def load_game(self):
-        """从磁盘读取存档并恢复游戏状态。"""
-        if not SAVE_FILE.exists():
+        """从磁盘读取存档并恢复游戏状态。M25: 优先读取 player.json + world_meta.json。"""
+        player_path = BASE_DIR / "data" / "player.json"
+        world_path = BASE_DIR / "data" / "world_meta.json"
+        
+        if player_path.exists() and world_path.exists():
+            try:
+                with open(player_path, "r", encoding="utf-8") as f:
+                    player_data = json.load(f)
+                with open(world_path, "r", encoding="utf-8") as f:
+                    world_data = json.load(f)
+                data = {"player": player_data, "world": world_data}
+            except Exception as e:
+                self.message = f"读档失败: {e}"
+                return False
+        elif SAVE_FILE.exists():
+            try:
+                with open(SAVE_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception as e:
+                self.message = f"读档失败: {e}"
+                return False
+        else:
             self.message = "没有找到存档文件。"
             return False
-        try:
-            with open(SAVE_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception as e:
-            self.message = f"读档失败: {e}"
-            return False
-        self.world = generate_world(seed=data.get("seed", WORLD_SEED), decorate=False)
+        
+        seed = data.get("seed") or (data.get("world", {}).get("seed") if "world" in data else WORLD_SEED)
+        self.world = generate_world(seed=seed, decorate=False)
         apply_load_data(self, data)
         # M21: 迁移怪物旧状态格式
         if hasattr(self, 'buff_manager'):
