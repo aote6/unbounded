@@ -1,4 +1,5 @@
 """玩家动作系统：挖掘、放置——从 Game 类提取。"""
+from systems.goal_system import check_special_location
 from tile_props import TILE_AIR, get_tile_props, get_dig_turns
 from world_gen import TILE_TREE
 from systems.inventory_actions import add_equipment_instance
@@ -160,7 +161,7 @@ def try_move_or_dig(game, dx, dy):
             return
         _maybe_cancel_dig(game, nx, ny)
         game.player_x, game.player_y = nx, ny
-        game._check_special_location()
+        check_special_location(game)
     elif props["diggable"]:
         dig_any_tile(game, nx, ny)
 

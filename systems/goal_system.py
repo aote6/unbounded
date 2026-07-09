@@ -3,7 +3,7 @@
 
 def check_goals(game):
     """根据玩家进度推进目标。"""
-    if game.goal == "build_first_room" and game._count_rooms_nearby() >= 1:
+    if game.goal == "build_first_room" and _simple_room_check(game):
         game.goal = "explore_cave"
         game.message = "【目标】家已建成！深入地下探索吧。"
     elif game.goal == "explore_cave" and game.player_y < -20:
@@ -39,3 +39,14 @@ def check_special_location(game):
                     game.inventory.add(item, count)
                 game.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
             break
+
+
+def _simple_room_check(game):
+    """简化版房间检测：周围10格内墙壁数量>=5视为有房间"""
+    count = 0
+    for dx in range(-10, 11, 2):
+        for dy in range(-10, 11, 2):
+            tile = game.world.get_tile(game.player_x + dx, game.player_y + dy)
+            if tile and tile.get("tile", 0) != 0:  # 非空气
+                count += 1
+    return count >= 5
