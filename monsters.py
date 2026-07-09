@@ -55,6 +55,7 @@ def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
         sy = py + random.randint(-15, 15)
         if chebyshev(sx, sy, px, py) < min_dist:
             continue
+        from tile_props import TILE_AIR
         if world.get_tile(sx, sy)["tile"] != TILE_AIR:
             continue
         if (sx, sy) in monster_index:
