@@ -388,7 +388,12 @@ class Game:
     # ═══════════════════════════════════
 
     def get_viewport_origin(self):
-        return (self.player.x - VIEW_WIDTH // 2, self.player.y - VIEW_HEIGHT // 2)
+        if self.engine and self.engine.stdscr:
+            vw = self.engine.stdscr.getmaxyx()[1]
+            vh = self.engine.stdscr.getmaxyx()[0] - 8
+        else:
+            vw, vh = VIEW_WIDTH, VIEW_HEIGHT
+        return (self.player.x - vw // 2, self.player.y - vh // 2)
 
 
 # ═══════════════════════════════════

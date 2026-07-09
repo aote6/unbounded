@@ -87,16 +87,16 @@ def generate_tile(x: int, y: int, seed: int = 12345) -> int:
             elif ore > 0.40: tile = TILE_CLAY
     else:
         if h < -0.15: tile = TILE_WATER
-        elif h < 0.05: tile = TILE_SAND
-        elif h < 0.25: tile = TILE_DIRT
+        elif h < 0.0: tile = TILE_SAND
+        elif h < 0.15: tile = TILE_DIRT
+        elif h < 0.35:
+            if ore > 0.40: tile = TILE_TREE
+            else: tile = TILE_DIRT
+        elif h < 0.50:
+            if ore > 0.35: tile = TILE_TREE
+            else: tile = TILE_DIRT
         else:
-            if 0.30 < ore < 0.65 and h > 0.18: tile = TILE_TREE
-            elif h > 0.40 and ore > 0.60:
-                from world_gen import TILE_COAL, TILE_COPPER, TILE_IRON
-                if ore > 0.80: tile = TILE_IRON
-                elif ore > 0.70: tile = TILE_COPPER
-                else: tile = TILE_COAL
-            elif 0.35 < ore < 0.55: tile = TILE_TREE
+            if ore > 0.30: tile = TILE_TREE
             else: tile = TILE_DIRT
 
     _PERLIN_CACHE[key] = tile

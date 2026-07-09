@@ -76,7 +76,8 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
     current_chars = []
     wy = oy + row
     view_w = stdscr.getmaxyx()[1]
-    for col in range(view_w):
+    vw = stdscr.getmaxyx()[1]
+    for col in range(vw):
         wx = ox + col
         ch, attr = _compute_cell(game, wx, wy)
         if ambient <= 2:
