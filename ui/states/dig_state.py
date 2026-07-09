@@ -3,6 +3,7 @@ import curses
 from core.state_machine import State
 from ui.game_renderer import draw
 
+from systems.turn_system import advance_turn
 
 
 
@@ -23,7 +24,7 @@ class DigState(State):
         if key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
             game.dig_adjacent(dx, dy)
-            game.advance_turn()
+            advance_turn(game)
             game.engine.pop_state()
             return None
 

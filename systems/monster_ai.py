@@ -1,4 +1,5 @@
 """怪物AI系统：行为决策、移动索引、生成控制
+from systems.combat_system import kill_monster
 
 M21: tick_status_effects 改为委托 BuffManager.tick_all()，
      保留兼容包装函数供旧调用方使用。
@@ -126,5 +127,5 @@ def _tick_monster_vs_neutral(game):
                 dmg = random.randint(ap[0], ap[1])
                 target["hp"] -= dmg
                 if target["hp"] <= 0:
-                    game._kill_monster(target, cause="predator")
+                    kill_monster(game, target, cause="predator")
                 break

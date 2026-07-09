@@ -1,4 +1,5 @@
 """Buff系统：统一管理所有实体（玩家+怪物）的状态效果。
+from systems.combat_system import kill_monster
 
 替换原有的三种格式：
 - on_fire (int)        → Buff("on_fire", ...)
@@ -119,7 +120,7 @@ class BuffManager:
                 if hp <= 0:
                     dead_entities.add(eid)
                     if not is_player:
-                        game._kill_monster(entity, cause=buff.source)
+                        kill_monster(game, entity, cause=buff.source)
                     # 玩家死亡在 check_death 中处理，这里只做标记
                     break
             

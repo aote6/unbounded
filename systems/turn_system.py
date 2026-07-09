@@ -1,11 +1,12 @@
 """回合推进系统：接管原 Game.advance_turn 的所有逻辑"""
 from systems.scent_map import rebuild_scent_map
 from systems.monster_ai import tick_monsters, try_spawn_monster, tick_corpses
-
+from systems.legacy_system import check_death, show_death_screen
+from systems.save_manager import new_game
 
 
 def advance_turn(game):
-    """每回合推进：气味→Buff→尸体→怪物→区块→目标"""
+    """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     game.turn += 1
 
     # 1. 刷新气味地图
@@ -30,6 +31,11 @@ def advance_turn(game):
     # 7. 目标检查（每10回合）
     if game.turn % 10 == 0:
         _check_goals(game)
+
+    # 8. 死亡检查
+    if check_death(game):
+        show_death_screen(game)
+        new_game(game, inherit_world=True)
 
 
 def _check_goals(game):

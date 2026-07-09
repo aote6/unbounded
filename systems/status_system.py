@@ -4,6 +4,7 @@
 M21 重构：通过 BuffManager 施加 Buff，不再直接修改实体字典。
 """
 from systems.event_bus import EventBus, EventType
+from systems.inventory_actions import get_equipment_instance
 from systems.tag_system import check_interaction
 
 
@@ -25,7 +26,7 @@ def _player_attack_tags(game):
     if not weapon_name:
         return tags
     # 优先从装备实例读 tags（新系统）
-    inst = game._get_equipment_instance(weapon_name)
+    inst = get_equipment_instance(game, weapon_name)
     if inst and hasattr(inst, 'tags') and inst.tags:
         tags.extend(inst.tags)
     # 回退到 items.json（旧存档兼容）
