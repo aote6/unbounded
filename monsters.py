@@ -2,6 +2,7 @@
 from config import MONSTER_SLEEP_DISTANCE, MONSTER_SLEEP_TICKS
 from item_generator import generate_loot
 from pathlib import Path
+import json
 import random
 
 BASE_DIR = Path(__file__).parent
