@@ -2,7 +2,12 @@ from systems.inventory_actions import add_equipment_instance
 """CraftingState - 合成界面状态"""
 
 import curses
-from config import ORE_TO_MATERIAL
+
+# 矿石名到材质名映射
+ORE_TO_MATERIAL = {
+    "煤矿": "煤", "铜矿": "铜", "铁矿": "铁",
+    "银矿": "银", "金矿": "金", "钻石矿": "钻石",
+}
 import random
 from core.state_machine import State
 from equipment import EquipmentInstance
