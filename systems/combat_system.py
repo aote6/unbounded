@@ -1,88 +1,66 @@
-"""战斗系统：攻击、击杀、掉落——从 Game 类提取。"""
-import random
-from config import PLAYER_BASE_HIT_CHANCE, PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX
-from world_gen import TILE_AIR
-from systems.event_bus import EventBus, EventType, GameEvent
+"""战斗系统：接管击杀怪物、掉落、分裂等逻辑"""
 import monsters as monsters_mod
+from systems.event_bus import EventBus, EventType, GameEvent
+from systems.inventory_actions import add_material, add_equipment_instance, remove_monster, add_monster
+from tile_props import TILE_AIR
+CORPSE_DECAY_TURNS = 100  # 尸体 decay 回合数
 
 
-class CombatSystem:
-    """战斗逻辑。接收 game 上下文，执行攻击/击杀流程。"""
+def kill_monster(game, monster, cause="attack"):
+    """击杀怪物：掉落、尸体、分裂、消息。"""
+    game._monsters_killed_this_life += 1
+    mx, my = monster["x"], monster["y"]
+    mname = monster["name"]
 
-    def __init__(self, game):
-        self.game = game
+    # 发送事件
+    EventBus().emit(GameEvent(EventType.MONSTER_KILLED, {"monster": monster, "cause": cause}), game)
 
-    def attack_monster(self, monster):
-        """玩家攻击怪物。"""
-        game = self.game
-        if random.random() > PLAYER_BASE_HIT_CHANCE:
-            game.message = f"攻击 {monster['name']}，但未命中！"
-            game.turn += 1
-            return
+    corpse_tile = monster.get("corpse_tile")
+    splits = monsters_mod.get_split_spawns(monster, game.monster_data)
+    drop_name, drop_obj = monsters_mod.generate_loot_for(game.player_y, mname)
 
-        dmg = random.randint(PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX)
-        dmg += game._equipment_bonus("attack_bonus")
-        dmg += game._combat_damage_bonus()
-        armor = monster.get("properties", {}).get("natural_armor", 0)
-        dmg = max(1, dmg - armor)
-        monster["hp"] -= dmg
-
-        EventBus().emit(GameEvent(EventType.DAMAGE_DEALT,
-            {"attacker": "player", "target": monster, "damage": dmg}), game)
-        game._gain_skill("combat")
-
-        if monster["hp"] <= 0:
-            self.kill_monster(monster, cause="attack")
+    # 掉落
+    if drop_name and drop_obj:
+        if isinstance(drop_obj, dict) and "count" in drop_obj:
+            add_material(game, drop_name, drop_obj.get("count", 1))
         else:
-            hp_ratio = monster["hp"] / monster["max_hp"]
-            if hp_ratio < 0.3:
-                game.message = f"攻击 {monster['name']}，造成 {dmg} 点伤害。它快不行了！"
-            else:
-                game.message = f"攻击 {monster['name']}，造成 {dmg} 点伤害。"
+            add_equipment_instance(game, drop_name, drop_obj)
 
-    def kill_monster(self, monster, cause="attack"):
-        """击杀怪物：计数、掉落、尸体、分裂。"""
-        game = self.game
-        game._monsters_killed_this_life += 1
-        mx, my = monster["x"], monster["y"]
-        mname = monster["name"]
+    # 移除怪物
+    remove_monster(game, monster)
 
-        EventBus().emit(GameEvent(EventType.MONSTER_KILLED,
-            {"monster": monster, "cause": cause}), game)
+    # 放置尸体
+    if corpse_tile and game.world.get_tile(mx, my)["tile"] == TILE_AIR:
+        game.world.set_tile(mx, my, corpse_tile)
+        game.modified_tiles[(mx, my)] = corpse_tile
+        game.corpses[(mx, my)] = CORPSE_DECAY_TURNS
 
-        corpse_tile = monster.get("corpse_tile")
-        splits = monsters_mod.get_split_spawns(monster, game.monster_data)
-        drop_name, drop_obj = monsters_mod.generate_loot_for(game.player_y, mname)
+    # 分裂
+    if splits:
+        for s in splits:
+            add_monster(game, s)
 
-        if drop_name and drop_obj:
-            if isinstance(drop_obj, dict) and "count" in drop_obj:
-                game._add_material(drop_name, drop_obj.get("count", 1))
-            else:
-                game._add_equipment_instance(drop_name, drop_obj)
+    # 消息
+    cause_msg = {
+        "attack": f"打倒了 {mname}！",
+        "burn": f"{mname} 被烧死了！",
+        "poison": f"{mname} 中毒身亡！",
+    }.get(cause, f"{mname} 死了。")
+    if splits:
+        cause_msg += f"它分裂成了 {len(splits)} 只小史莱姆！"
+    elif drop_name:
+        cause_msg += f"掉落了 {drop_name}。"
+    game.message = cause_msg
 
-        game._remove_monster(monster)
 
-        if corpse_tile and game.world.get_tile(mx, my)["tile"] == TILE_AIR:
-            old_tile = game.world.get_tile(mx, my)["tile"]
-            game.world.set_tile(mx, my, corpse_tile)
-            EventBus().emit(GameEvent(EventType.TILE_CHANGED,
-                {"x": mx, "y": my, "old": old_tile, "new": corpse_tile}), game)
-            game.modified_tiles[(mx, my)] = corpse_tile
-            game.corpses[(mx, my)] = 50  # CORPSE_DECAY_TURNS
-
-        if splits:
-            for s in splits:
-                game._add_monster(s)
-
-        cause_msg = {
-            "attack": f"打倒了 {mname}！",
-            "burn": f"{mname} 被烧死了！",
-            "poison": f"{mname} 中毒身亡！",
-            "predator": f"{mname} 被猎杀了！",
-        }.get(cause, f"{mname} 死了。")
-
-        if splits:
-            cause_msg += f"它分裂成了 {len(splits)} 只小史莱姆！"
-        elif drop_name:
-            cause_msg += f"掉落了 {drop_name}。"
-        game.message = cause_msg
+def collect_attack_effects(game):
+    """收集所有装备的 on_attack 效果"""
+    effects = []
+    for item_name in game.equipment.values():
+        from systems.inventory_actions import get_equipment_instance
+        inst = get_equipment_instance(game, item_name)
+        if inst:
+            effects.extend(inst.on_attack)
+        else:
+            effects.extend(game.items.get(item_name, {}).get("on_attack", []))
+    return effects

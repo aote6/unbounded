@@ -1,6 +1,7 @@
 """玩家动作系统：挖掘、放置——从 Game 类提取。"""
 from world_gen import TILE_AIR
 from tile_props import get_tile_props
+from systems.player_items import add_equipment_instance
 from systems.event_bus import EventBus, EventType, GameEvent
 import items as items_mod
 
@@ -17,7 +18,7 @@ def dig_adjacent(game, dx, dy):
     if drop_info:
         game._maybe_cancel_dig(nx, ny)
         for d, c in drop_info.items():
-            game._add_material(d, c)
+            game.inventory.add(d, c)
         old_tile = game.world.get_tile(nx, ny)["tile"]
         game.world.set_tile(nx, ny, TILE_AIR)
         game.modified_tiles[(nx, ny)] = TILE_AIR
@@ -29,9 +30,9 @@ def dig_adjacent(game, dx, dy):
         if (nx, ny) in game.chests:
             chest = game.chests.pop((nx, ny))
             for mat, count in chest["materials"].items():
-                game._add_material(mat, count)
+                game.inventory.add(mat, count)
             for inst in chest["equipment_instances"]:
-                game._add_equipment_instance(inst.name, inst)
+                add_equipment_instance(game, inst.name, inst)
             game.message = f"拆掉了 {tile}，箱内物品已回收。"
         else:
             game.message = f"拆掉了 {tile}，回收材料。"
@@ -85,8 +86,8 @@ def do_place(game):
         game.chests[(bx, by)] = {"materials": {}, "equipment_instances": []}
 
     if game.place_item_name:
-        game._remove_material(game.place_item_name, 1)
-        if game._count_material(game.place_item_name) <= 0:
+        game.inventory.remove(game.place_item_name, 1)
+        if game.inventory.count(game.place_item_name) <= 0:
             game.message = f"放置了 {game.place_mode}（背包中已无更多，退出建造模式）"
             game.place_mode = None
             game.place_item_name = None
@@ -116,14 +117,15 @@ def dig_any_tile(game, x, y):
     if game.dig_progress["remaining"] <= 0:
         drop = props.get("drop")
         if drop:
-            game._add_material(drop, 1)
-            game.message = f"挖到了 {drop} x1（共 {game._count_material(drop)}）"
+            game.inventory.add(drop, 1)
+            game.message = f"挖到了 {drop} x1（共 {game.inventory.count(drop)}）"
         else:
             game.message = f"挖掉了 {props['name']}。"
         old_tile = game.world.get_tile(x, y)["tile"]
         game.world.set_tile(x, y, TILE_AIR)
         game.modified_tiles[(x, y)] = TILE_AIR
-        from systems.event_bus import EventBus, EventType, GameEvent
+        from systems.player_items import add_equipment_instance
+from systems.event_bus import EventBus, EventType, GameEvent
         EventBus().emit(GameEvent(EventType.TILE_CHANGED,
             {"x": x, "y": y, "old": old_tile, "new": TILE_AIR}), game)
         if (x, y) in game.corpses:
@@ -152,7 +154,7 @@ def try_move_or_dig(game, dx, dy):
 
     if mon:
         game._maybe_cancel_dig(nx, ny)
-        game._attack_monster(mon)
+        game._combat_system.attack_monster(mon) if hasattr(game, '_combat_system') else None
         return
 
     props = get_tile_props(tile)

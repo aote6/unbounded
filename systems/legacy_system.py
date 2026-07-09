@@ -147,9 +147,9 @@ def apply_legacy_perks(game):
             continue
         
         if perk["type"] == "item":
-            game._add_equipment_instance(perk["item_name"])
+            add_equipment_instance(game, perk["item_name"])
         elif perk["type"] == ItemCategory.MATERIAL:
-            game._add_material(perk["item_name"], perk.get("count", 1))
+            game.inventory.add(perk["item_name"], perk.get("count", 1))
         elif perk["type"] == "skill":
             game.skills[perk["skill"]] = game.skills.get(perk["skill"], 0) + perk["bonus"]
         elif perk["type"] == "hp_bonus":
@@ -204,6 +204,7 @@ def purchase_perk(perk_id):
     return True, f"解锁了【{perk['name']}】！"
 
 from world_gen import TILE_AIR
+from systems.player_items import add_equipment_instance
 from systems.event_bus import EventBus, EventType, GameEvent
 from inventory import Inventory
 import json

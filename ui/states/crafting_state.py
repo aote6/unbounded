@@ -1,3 +1,4 @@
+from systems.player_items import add_equipment_instance
 """CraftingState - 合成界面状态"""
 
 import curses
@@ -86,14 +87,14 @@ class CraftingState(State):
     def _craft(self, name):
         game = self.game
         r = self.recipes[name]
-        can = all(game._count_material(m) >= c
+        can = all(game.inventory.count(m) >= c
                   for m, c in r.get("ingredients", {}).items())
         if not can:
             self.status_msg = "材料不足！按任意键继续。"
             return
 
         for m, c in r.get("ingredients", {}).items():
-            game._remove_material(m, c)
+            game.inventory.remove(m, c)
         # M27: 记录合成配方
         if not hasattr(game, "_crafted_this_life"):
             game._crafted_this_life = []
@@ -128,7 +129,7 @@ class CraftingState(State):
                 lifesteal=item_dict.get("lifesteal", 0),
                 speed_bonus=item_dict.get("speed_bonus", 0),
             )
-            game._add_equipment_instance(inst.name, inst)
+            add_equipment_instance(game, inst.name, inst)
             affix_str = ""
             if inst.affixes:
                 affix_str = " [" + "|".join(inst.affixes) + "]"
@@ -137,13 +138,13 @@ class CraftingState(State):
         elif result_type == ItemCategory.MATERIAL:
             mat_name = result_def.get("name", name)
             mat_count = result_def.get("count", 1)
-            game._add_material(mat_name, mat_count)
-            self.status_msg = f"合成了 {mat_name} x{mat_count}（共 {game._count_material(mat_name)}）"
+            game.inventory.add(mat_name, mat_count)
+            self.status_msg = f"合成了 {mat_name} x{mat_count}（共 {game.inventory.count(mat_name)}）"
 
         elif result_type == ItemCategory.PLACEABLE:
             # 统一处理：先加材料到背包，让玩家按 b 放置
-            game._add_material(name, 1)
-            self.status_msg = f"合成了 {name} x1（共 {game._count_material(name)}）。按 b 放置。"
+            game.inventory.add(name, 1)
+            self.status_msg = f"合成了 {name} x1（共 {game.inventory.count(name)}）。按 b 放置。"
 
         else:
             # 兜底分支改为报错，不再静默生成垃圾装备

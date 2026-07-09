@@ -42,3 +42,12 @@ Step 3: 配方Schema重构 ✅ (2026-07-08)
   - recipes.json: 34个配方 "generated_equipment" → "equipment"，嵌入 generator_args
   - crafting_state.py: 从 generator_args 取 archetype/material，不再从 result_def 直接取
   - 现有 is_placeable 保留，不强制删除（build_state/inventory 仍在使用）
+
+Phase 2: main.py 彻底重构 ✅ (2026-07-09)
+  - main.py: 纯数据容器 GameState（43属性+11getter），零业务逻辑
+  - systems/turn_system.py: 接管 advance_turn（气味/Buff/怪物/区块/目标）
+  - systems/inventory_actions.py: 接管物品/怪物操作（9个函数）
+  - systems/combat_system.py: 接管 kill_monster + collect_attack_effects
+  - systems/save_manager.py: 接管 new_game/save_game/load_game（修复 self→game bug）
+  - systems/save_system.py: 追加 check_death/place_grave/save_world_on_death
+  - 与用户自建的 player_action.py/goal_system.py 无冲突

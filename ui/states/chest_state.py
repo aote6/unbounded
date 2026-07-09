@@ -1,3 +1,4 @@
+from systems.player_items import add_equipment_instance
 """ChestState - 箱子交互界面状态"""
 
 import curses
@@ -101,10 +102,10 @@ class ChestState(State):
             game.message = "所有物品已存入箱子。"
         else:
             for k, v in list(chest["materials"].items()):
-                game._add_material(k, v)
+                game.inventory.add(k, v)
                 del chest["materials"][k]
             for inst in list(chest["equipment_instances"]):
-                game._add_equipment_instance(inst.name, inst)
+                add_equipment_instance(game, inst.name, inst)
                 chest["equipment_instances"].remove(inst)
             game.message = "箱内所有物品已取出。"
 
@@ -119,18 +120,18 @@ class ChestState(State):
         if self.viewing_chest:
             if item[0] == "material":
                 mat_name, count = item[1], item[2]
-                game._add_material(mat_name, count)
+                game.inventory.add(mat_name, count)
                 del chest["materials"][mat_name]
             else:
                 inst = item[2]
-                game._add_equipment_instance(inst.name, inst)
+                add_equipment_instance(game, inst.name, inst)
                 chest["equipment_instances"].remove(inst)
             game.message = "已取出。"
         else:
             if item[0] == "material":
                 mat_name, count = item[1], item[2]
                 chest["materials"][mat_name] = chest["materials"].get(mat_name, 0) + count
-                game._remove_material(mat_name, count)
+                game.inventory.remove(mat_name, count)
             else:
                 inst = item[2]
                 chest["equipment_instances"].append(inst.clone() if hasattr(inst, "clone") else inst)

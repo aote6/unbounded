@@ -1,3 +1,4 @@
+from systems.player_items import add_equipment_instance
 """目标系统：进度推进 + 特殊地点检测。"""
 
 
@@ -36,6 +37,6 @@ def check_special_location(game):
                 }
                 loot = loot_tables.get(name, {})
                 for item, count in loot.items():
-                    game._add_material(item, count)
+                    game.inventory.add(item, count)
                 game.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
             break

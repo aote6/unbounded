@@ -1,402 +1,185 @@
-""" main.py 终端版游戏主循环——俯视图 + 技能 + 存档。"""
-import curses, json, random, traceback, os
+""" main.py —— 纯入口 + GameState 数据容器。
+    所有业务逻辑已迁移至 systems/ 和 ui/states/。
+    Game 类只放属性 + 最简单的 getter，不放任何业务逻辑。
+"""
+import json
+import curses
 from pathlib import Path
-from world_gen import (
-    SAVE_DIR,
-    generate_world, find_spawn, World,
-    TILE_AIR, TILE_DROPS, CHUNK_SIZE,
-    TILE_WATER, TILE_TREE,
-)
-from tile_props import get_tile_props
-from systems.save_system import build_save_data, apply_load_data, _apply_world_data
-from ui.game_renderer import draw
-from systems.tag_system import load_rules
-from systems.event_bus import EventBus, EventType, GameEvent
-from systems.buff_system import create_buff_manager
+
+# ── 数据层 ──
+from inventory import Inventory, ItemCategory
+from items import load_items
+from monsters import load_monsters
+
+# ── 系统层（初始化需要）──
+from systems.event_bus import EventBus, EventType
 from systems.status_system import register as register_status
-from systems.scent_map import rebuild_scent_map
+from systems.buff_system import create_buff_manager
+from systems.tag_system import load_rules
 
-from systems.monster_ai import tick_monsters, try_spawn_monster, tick_corpses, tick_status_effects
+# ── 配置 ──
 from config import (
-    VIEW_WIDTH, VIEW_HEIGHT, WORLD_SEED,
     PLAYER_INITIAL_HP,
-    SPAWN_INITIAL_COUNTDOWN, SPAWN_INTERVAL_MIN, SPAWN_INTERVAL_MAX,
-    SPAWN_MIN_DISTANCE,
-    DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START,
+    SPAWN_INITIAL_COUNTDOWN,
+    VIEW_WIDTH,
+    VIEW_HEIGHT,
 )
-import monsters as monsters_mod
-import items as items_mod
-from inventory import Inventory
-
-from data_mappings import load_recipes
-from systems.room_system import detect_room, check_room_formation, count_rooms_nearby
-from systems.goal_system import check_goals, check_special_location
-from systems.player_action import dig_adjacent, do_place, dig_any_tile, try_move_or_dig
-from systems.time_system import get_time_of_day, get_geology_zone
-from systems.skill_system import gain_skill, digging_speed_bonus, combat_damage_bonus, defense_reduction
-from systems.legacy_system import drop_items_on_ground, place_grave, save_world_on_death, check_death, show_death_screen, apply_legacy_perks
-from systems.player_items import add_equipment_instance, get_equipment_instance, count_equipment, get_item_attr, equipment_bonus, best_equipped_tool_bonus, collect_attack_effects
-from systems.monster_index import build_monster_index, monster_at, monster_has_position, monster_moved, add_monster, remove_monster
-from ui.terminal import setup_curses, check_terminal_size
 
 BASE_DIR = Path(__file__).parent
-SAVE_FILE = BASE_DIR / "data" / "save.json"
-CORPSE_DECAY_TURNS = 50
-CHUNK_KEEP_RADIUS = 3
-SKILL_LEVEL_THRESHOLD = 10
 
-# 矿石→材质映射表（合成时自动转换）
 
-# ═══════════════════════════════════
-# Game 类
-# ═══════════════════════════════════
 class Game:
-    def __init__(self, stdscr):
-        self.stdscr = stdscr
-        self._setup_curses()
+    """纯数据容器。不包含业务逻辑。"""
+
+    def __init__(self):
+        # ── 世界与坐标 ──
         self.world = None
         self.player_x = self.player_y = 0
         self.player_z = 0
         self.cursor_x = self.cursor_y = 0
+        self.respawn_x = self.respawn_y = 0
+        self.bed_x = None
+        self.bed_y = None
+
+        # ── 角色状态 ──
         self.player_hp = PLAYER_INITIAL_HP
         self.player_max_hp = PLAYER_INITIAL_HP
         self.turn = 0
         self.inventory = Inventory()
-        self.equipment = {}  # slot_name -> EquipmentInstance or None                # 装备槽: {"main_hand": "石剑"}
-        self.message = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。S 存档，L 读档。"
-        self.place_mode = None; self.last_place = None
-        self.place_item_name = None; self.last_place_item_name = None
-        self.dig_progress = None; self.look_mode = False
-        self.recipes = load_recipes()
-        self.items = items_mod.load_items()
-        self.monster_data = monsters_mod.load_monsters()
+        self.equipment = {}
+        self.skills = {"digging": 0, "combat": 0, "defense": 0}
+        self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
+
+        # ── 静态数据（从 JSON 加载）──
+        self.recipes = {}
+        self.items = {}
+        self.monster_data = {}
+        self._load_static_data()
+
+        # ── 实体 ──
         self.monsters = []
         self._monster_index = {}
         self.spawn_counter = {"count": SPAWN_INITIAL_COUNTDOWN}
-        load_rules()  # 加载交互规则矩阵
+
+        # ── 地图状态 ──
         self.corpses = {}
         self.modified_tiles = {}
-        self.chests = {}  # {(x,y): {"materials": {}, "equipment_instances": [...]}}
-        self.skills = {"digging": 0, "combat": 0, "defense": 0}
-        self.respawn_x = 0
-        self.respawn_y = 0
-        self.bed_x = None
-        self.bed_y = None
-        # 目标系统
+        self.chests = {}
+        self._burning_tiles = set()
+        self._found_specials = set()
+
+        # ── UI 临时状态 ──
+        self.message = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。"
+        self.place_mode = None
+        self.last_place = None
+        self.place_item_name = None
+        self.last_place_item_name = None
+        self.dig_progress = None
+        self.look_mode = False
+
+        # ── 目标系统 ──
         self.goal = "build_first_room"
         self.goals_completed = []
         self.goal_message_shown = False
-        self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
-        # 事件总线
+
+        # ── 事件与 Buff ──
         register_status()
         self.buff_manager = create_buff_manager()
-        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
-        # M27: 跨局遗产统计
+        load_rules()
+
+        # ── 遗产统计 ──
         self._monsters_killed_this_life = 0
         self._blocks_placed_this_life = 0
         self._crafted_this_life = []
-        self.engine = None  # 状态机引擎，由 run() 设置
 
-    # ── 材料系统（堆叠物品） ──
-    def _count_material(self, name):
-        return self.inventory.count(name)
+        # ── 引擎引用（由 main() 设置）──
+        self.engine = None
 
-    def _add_material(self, name, count):
-        self.inventory.add(name, count)
-
-    def _remove_material(self, name, count):
-        self.inventory.remove(name, count)
-
-    def _add_equipment_instance(self, name, instance_data=None):
-        add_equipment_instance(self, name, instance_data)
-
-    def _get_equipment_instance(self, name):
-        return get_equipment_instance(self, name)
-
-    def _count_equipment(self, name):
-        return count_equipment(self, name)
-
-    def _get_item_attr(self, item_name, field_name):
-        return get_item_attr(self, item_name, field_name)
-
-    def _equipment_bonus(self, field_name):
-        return equipment_bonus(self, field_name)
-
-    def _best_equipped_tool_bonus(self):
-        return best_equipped_tool_bonus(self)
-
-    def _collect_attack_effects(self):
-        return collect_attack_effects(self)
-
-    def _build_monster_index(self):
-        build_monster_index(self)
-
-    def _monster_at(self, x, y):
-        return monster_at(self, x, y)
-
-    def _monster_has_position(self, x, y):
-        return monster_has_position(self, x, y)
-
-    def _monster_moved(self, monster, old_x, old_y):
-        monster_moved(self, monster, old_x, old_y)
-
-    def _add_monster(self, monster):
-        add_monster(self, monster)
-
-    def _remove_monster(self, monster):
-        remove_monster(self, monster)
-
-    def new_game(self, inherit_world=False):
-        # M26: inherit_world=True 保留世界 Chunk 和世界状态
-        import shutil, json
-        
-        if not inherit_world:
-            if SAVE_DIR.exists():
-                shutil.rmtree(SAVE_DIR)
-            SAVE_DIR.mkdir(parents=True, exist_ok=True)
-            self.world = generate_world(seed=WORLD_SEED)
-        else:
-            world_path = BASE_DIR / "data" / "world_meta.json"
-            if SAVE_DIR.exists() and world_path.exists():
-                with open(world_path) as f:
-                    world_data = json.load(f)
-                seed = world_data.get("seed", WORLD_SEED)
-                self.world = generate_world(seed=seed)
-                _apply_world_data(self, world_data)
-            else:
-                if SAVE_DIR.exists():
-                    shutil.rmtree(SAVE_DIR)
-                SAVE_DIR.mkdir(parents=True, exist_ok=True)
-                self.world = generate_world(seed=WORLD_SEED)
-        
-        for p in [SAVE_FILE, BASE_DIR / "data" / "player.json"]:
-            if p.exists():
-                p.unlink()
-        
-        sx, sy = find_spawn(self.world, start_x=0)
-        self.player_x, self.player_y = sx, sy
-        self.respawn_x, self.respawn_y = sx, sy
-        self.player_z = 0
-        self.cursor_x, self.cursor_y = sx, sy
-        self.player_hp = PLAYER_INITIAL_HP; self.player_max_hp = PLAYER_INITIAL_HP
-        self.turn = 0
-        self.inventory = Inventory()
-        self.inventory = Inventory()
-        self.equipment = {}  # slot_name -> EquipmentInstance or None
-        # M27: 应用跨局遗产增益
-        apply_legacy_perks(self)
-        self.buff_manager = create_buff_manager()
-        # 订阅方块变更事件 → 房间检测
-        EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
-        self.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
-        self.place_mode = None; self.last_place = None
-        self.place_item_name = None; self.last_place_item_name = None
-        self.dig_progress = None; self.look_mode = False
-        self.recipes = load_recipes(); self.items = items_mod.load_items()
-        self.monster_data = monsters_mod.load_monsters()
-        self.monsters = []; self._monster_index = {}
-        self.spawn_counter = {"count": SPAWN_INITIAL_COUNTDOWN}
-        self.corpses = {}; self.modified_tiles = {}
-        self.chests = {}
-        self.skills = {"digging": 0, "combat": 0, "defense": 0}
-        self.skill_levels = {"digging": 1, "combat": 1, "defense": 1}
-
-    def save_game(self):
-        """保存游戏状态到磁盘。M25: 拆分为 player.json + world_meta.json + save.json 兼容。"""
-        player_data, world_data = build_save_data(self)
-        save_data = {"player": player_data, "world": world_data}
-        
-        player_path = BASE_DIR / "data" / "player.json"
-        world_path = BASE_DIR / "data" / "world_meta.json"
-        
+    def _load_static_data(self):
+        """加载 recipes.json / items.json / monsters.json"""
         try:
-            SAVE_FILE.parent.mkdir(parents=True, exist_ok=True)
-            # 新格式：独立文件
-            with open(player_path, "w", encoding="utf-8") as f:
-                json.dump(player_data, f, ensure_ascii=False, indent=2)
-            with open(world_path, "w", encoding="utf-8") as f:
-                json.dump(world_data, f, ensure_ascii=False, indent=2)
-            # 保留旧格式兼容
-            with open(SAVE_FILE, "w", encoding="utf-8") as f:
-                json.dump(save_data, f, ensure_ascii=False, indent=2)
-            self.message = "游戏已保存。"
-        except Exception as e:
-            self.message = f"存档失败: {e}"
+            with open(BASE_DIR / "data" / "recipes.json", "r", encoding="utf-8") as f:
+                self.recipes = json.load(f)
+        except Exception:
+            self.recipes = {}
+        try:
+            self.items = load_items()
+        except Exception:
+            self.items = {}
+        try:
+            self.monster_data = load_monsters()
+        except Exception:
+            self.monster_data = {}
 
-    def _setup_curses(self):
-        setup_curses(self.stdscr)
-
-    def _check_terminal_size(self):
-        return check_terminal_size(self.stdscr)
-    def load_game(self):
-        """从磁盘读取存档并恢复游戏状态。M25: 优先读取 player.json + world_meta.json。"""
-        player_path = BASE_DIR / "data" / "player.json"
-        world_path = BASE_DIR / "data" / "world_meta.json"
-        
-        if player_path.exists() and world_path.exists():
-            try:
-                with open(player_path, "r", encoding="utf-8") as f:
-                    player_data = json.load(f)
-                with open(world_path, "r", encoding="utf-8") as f:
-                    world_data = json.load(f)
-                data = {"player": player_data, "world": world_data}
-            except Exception as e:
-                self.message = f"读档失败: {e}"
-                return False
-        elif SAVE_FILE.exists():
-            try:
-                with open(SAVE_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-            except Exception as e:
-                self.message = f"读档失败: {e}"
-                return False
-        else:
-            self.message = "没有找到存档文件。"
-            return False
-        
-        seed = data.get("seed") or (data.get("world", {}).get("seed") if "world" in data else WORLD_SEED)
-        self.world = generate_world(seed=seed, decorate=False)
-        apply_load_data(self, data)
-        # M21: 迁移怪物旧状态格式
-        if hasattr(self, 'buff_manager'):
-            for m in self.monsters:
-                self.buff_manager.migrate_legacy(m)
-        return True
-
-    def _maybe_cancel_dig(self, x, y):
-        if self.dig_progress and (self.dig_progress["x"] != x or self.dig_progress["y"] != y):
-            self.dig_progress = None
-
-    def _dig_any_tile(self, x, y):
-        return dig_any_tile(self, x, y)
-
-    def _dig_natural_tile(self, x, y):
-        tile = self.world.get_tile(x, y)["tile"]
-        if tile not in TILE_DROPS and not ("尸体" in str(tile) or "残骸" in str(tile)):
-            return False
-        return self._dig_any_tile(x, y)
-
-    def try_move_or_dig(self, dx, dy):
-        try_move_or_dig(self, dx, dy)
-
-    def _do_place(self):
-        do_place(self)
-
-    def _attack_monster(self, monster):
-        from systems.combat_system import CombatSystem
-        if not hasattr(self, '_combat_system'):
-            self._combat_system = CombatSystem(self)
-        self._combat_system.attack_monster(monster)
-
-    def _kill_monster(self, monster, cause="attack"):
-        # M27: 本局击杀计数
-        self._monsters_killed_this_life += 1
-        mx, my = monster["x"], monster["y"]
-        mname = monster["name"]
-        EventBus().emit(GameEvent(EventType.MONSTER_KILLED, {"monster": monster, "cause": cause}), self)
-        corpse_tile = monster.get("corpse_tile")
-        splits = monsters_mod.get_split_spawns(monster, self.monster_data)
-        drop_name, drop_obj = monsters_mod.generate_loot_for(self.player_y, mname)
-        if drop_name and drop_obj:
-            if isinstance(drop_obj, dict) and "count" in drop_obj:
-                self._add_material(drop_name, drop_obj.get("count", 1))
-            else:
-                self._add_equipment_instance(drop_name, drop_obj)
-        self._remove_monster(monster)
-        if corpse_tile and self.world.get_tile(mx, my)["tile"] == TILE_AIR:
-            old_tile = self.world.get_tile(mx, my)["tile"]
-            self.world.set_tile(mx, my, corpse_tile)
-            EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": mx, "y": my, "old": old_tile, "new": corpse_tile}), self)
-            self.modified_tiles[(mx, my)] = corpse_tile
-            self.corpses[(mx, my)] = CORPSE_DECAY_TURNS
-        if splits:
-            for s in splits:
-                self._add_monster(s)
-        cause_msg = {
-            "attack": f"打倒了 {mname}！",
-            "burn": f"{mname} 被烧死了！",
-            "poison": f"{mname} 中毒身亡！",
-        }.get(cause, f"{mname} 死了。")
-        if splits:
-            cause_msg += f"它分裂成了 {len(splits)} 只小史莱姆！"
-        elif drop_name:
-            cause_msg += f"掉落了 {drop_name}。"
-        self.message = cause_msg
-
-    def dig_adjacent(self, dx, dy):
-        dig_adjacent(self, dx, dy)
-
-    def _drop_items_on_ground(self, x, y):
-        drop_items_on_ground(self, x, y)
-    
-    def check_death(self):
-        return check_death(self)
-
-    def show_death_screen(self):
-        show_death_screen(self)
+    # ═══════════════════════════════════
+    # 简单 getter（被外部广泛调用，保留）
+    # ═══════════════════════════════════
 
     def get_viewport_origin(self):
-        vx = self.player_x - VIEW_WIDTH // 2
-        vy = self.player_y - VIEW_HEIGHT // 2
-        return vx, vy
+        """返回视口左上角坐标"""
+        return (self.player_x - VIEW_WIDTH // 2, self.player_y - VIEW_HEIGHT // 2)
 
-    def tile_attr(self, tile):
-        return _tile_attr_fn(self, tile)
+    def _monster_at(self, x, y):
+        return (x, y) in self._monster_index
 
-    
-    def _check_room_formation(self):
-        return check_room_formation(self)
-    
-    
-    def advance_turn(self):
-        rebuild_scent_map(self)
-        self.buff_manager.tick_all(self)
-        tick_corpses(self)
-        tick_monsters(self)
-        try_spawn_monster(self)
-        self.world.keep_radius(self.player_x, self.player_y, CHUNK_KEEP_RADIUS)
-        # 目标推进
-        check_goals(self)
-    
-    def _check_goals(self):
-        check_goals(self)
-    
+    def _monster_has_position(self, x, y):
+        return self._monster_at(x, y)
+
+    def _gain_skill(self, name, amount=1):
+        self.skills[name] = self.skills.get(name, 0) + amount
+
+    def _equipment_bonus(self, attr):
+        total = 0
+        for inst in self.equipment.values():
+            if inst and hasattr(inst, attr):
+                total += getattr(inst, attr, 0) or 0
+        return total
+
+    def _best_equipped_tool_bonus(self, tool_type):
+        best = 0
+        for inst in self.equipment.values():
+            if inst and hasattr(inst, "tool_bonus"):
+                tags = getattr(inst, "tags", [])
+                if tool_type in tags:
+                    best = max(best, inst.tool_bonus or 0)
+        return best
+
+    def _digging_speed_bonus(self):
+        return self._best_equipped_tool_bonus("digging")
+
+    def _combat_damage_bonus(self):
+        base = self._equipment_bonus("attack_bonus")
+        base += self.skills.get("combat", 0) // 3
+        return base
+
+    def _player_defense(self):
+        base = self._equipment_bonus("defense_bonus")
+        base += self.skills.get("defense", 0) // 3
+        return base
+
     def _count_rooms_nearby(self):
-        return count_rooms_nearby(self)
-    
+        # 占位，由 goal_system 覆盖
+        return 0
+
     def _check_special_location(self):
-        check_special_location(self)
+        # 占位，由 goal_system 覆盖
+        pass
 
-    def _handle_reload(self):
-        self.recipes = load_recipes()
-        self.items = items_mod.load_items()
-        self.monster_data = monsters_mod.load_monsters()
-        self.message = "数据已重载"
 
-    def _handle_save(self):
-        self.save_game()
-
-    def _handle_load(self):
-        self.load_game()
-
-    def _handle_dig_mode(self):
-        self.message = "挖掘模式：按方向键选择要拆除的方块（包括尸体），其他键取消。"
-        draw(self)
-        key2 = self.stdscr.getch()
-        if key2 in DIRECTIONS:
-            dx, dy = DIRECTIONS[key2]
-            self.dig_adjacent(dx, dy)
-            return True
-        else:
-            self.message = "取消挖掘。"
-            return False
+# ═══════════════════════════════════
+# 入口
+# ═══════════════════════════════════
 
 def main(stdscr):
+    from ui.terminal import setup_curses
+    setup_curses(stdscr)
     from ui.states.main_menu_state import MainMenuState
     from core.state_machine import Engine
-    game = Game(stdscr)
+
+    game = Game()
     game.engine = Engine(stdscr)
     game.engine.run(MainMenuState(game))
+
 
 if __name__ == "__main__":
     curses.wrapper(main)

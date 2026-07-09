@@ -131,23 +131,3 @@ def _apply_world_data(game, data):
     game.modified_tiles = {}
 
 
-# ═══════════════════════════════════
-# 存档管理 API（供主菜单使用）
-# ═══════════════════════════════════
-
-def check_save_status():
-    """返回存档状态: 'full' / 'world_only' / 'none'"""
-    if PLAYER_PATH.exists() or LEGACY_SAVE_FILE.exists():
-        return 'full'
-    if WORLD_PATH.exists():
-        return 'world_only'
-    return 'none'
-
-
-def clear_all_saves():
-    """清空所有存档"""
-    for p in [LEGACY_SAVE_FILE, PLAYER_PATH, WORLD_PATH]:
-        if p.exists():
-            p.unlink()
-    if SAVE_DIR.exists():
-        shutil.rmtree(SAVE_DIR)
