@@ -18,6 +18,7 @@ def setup_curses(stdscr):
     curses.init_pair(7, curses.COLOR_RED, -1)
     curses.init_pair(8, curses.COLOR_MAGENTA, -1)
     curses.init_pair(9, curses.COLOR_BLACK, curses.COLOR_YELLOW)
+    curses.init_pair(10, curses.COLOR_BLUE, -1)
     stdscr.keypad(True)
     stdscr.nodelay(False)
 

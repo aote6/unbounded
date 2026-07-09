@@ -72,6 +72,7 @@ class Engine:
                         continue
                 current.update()
                 current.render(self.stdscr)
+                curses.doupdate()
             except Exception as e:
                 # 安全退出 curses
                 try:

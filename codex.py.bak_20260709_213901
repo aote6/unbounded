@@ -1,0 +1,77 @@
+"""codex.py 游戏全局图鉴——单一数据源。按 tile 的 name 字段查颜色，
+避免多个材质共用同一符号时颜色被强制统一。"""
+
+CODEX = {
+    "空气": {"color": "white", "attr": "normal"},
+    "泥土": {"color": "brown", "attr": "normal"},
+    "石头": {"color": "white", "attr": "normal"},
+    "煤矿": {"color": "black", "attr": "bold"},
+    "铜矿石": {"color": "yellow", "attr": "dim"},
+    "铁矿石": {"color": "white", "attr": "dim"},
+    "银矿石": {"color": "white", "attr": "bold"},
+    "金矿石": {"color": "yellow", "attr": "bold"},
+    "钻石原石": {"color": "cyan", "attr": "bold"},
+    "硫磺": {"color": "yellow", "attr": "dim"},
+    "盐矿石": {"color": "white", "attr": "normal"},
+    "黏土": {"color": "brown", "attr": "dim"},
+    "沙子": {"color": "yellow", "attr": "normal"},
+    "石灰岩": {"color": "white", "attr": "dim"},
+    "大理石": {"color": "white", "attr": "normal"},
+    "花岗岩": {"color": "white", "attr": "bold"},
+    "黑曜石": {"color": "black", "attr": "bold"},
+    "水域": {"color": "blue", "attr": "bold"},
+    "树木": {"color": "green", "attr": "bold"},
+    "石墙": {"color": "white", "attr": "normal"},
+    "木墙": {"color": "brown", "attr": "normal"},
+    "火把": {"color": "yellow", "attr": "bold"},
+    "石灰岩墙": {"color": "white", "attr": "dim"},
+    "大理石柱": {"color": "white", "attr": "bold"},
+    "花岗岩砖": {"color": "white", "attr": "dim"},
+    "玻璃窗": {"color": "cyan", "attr": "dim"},
+    "砖墙": {"color": "brown", "attr": "dim"},
+    "砂岩墙": {"color": "yellow", "attr": "dim"},
+    "盐灯": {"color": "white", "attr": "bold"},
+    "硫磺灯": {"color": "yellow", "attr": "dim"},
+    "木箱": {"color": "brown", "attr": "normal"},
+    "史莱姆尸体": {"color": "green", "attr": "dim"},
+    "巨型史莱姆尸体": {"color": "green", "attr": "bold"},
+    "蝙蝠尸体": {"color": "brown", "attr": "dim"},
+    "岩石傀儡残骸": {"color": "brown", "attr": "dim"},
+    "向下的楼梯": {"color": "white", "attr": "bold"},
+    "向上的楼梯": {"color": "white", "attr": "bold"},
+    "木地板": {"color": "brown", "attr": "normal"},
+    "木门": {"color": "brown", "attr": "bold"},
+    "木桌": {"color": "brown", "attr": "normal"},
+    "木椅": {"color": "brown", "attr": "dim"},
+    "骨墙": {"color": "white", "attr": "normal"},
+    "丝绸墙纸": {"color": "brown", "attr": "normal"},
+    "石砖墙": {"color": "white", "attr": "normal"},
+    "地毯": {"color": "brown", "attr": "normal"},
+    "火焰": {"color": "brown", "attr": "bold"},
+}
+
+COLOR_MAP = {
+    "white": 1, "yellow": 2, "cyan": 3,
+    "green": 6, "red": 7, "magenta": 8, "blue": 10,
+    "black": 1,   # 8色终端无法真正显示黑字，用白+暗淡模拟深色
+    "brown": 2,   # 用黄+暗淡模拟棕色
+}
+
+ATTR_MAP = {
+    "normal": 0, "bold": 0x200000, "dim": 0x400000,
+}
+
+
+def get_char(tile):
+    """整数/字符串 tile ID → 显示字符。"""
+    from tile_props import get_tile_char
+    return get_tile_char(tile)
+
+
+def get_color_attr(tile):
+    """tile → (color_name, attr_name)，按 name 字段查，
+    避免共用符号的材质被强制同色。"""
+    from tile_props import get_tile_props
+    name = get_tile_props(tile).get("name", "")
+    entry = CODEX.get(name, {"color": "white", "attr": "normal"})
+    return entry["color"], entry["attr"]

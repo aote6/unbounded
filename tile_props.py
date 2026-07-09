@@ -27,7 +27,7 @@ TILE_PROPS = {
     TILE_COAL: {
         "name": "煤矿", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 3.0,
-        "drop": "煤矿", "char": "\u263b",
+        "drop": "煤矿", "char": "▪",
     },
     TILE_COPPER: {
         "name": "铜矿石", "passable": False, "transparent": False,
@@ -37,27 +37,27 @@ TILE_PROPS = {
     TILE_IRON: {
         "name": "铁矿石", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 4.5,
-        "drop": "铁矿石", "char": "\u2642",
+        "drop": "铁矿石", "char": "◆",
     },
     TILE_SILVER: {
         "name": "银矿石", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 5.0,
-        "drop": "银矿石", "char": "\u263c",
+        "drop": "银矿石", "char": "◇",
     },
     TILE_GOLD: {
         "name": "金矿石", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 6.0,
-        "drop": "金矿石", "char": "\u2600",
+        "drop": "金矿石", "char": "●",
     },
     TILE_DIAMOND: {
         "name": "钻石原石", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 8.0,
-        "drop": "钻石原石", "char": "\u2666",
+        "drop": "钻石原石", "char": "◈",
     },
     TILE_SULFUR: {
         "name": "硫磺", "passable": False, "transparent": False,
         "blocks_vision": True, "diggable": True, "hardness": 3.0,
-        "drop": "硫磺", "char": "\u263f",
+        "drop": "硫磺", "char": "▲",
     },
     TILE_SALT: {
         "name": "盐矿石", "passable": False, "transparent": False,
@@ -144,7 +144,7 @@ _SYSTEM_TILES = {
     },
     "火把": {
         "name": "火把", "passable": True, "transparent": True,
-        "blocks_vision": False, "diggable": False, "hardness": 0.5, "char": "\u2020",
+        "blocks_vision": False, "diggable": False, "hardness": 0.5, "char": "!",
         "tags": ["light", "heat_source"]
     },
     "石灰岩墙": {
@@ -179,12 +179,12 @@ _SYSTEM_TILES = {
     },
     "盐灯": {
         "name": "盐灯", "passable": True, "transparent": True,
-        "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u263c",
+        "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "*",
         "tags": ["light", "decor"]
     },
     "硫磺灯": {
         "name": "硫磺灯", "passable": True, "transparent": True,
-        "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "\u263f",
+        "blocks_vision": False, "diggable": False, "hardness": 1.0, "char": "*",
         "tags": ["light", "heat_source", "flammable"]
     },
     "木箱": {
@@ -244,7 +244,7 @@ _SYSTEM_TILES = {
 
     "骨墙": {
         "name": "骨墙", "passable": False, "transparent": False,
-        "blocks_vision": True, "diggable": False, "hardness": 3.0, "char": "\u263a",
+        "blocks_vision": True, "diggable": False, "hardness": 3.0, "char": "▓",
         "tags": ["bone", "wall", "nonflammable"]
     },
     "丝绸墙纸": {
@@ -265,7 +265,7 @@ _SYSTEM_TILES = {
     "火": {
         "name": "火焰", "passable": True, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 0.1,
-        "char": "\u2668", "tags": ["burning", "heat_source", "light"],
+        "char": "*", "tags": ["burning", "heat_source", "light"],
     },
 }
 

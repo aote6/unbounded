@@ -24,7 +24,8 @@ class DigState(State):
 
         if key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
-            game.dig_adjacent(dx, dy)
+            from systems.player_action import dig_adjacent
+            dig_adjacent(game, dx, dy)
             advance_turn(game)
             game.engine.pop_state()
             return None

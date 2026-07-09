@@ -346,6 +346,9 @@
         "blocks_vision": false,
         "diggable": false,
         "hardness": 1.0
+      },
+      "recipe": {
+        "木材": 4
       }
     }
   },
