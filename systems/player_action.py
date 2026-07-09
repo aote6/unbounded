@@ -148,8 +148,17 @@ def try_move_or_dig(game, dx, dy):
         _maybe_cancel_dig(game, nx, ny)
         # 攻击交给 combat_system 处理
         from systems.combat_system import kill_monster
-        # 简化的攻击逻辑——实际 damage 计算在 play_state 中
-        game.message = f"攻击 {mon['name']}！"
+        from config import PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX, PLAYER_BASE_HIT_CHANCE
+        import random
+        if random.random() < PLAYER_BASE_HIT_CHANCE:
+            dmg = random.randint(PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX)
+            dmg += game._combat_damage_bonus()
+            mon["hp"] -= dmg
+            game.message = f"攻击 {mon['name']}，造成 {dmg} 点伤害"
+            if mon["hp"] <= 0:
+                kill_monster(game, mon, cause="attack")
+        else:
+            game.message = f"攻击 {mon['name']}，未命中！"
         return
 
     props = get_tile_props(tile)

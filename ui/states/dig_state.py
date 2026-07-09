@@ -1,6 +1,7 @@
 """挖掘模式状态：按方向键拆除方块，其他键取消"""
 import curses
 from core.state_machine import State
+from config import DIRECTIONS
 from ui.game_renderer import draw
 
 from systems.turn_system import advance_turn
