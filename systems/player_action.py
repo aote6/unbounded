@@ -103,7 +103,7 @@ def dig_any_tile(game, x, y):
         return False
 
     if not (game.dig_progress and game.dig_progress["x"] == x and game.dig_progress["y"] == y):
-        tool_power = 1 + game._best_equipped_tool_bonus()
+        tool_power = 1 + game._best_equipped_tool_bonus("digging")
         base_turns = get_dig_turns(tile, tool_power)
         speed_bonus = game._digging_speed_bonus()
         total = max(1, base_turns - speed_bonus)

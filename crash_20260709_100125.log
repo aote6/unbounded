@@ -1,0 +1,20 @@
+Unbounded Crash Report - 20260709_100125
+Error: AttributeError: 'Game' object has no attribute '_add_monster'
+State stack: ['MainMenuState', 'PlayState']
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/unbounded/core/state_machine.py", line 69, in run
+    result = current.handle_input(key)
+  File "/data/data/com.termux/files/home/unbounded/ui/states/play_state.py", line 73, in handle_input
+    advance_turn(game)
+    ~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/home/unbounded/systems/turn_system.py", line 25, in advance_turn
+    try_spawn_monster(game)
+    ~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/home/unbounded/systems/monster_ai.py", line 57, in try_spawn_monster
+    _try_spawn_neutral(game)
+    ~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/data/data/com.termux/files/home/unbounded/systems/monster_ai.py", line 80, in _try_spawn_neutral
+    game._add_monster(nm)
+    ^^^^^^^^^^^^^^^^^
+AttributeError: 'Game' object has no attribute '_add_monster'

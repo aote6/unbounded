@@ -1,10 +1,9 @@
 """游戏渲染器 - 负责绘制游戏画面和HUD
 
-M23: 双缓冲优化 — 地图绘制从逐格 addstr 改为行内合
-并连续同色字符，大幅减少 curses 调用次数。
+M23: 双缓冲优化 — 地图绘制从逐格 addstr 改为行内合并连续同色字符。
 """
 import curses
-from config import VIEW_HEIGHT, VIEW_WIDTH
+from config import VIEW_HEIGHT, VIEW_WIDTH, DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START
 from tile_props import get_tile_props, get_tile_char
 
 
@@ -21,15 +20,38 @@ TILE_CHARS = {
     "楼梯下": ">", "楼梯上": "<",
     "~": "~",
     "T": "T",
-    "†": "†",  # 墓碑
+    "†": "†",
     "兔子尸体": "r", "鹿尸体": "R", "狐狸尸体": "f",
 }
 
 SLOT_NAMES = {"main_hand": "主手", "off_hand": "副手", "body": "身体", "accessory": "饰品"}
 
 
+def _get_time_of_day(turn):
+    t = turn % DAY_LENGTH
+    if DAWN_START <= t < DAY_START:
+        return "黎明", 4
+    elif DAY_START <= t < DUSK_START:
+        return "白天", 9
+    elif DUSK_START <= t < NIGHT_START:
+        return "黄昏", 4
+    else:
+        return "夜晚", 1
+
+
+def _tile_attr(tile):
+    props = get_tile_props(tile)
+    name = props["name"]
+    if name in ("树木", "草丛"):
+        return curses.color_pair(6)
+    elif name == "水域":
+        return curses.color_pair(2)
+    elif "矿石" in name or name in ("钻石原石",):
+        return curses.color_pair(5)
+    return curses.color_pair(1)
+
+
 def _compute_cell(game, wx, wy):
-    """计算单个格子的字符和属性，从原 draw() 提取。"""
     if game._monster_has_position(wx, wy):
         m = game._monster_at(wx, wy)
         ch = m["char"]
@@ -44,27 +66,20 @@ def _compute_cell(game, wx, wy):
     else:
         tile = game.world.get_tile(wx, wy)["tile"]
         ch = TILE_CHARS.get(tile, get_tile_char(tile))
-        attr = game.tile_attr(tile)
+        attr = _tile_attr(tile)
     return ch, attr
 
 
-def _draw_map_row(game, row, ox, oy, ambient):
-    """将一行地图单元格合并为连续同色段，一次性写入。
-    从 VIEW_WIDTH 次 addstr 降至每行 1-5 次。
-    """
-    segments = []  # [(attr, string)]
+def _draw_map_row(stdscr, game, row, ox, oy, ambient):
+    segments = []
     current_attr = None
     current_chars = []
-
     wy = oy + row
     for col in range(VIEW_WIDTH):
         wx = ox + col
         ch, attr = _compute_cell(game, wx, wy)
-
-        # 夜晚全局压暗
         if ambient <= 2:
             attr = curses.color_pair(4)
-
         if attr != current_attr:
             if current_chars:
                 segments.append((current_attr, ''.join(current_chars)))
@@ -72,36 +87,27 @@ def _draw_map_row(game, row, ox, oy, ambient):
             current_chars = [ch]
         else:
             current_chars.append(ch)
-
     if current_chars:
         segments.append((current_attr, ''.join(current_chars)))
-
-    # 写入该行
     x = 0
     for attr, text in segments:
         try:
-            game.stdscr.addstr(row, x, text, attr)
+            stdscr.addstr(row, x, text, attr)
         except curses.error:
             pass
         x += len(text)
 
 
 def draw(game):
-    """绘制整个游戏画面：地图 + HUD。
-    
-    M23: 地图使用行内合并策略，消除逐格 addstr 的闪烁。
-    """
-    if not game._check_terminal_size():
-        return
-    game.stdscr.erase()
+    stdscr = game.engine.stdscr
+    stdscr.erase()
     ox, oy = game.get_viewport_origin()
-    time_name, ambient = game._get_time_of_day()
+    time_name, ambient = _get_time_of_day(game.turn)
 
-    # 绘制地图（行合并优化）
     for row in range(VIEW_HEIGHT):
-        _draw_map_row(game, row, ox, oy, ambient)
+        _draw_map_row(stdscr, game, row, ox, oy, ambient)
 
-    # 绘制 HUD
+    # HUD
     mats = " ".join(f"{k}:{v}" for k, v in game.inventory.get_materials().items()) or "（空）"
     eq_parts = []
     for slot_id in ("main_hand", "off_hand", "body", "accessory"):
@@ -113,11 +119,10 @@ def draw(game):
     if def_bonus > 0:
         hp_str += f" 防:{def_bonus}"
     sk_str = f"挖掘:{game.skill_levels['digging']} 战斗:{game.skill_levels['combat']} 防御:{game.skill_levels['defense']}"
-    zone = game._get_geology_zone(game.player_y)
     goal_names = {"build_first_room": "建造第一个房间", "explore_cave": "深入地下探索",
                   "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
     goal_text = goal_names.get(game.goal, game.goal)
-    s1 = f"[{time_name}] {zone} | {hp_str} | 技能 {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text}"
+    s1 = f"[{time_name}] | {hp_str} | 技能 {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text}"
     if game.place_mode:
         s1 += f" | [建造: {game.place_mode}]"
     if game.dig_progress:
@@ -128,12 +133,12 @@ def draw(game):
     equip_str = " | ".join(equips) if equips else "无"
     s3 = f"材料: {mats} | 装备: {equip_str}"
     try:
-        game.stdscr.addstr(VIEW_HEIGHT + 1, 0, s1, curses.A_BOLD)
-        game.stdscr.addstr(VIEW_HEIGHT + 2, 0, s2)
-        game.stdscr.addstr(VIEW_HEIGHT + 3, 0, s3)
-        game.stdscr.addstr(VIEW_HEIGHT + 4, 0, game.message)
-        game.stdscr.addstr(VIEW_HEIGHT + 6, 0,
+        stdscr.addstr(VIEW_HEIGHT + 1, 0, s1, curses.A_BOLD)
+        stdscr.addstr(VIEW_HEIGHT + 2, 0, s2)
+        stdscr.addstr(VIEW_HEIGHT + 3, 0, s3)
+        stdscr.addstr(VIEW_HEIGHT + 4, 0, game.message)
+        stdscr.addstr(VIEW_HEIGHT + 6, 0,
             "移动 | c 合成 | e 装备 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | < > 换层 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出")
     except curses.error:
         pass
-    game.stdscr.refresh()
+    stdscr.refresh()

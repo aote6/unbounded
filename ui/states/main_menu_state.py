@@ -2,6 +2,7 @@
 import curses
 from core.state_machine import State
 from systems.save_system import check_save_status, clear_all_saves
+from systems.save_manager import new_game, load_game
 from ui.states.play_state import PlayState
 
 
@@ -19,21 +20,21 @@ class MainMenuState(State):
     def handle_input(self, key):
         if self.save_status == 'full':
             if key in (ord('l'), ord('L')):
-                if not self.game.load_game():
-                    self.game.new_game()
+                if not load_game(self.game):
+                    new_game(self.game)
                 return PlayState(self.game)
             elif key in (ord('n'), ord('N')):
                 clear_all_saves()
-                self.game.new_game()
+                new_game(self.game)
                 return PlayState(self.game)
 
         elif self.save_status == 'world_only':
-            self.game.new_game(inherit_world=True)
+            new_game(self.game, inherit_world=True)
             return PlayState(self.game)
 
         else:
             if key in (ord('n'), ord('N')):
-                self.game.new_game()
+                new_game(self.game)
                 return PlayState(self.game)
 
         return None

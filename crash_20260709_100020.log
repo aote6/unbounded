@@ -1,0 +1,17 @@
+Unbounded Crash Report - 20260709_100020
+Error: TypeError: Game._best_equipped_tool_bonus() missing 1 required positional argument: 'tool_type'
+State stack: ['MainMenuState', 'PlayState']
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/unbounded/core/state_machine.py", line 69, in run
+    result = current.handle_input(key)
+  File "/data/data/com.termux/files/home/unbounded/ui/states/play_state.py", line 69, in handle_input
+    try_move_or_dig(game, dx, dy)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/unbounded/systems/player_action.py", line 157, in try_move_or_dig
+    dig_any_tile(game, nx, ny)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "/data/data/com.termux/files/home/unbounded/systems/player_action.py", line 106, in dig_any_tile
+    tool_power = 1 + game._best_equipped_tool_bonus()
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+TypeError: Game._best_equipped_tool_bonus() missing 1 required positional argument: 'tool_type'

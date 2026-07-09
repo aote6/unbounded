@@ -120,7 +120,7 @@ class Game:
         return (self.player_x - VIEW_WIDTH // 2, self.player_y - VIEW_HEIGHT // 2)
 
     def _monster_at(self, x, y):
-        return (x, y) in self._monster_index
+        return self._monster_index.get((x, y))
 
     def _monster_has_position(self, x, y):
         return self._monster_at(x, y)

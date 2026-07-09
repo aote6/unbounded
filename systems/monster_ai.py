@@ -1,9 +1,10 @@
 """怪物AI系统：行为决策、移动索引、生成控制
-from systems.combat_system import kill_monster
 
 M21: tick_status_effects 改为委托 BuffManager.tick_all()，
      保留兼容包装函数供旧调用方使用。
 """
+from systems.inventory_actions import add_monster, monster_moved
+from systems.combat_system import kill_monster
 
 import monsters as monsters_mod
 import random
@@ -20,7 +21,7 @@ def tick_monsters(game):
         )
         # 更新空间索引
         if m["x"] != old_x or m["y"] != old_y:
-            game._monster_moved(m, old_x, old_y)
+            monster_moved(game, m, old_x, old_y)
         if isinstance(act, int):
             if act > 0:
                 dmg = max(1, act - game._player_defense())
@@ -50,7 +51,7 @@ def try_spawn_monster(game):
         # M21: 新怪物也做旧格式迁移
         if hasattr(game, 'buff_manager'):
             game.buff_manager.migrate_legacy(m)
-        game._add_monster(m)
+        add_monster(game, m)
         game.message = f"一只 {m['name']} 出现了！"
 
     # M22: 中立生物生成
@@ -77,7 +78,7 @@ def _try_spawn_neutral(game):
         nm = monsters_mod.make_monster(neutral_type, sx, sy, game.monster_data)
         if hasattr(game, 'buff_manager'):
             game.buff_manager.migrate_legacy(nm)
-        game._add_monster(nm)
+        add_monster(game, nm)
         break
 
 

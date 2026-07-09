@@ -1,4 +1,5 @@
 """存档系统：构建/恢复 + 存档管理 API"""
+from systems.inventory_actions import add_monster
 import json, shutil
 from pathlib import Path
 from world_gen import SAVE_DIR
@@ -107,7 +108,7 @@ def _apply_world_data(game, data):
         m = monsters_mod.make_monster(md["name"], md["x"], md["y"], game.monster_data)
         if m:
             m["hp"] = md.get("hp", m["max_hp"])
-            game._add_monster(m)
+            add_monster(game, m)
     game.corpses = {}
     for key_str, val in data.get("corpses", {}).items():
         parts = key_str.split(",")

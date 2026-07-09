@@ -1,0 +1,11 @@
+Unbounded Crash Report - 20260709_095518
+Error: AttributeError: 'Game' object has no attribute 'new_game'
+State stack: ['MainMenuState']
+
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/unbounded/core/state_machine.py", line 69, in run
+    result = current.handle_input(key)
+  File "/data/data/com.termux/files/home/unbounded/ui/states/main_menu_state.py", line 36, in handle_input
+    self.game.new_game()
+    ^^^^^^^^^^^^^^^^^^
+AttributeError: 'Game' object has no attribute 'new_game'
