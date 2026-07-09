@@ -41,7 +41,7 @@ class FakeStdscr:
 sys.modules['curses'] = FakeCurses()
 
 print("=== Test 1: import main ===")
-from systems.player_items import add_equipment_instance
+from systems.inventory_actions import add_equipment_instance
 import main
 
 print("\n=== Test 2: Game.__init__ ===")

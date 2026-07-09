@@ -44,12 +44,6 @@ class PlayerState:
     def equipment_bonus(self, attr: str) -> int:
         return sum(getattr(inst, attr, 0) or 0 for inst in self.equipment.values() if inst)
 
-    def combat_damage_bonus(self) -> int:
-        return self.equipment_bonus("attack_bonus") + (self.skills.get("combat", 0) // 3)
-
-    def defense_bonus(self) -> int:
-        return self.equipment_bonus("defense_bonus") + (self.skills.get("defense", 0) // 3)
-
 
 @dataclass
 class WorldState:
@@ -180,20 +174,23 @@ class Game:
     # ── 数值计算 property（从 PlayerState 代理）──
     @property
     def _equipment_bonus(self): return lambda attr: self.player.equipment_bonus(attr)
-    @property
-    def _combat_damage_bonus(self): return lambda: self.player.combat_damage_bonus()
-    @property
-    def _player_defense(self): return lambda: self.player.defense_bonus()
-    def _best_equipped_tool_bonus(self, tool_type): 
-        best = 0
-        for inst in self.player.equipment.values():
-            if inst and hasattr(inst, "tool_bonus") and tool_type in getattr(inst, "tags", []):
-                best = max(best, inst.tool_bonus or 0)
-        return best
-    def _digging_speed_bonus(self): return self._best_equipped_tool_bonus("digging")
+    def _combat_damage_bonus(self):
+        from systems.skill_system import combat_damage_bonus
+        return combat_damage_bonus(self)
+    def _player_defense(self):
+        from systems.skill_system import defense_bonus
+        return defense_bonus(self)
+    def _best_equipped_tool_bonus(self, tool_type):
+        from systems.skill_system import best_equipped_tool_bonus
+        return best_equipped_tool_bonus(self, tool_type)
+
+    def _digging_speed_bonus(self):
+        from systems.skill_system import digging_speed_bonus
+        return digging_speed_bonus(self)
 
     def _gain_skill(self, name, amount=1):
-        self.player.skills[name] = self.player.skills.get(name, 0) + amount
+        from systems.skill_system import gain_skill
+        gain_skill(self, name, amount)
 
     # ═══════════════════════════════════
     # 向后兼容 property — WorldState
@@ -378,6 +375,13 @@ class Game:
             self.monster_data = load_monsters()
         except Exception as e:
             logger.error(f"加载怪物失败: {e}")
+
+        from systems.entity_validator import validate_all
+        try:
+            validate_all()
+        except Exception as e:
+            logger.error(f"数据一致性校验失败: {e}")
+            raise
 
     # ═══════════════════════════════════
     # 视口

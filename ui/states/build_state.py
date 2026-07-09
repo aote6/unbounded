@@ -50,8 +50,8 @@ class BuildState(State):
         if self.win:
             del self.win
             self.win = None
-        self.game.stdscr.touchwin()
-        self.game.stdscr.refresh()
+        self.game.engine.stdscr.touchwin()
+        self.game.engine.stdscr.refresh()
 
     def handle_input(self, key):
         if self._selecting:

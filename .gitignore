@@ -5,3 +5,7 @@ __pycache__/
 patch_*.py
 data/save.json
 data/chunks/
+fix_*.py
+crash_*.log
+data/legacy.json
+data/world_meta.json

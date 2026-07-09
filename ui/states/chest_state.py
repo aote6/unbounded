@@ -1,4 +1,4 @@
-from systems.player_items import add_equipment_instance
+from systems.inventory_actions import add_equipment_instance
 """ChestState - 箱子交互界面状态"""
 
 import curses
@@ -37,8 +37,8 @@ class ChestState(State):
         if self.win:
             del self.win
             self.win = None
-        self.game.stdscr.touchwin()
-        self.game.stdscr.refresh()
+        self.game.engine.stdscr.touchwin()
+        self.game.engine.stdscr.refresh()
 
     def _refresh_lists(self):
         chest = self.chest

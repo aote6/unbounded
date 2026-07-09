@@ -111,8 +111,9 @@ def draw(game):
     mats = " ".join(f"{k}:{v}" for k, v in game.inventory.get_materials().items()) or "（空）"
     eq_parts = []
     for slot_id in ("main_hand", "off_hand", "body", "accessory"):
-        eq = game.equipment.get(slot_id, "空")
-        eq_parts.append(f"{SLOT_NAMES[slot_id]}:{eq}")
+        eq = game.equipment.get(slot_id)
+        eq_name = eq.name if hasattr(eq, "name") else (eq if eq else "空")
+        eq_parts.append(f"{SLOT_NAMES[slot_id]}:{eq_name}")
     eq_str = " | ".join(eq_parts)
     def_bonus = game._player_defense()
     hp_str = f"HP: {game.player_hp}/{game.player_max_hp}"

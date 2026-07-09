@@ -204,7 +204,7 @@ def purchase_perk(perk_id):
     return True, f"解锁了【{perk['name']}】！"
 
 from world_gen import TILE_AIR
-from systems.player_items import add_equipment_instance
+from systems.inventory_actions import add_equipment_instance
 from systems.event_bus import EventBus, EventType, GameEvent
 from inventory import Inventory
 import json
@@ -259,17 +259,17 @@ def check_death(game):
 def show_death_screen(game):
     """显示死亡画面并打开遗产商店。"""
     import curses
-    game.stdscr.erase()
+    game.engine.stdscr.erase()
     m1, m2 = "你死了。", f"物品掉落在 ({game.player_x},{game.player_y})"
     m3 = "世界保留，新角色将继承一切。"
     m4 = "按任意键打开遗产商店..."
-    h, w = game.stdscr.getmaxyx()
-    game.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
-    game.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
-    game.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
-    game.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
-    game.stdscr.refresh()
-    game.stdscr.getch()
+    h, w = game.engine.stdscr.getmaxyx()
+    game.engine.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
+    game.engine.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
+    game.engine.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
+    game.engine.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
+    game.engine.stdscr.refresh()
+    game.engine.stdscr.getch()
     from ui.states.legacy_state import LegacyState
     if game.engine:
         game.engine.push_state(LegacyState(game))

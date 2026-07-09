@@ -1,4 +1,4 @@
-from systems.player_items import add_equipment_instance
+from systems.inventory_actions import add_equipment_instance
 """CraftingState - 合成界面状态"""
 
 import curses
@@ -106,6 +106,7 @@ class CraftingState(State):
 
         if result_type == ItemCategory.EQUIPMENT:
             from item_generator import get_generator
+            gen = get_generator()
             gen_args = result_def.get("generator_args", {})
             arch = gen_args.get("archetype")
             mat = gen_args.get("material")
