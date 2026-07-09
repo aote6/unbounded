@@ -17,7 +17,7 @@ def load_json(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        print(f"[generator] JSON 解析失败: {path} - {e}")
+        import logging; logging.warning(f"item_generator 解析失败: {path} - {e}")
         return {}
 
 

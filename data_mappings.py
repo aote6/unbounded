@@ -36,5 +36,5 @@ def load_recipes():
         with open(RECIPES_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        print(f"[recipes] JSON 解析失败: {e}")
+        import logging; logging.warning(f"recipes.json 解析失败: {e}")
         return {}

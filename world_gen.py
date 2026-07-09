@@ -1,6 +1,9 @@
 """ world_gen.py 无限世界生成模块。基于绝对坐标的懒加载 chunk 系统。
 每个 Chunk 管理自身生命周期，支持脏标记与差分持久化。"""
 
+# 噪声函数已迁移至 systems/noise_engine.py
+from systems.noise_engine import (_hash2d, _hash_uniform, _smooth_noise,
+    _interpolated_noise, perlin_2d, generate_tile, clear_perlin_cache)
 import json
 from pathlib import Path
 
@@ -43,131 +46,6 @@ TILE_DROPS = {
 
 # ═══════════════════════════════════════
 # Perlin 噪声生成（纯函数，无状态）
-# ═══════════════════════════════════════
-
-def _hash2d(x: int, y: int, seed: int) -> int:
-    h = seed
-    h ^= x * 0x7FEB352D
-    h ^= y * 0x846CA68B
-    h *= 0x27D4EB2D
-    h ^= (h >> 13)
-    h *= 0x8E3779B9
-    h ^= (h >> 16)
-    return h & 0x7FFFFFFF
-
-def _hash_uniform(x: int, y: int, seed: int) -> float:
-    return _hash2d(x, y, seed) / 0x7FFFFFFF
-
-def _smooth_noise(x: int, y: int, seed: int) -> float:
-    corners = (_hash_uniform(x-1, y-1, seed) + _hash_uniform(x+1, y-1, seed) +
-               _hash_uniform(x-1, y+1, seed) + _hash_uniform(x+1, y+1, seed)) / 16.0
-    sides = (_hash_uniform(x-1, y, seed) + _hash_uniform(x+1, y, seed) +
-             _hash_uniform(x, y-1, seed) + _hash_uniform(x, y+1, seed)) / 8.0
-    center = _hash_uniform(x, y, seed) / 4.0
-    return corners + sides + center
-
-def _interpolated_noise(x: float, y: float, seed: int) -> float:
-    int_x = int(x); frac_x = x - int_x
-    int_y = int(y); frac_y = y - int_y
-    v1 = _smooth_noise(int_x, int_y, seed)
-    v2 = _smooth_noise(int_x + 1, int_y, seed)
-    v3 = _smooth_noise(int_x, int_y + 1, seed)
-    v4 = _smooth_noise(int_x + 1, int_y + 1, seed)
-    i1 = v1 * (1 - frac_x) + v2 * frac_x
-    i2 = v3 * (1 - frac_x) + v4 * frac_x
-    return i1 * (1 - frac_y) + i2 * frac_y
-
-from functools import lru_cache
-
-
-
-@lru_cache(maxsize=65536)
-def perlin_2d(x: float, y: float, seed: int = 0,
-              persistence: float = 0.5, octaves: int = 4) -> float:
-    total = 0.0; freq = 1.0; amp = 1.0; max_val = 0.0
-    for _ in range(octaves):
-        total += _interpolated_noise(x * freq, y * freq, seed) * amp
-        max_val += amp
-        freq *= 2.0; amp *= persistence
-    return total / max_val
-
-
-# ═══════════════════════════════════════
-# 单格地形生成（纯函数）
-# ═══════════════════════════════════════
-
-def generate_tile(x: int, y: int, seed: int = 12345) -> int:
-    """返回该格的 tile ID。只用2次perlin：高程(octaves=6含细节)+矿脉(octaves=3)。"""
-    # 坐标取整到0.5精度，大幅提高perlin缓存命中率
-    fx = round(x * 0.01 * 2) / 2
-    fy = round(y * 0.01 * 2) / 2
-    h = perlin_2d(fx, fy, seed=seed, octaves=6)
-    # 矿脉/湿度
-    ox = round(x * 0.05 * 2) / 2
-    oy = round(y * 0.05 * 2) / 2
-    ore = perlin_2d(ox, oy, seed=seed + 7777, octaves=3)
-    
-    # 水域：低高程 + 矿脉值适中 = 河流/湖泊
-    if (h < -0.10 and ore > 0.30) or (h < -0.20):
-        return TILE_WATER
-    
-    # 地表
-    if y > -3:
-        if h > 0.30:
-            return TILE_GRANITE if ore > 0.50 else TILE_STONE
-        elif h > 0.12:
-            if ore > 0.70: return TILE_LIMESTONE
-            if 0.30 < ore < 0.65 and h > 0.18: return TILE_TREE
-            return TILE_DIRT
-        elif h > -0.05:
-            if ore > 0.75: return TILE_CLAY
-            if ore < 0.20: return TILE_SAND
-            if 0.35 < ore < 0.55: return TILE_TREE
-            return TILE_DIRT
-        else:
-            return TILE_CLAY if ore > 0.50 else TILE_SAND
-    
-    # 地下分层
-    if y > -8:
-        if h > -0.10:
-            if ore > 0.65: return TILE_LIMESTONE
-            if ore < 0.20: return TILE_SAND
-            if ore > 0.55: return TILE_CLAY
-            return TILE_DIRT
-        return TILE_AIR
-    elif y > -25:
-        if h > -0.15:
-            if ore > 0.65: return TILE_COAL
-            if ore > 0.55: return TILE_LIMESTONE
-            return TILE_STONE
-        return TILE_STONE if ore > 0.35 else TILE_AIR
-    elif y > -45:
-        if h > -0.20:
-            if ore > 0.72: return TILE_IRON
-            if ore > 0.58: return TILE_COPPER
-            if ore < 0.20: return TILE_SALT
-            if ore > 0.50: return TILE_MARBLE
-            return TILE_STONE
-        return TILE_STONE
-    elif y > -70:
-        if h > -0.23:
-            if ore > 0.75: return TILE_GOLD
-            if ore > 0.62: return TILE_SILVER
-            if ore > 0.52: return TILE_GRANITE
-            if ore < 0.15: return TILE_SULFUR
-            return TILE_STONE
-        return TILE_STONE
-    else:
-        if h > -0.25:
-            if ore > 0.78: return TILE_DIAMOND
-            if ore > 0.60: return TILE_OBSIDIAN
-            if ore > 0.50: return TILE_MARBLE
-            return TILE_STONE
-        return TILE_STONE
-
-
-# ═══════════════════════════════════════
-# Chunk 类：自管理生命周期 + 差分持久化
 # ═══════════════════════════════════════
 
 class Chunk:
@@ -342,11 +220,6 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
     world.set_tile(0, 1, TILE_DIRT)
     return 0, 0
 
-def clear_perlin_cache():
-    """清理 perlin 缓存（切换世界时调用）。"""
-    perlin_2d.cache_clear()
-
-def _carve_caves(world):
     """在每层挖出横向洞穴通道，确保有行走空间"""
     import random
     rng = random.Random(world.seed + 9999)
@@ -377,6 +250,33 @@ def _carve_caves(world):
                         pass
                 
                 # 随机游走，偏向水平
+                x += rng.choice([-1, 0, 1, 1, 1])
+                y += rng.choice([-1, 0, 0, 0, 0, 1])
+
+def _carve_caves(world):
+    """在每层挖出横向洞穴通道，确保有行走空间"""
+    import random
+    rng = random.Random(world.seed + 9999)
+    for x in range(-10, 10):
+        for y in range(-2, 3):
+            world.set_tile(x, y, TILE_AIR)
+    world.set_tile(0, 1, TILE_DIRT)
+    for depth_band in [(-15, -3), (-35, -15), (-55, -35)]:
+        for _ in range(rng.randint(3, 5)):
+            x = rng.randint(-200, 200)
+            y = rng.randint(depth_band[0], depth_band[1])
+            length = rng.randint(100, 250)
+            height = rng.randint(3, 5)
+            for step in range(length):
+                for dy in range(-height//2, height//2 + 1):
+                    try:
+                        tile = world.get_tile(x, y+dy)["tile"]
+                        if tile in (TILE_STONE, TILE_DIRT, TILE_COAL, TILE_COPPER,
+                                   TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_LIMESTONE,
+                                   TILE_MARBLE, TILE_GRANITE, TILE_CLAY, TILE_SAND):
+                            world.set_tile(x, y+dy, TILE_AIR)
+                    except:
+                        pass
                 x += rng.choice([-1, 0, 1, 1, 1])
                 y += rng.choice([-1, 0, 0, 0, 0, 1])
 

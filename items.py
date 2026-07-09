@@ -14,7 +14,7 @@ def load_items():
         with open(ITEMS_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        print(f"[items] JSON 解析失败: {e}")
+        import logging; logging.warning(f"items.json 解析失败: {e}")
         return {}
 
 def is_placeable(items, name):

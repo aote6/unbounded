@@ -33,6 +33,7 @@ class PlayState(State):
         game = self.game
 
         if key in (KEY_QUIT, KEY_QUIT_UPPER):
+            from systems.save_manager import save_game; save_game(game)
             game.engine._running = False
             return None
         elif key == ord("?"):
