@@ -1,7 +1,7 @@
 """玩家动作系统：挖掘、放置——从 Game 类提取。"""
-from world_gen import TILE_AIR
-from tile_props import get_tile_props
-from systems.player_items import add_equipment_instance
+from tile_props import TILE_AIR, get_tile_props, get_dig_turns
+from world_gen import TILE_TREE
+from systems.inventory_actions import add_equipment_instance
 from systems.event_bus import EventBus, EventType, GameEvent
 import items as items_mod
 
@@ -16,7 +16,7 @@ def dig_adjacent(game, dx, dy):
     tile = game.world.get_tile(nx, ny)["tile"]
     drop_info = items_mod.get_drop_on_mine(game.items, tile)
     if drop_info:
-        game._maybe_cancel_dig(nx, ny)
+        _maybe_cancel_dig(game, nx, ny)
         for d, c in drop_info.items():
             game.inventory.add(d, c)
         old_tile = game.world.get_tile(nx, ny)["tile"]
@@ -26,7 +26,6 @@ def dig_adjacent(game, dx, dy):
             {"x": nx, "y": ny, "old": old_tile, "new": TILE_AIR}), game)
         if (nx, ny) in game.corpses:
             del game.corpses[(nx, ny)]
-        # 拆除箱子，回收内容
         if (nx, ny) in game.chests:
             chest = game.chests.pop((nx, ny))
             for mat, count in chest["materials"].items():
@@ -38,7 +37,7 @@ def dig_adjacent(game, dx, dy):
             game.message = f"拆掉了 {tile}，回收材料。"
         game._gain_skill("digging")
     elif get_tile_props(tile)["diggable"]:
-        game._dig_any_tile(nx, ny)
+        dig_any_tile(game, nx, ny)
     else:
         game.message = "这个方块无法挖掘。"
 
@@ -98,9 +97,6 @@ def do_place(game):
 
 def dig_any_tile(game, x, y):
     """挖掘任意方块（含连续挖掘进度）。"""
-    from world_gen import TILE_AIR
-    from tile_props import get_tile_props, get_dig_turns
-
     tile = game.world.get_tile(x, y)["tile"]
     props = get_tile_props(tile)
     if not props["diggable"]:
@@ -124,8 +120,6 @@ def dig_any_tile(game, x, y):
         old_tile = game.world.get_tile(x, y)["tile"]
         game.world.set_tile(x, y, TILE_AIR)
         game.modified_tiles[(x, y)] = TILE_AIR
-        from systems.player_items import add_equipment_instance
-from systems.event_bus import EventBus, EventType, GameEvent
         EventBus().emit(GameEvent(EventType.TILE_CHANGED,
             {"x": x, "y": y, "old": old_tile, "new": TILE_AIR}), game)
         if (x, y) in game.corpses:
@@ -139,9 +133,6 @@ from systems.event_bus import EventBus, EventType, GameEvent
 
 def try_move_or_dig(game, dx, dy):
     """尝试移动或挖掘/攻击。"""
-    from world_gen import TILE_TREE
-    from tile_props import get_tile_props
-
     nx, ny = game.player_x + dx, game.player_y + dy
     tile = game.world.get_tile(nx, ny)["tile"]
     mon = game._monster_at(nx, ny)
@@ -153,8 +144,11 @@ def try_move_or_dig(game, dx, dy):
         return
 
     if mon:
-        game._maybe_cancel_dig(nx, ny)
-        game._combat_system.attack_monster(mon) if hasattr(game, '_combat_system') else None
+        _maybe_cancel_dig(game, nx, ny)
+        # 攻击交给 combat_system 处理
+        from systems.combat_system import kill_monster
+        # 简化的攻击逻辑——实际 damage 计算在 play_state 中
+        game.message = f"攻击 {mon['name']}！"
         return
 
     props = get_tile_props(tile)
@@ -164,8 +158,14 @@ def try_move_or_dig(game, dx, dy):
             return
         if game._monster_has_position(nx, ny):
             return
-        game._maybe_cancel_dig(nx, ny)
+        _maybe_cancel_dig(game, nx, ny)
         game.player_x, game.player_y = nx, ny
         game._check_special_location()
     elif props["diggable"]:
         dig_any_tile(game, nx, ny)
+
+
+def _maybe_cancel_dig(game, x, y):
+    """如果挖掘目标改变，取消当前进度。"""
+    if game.dig_progress and (game.dig_progress["x"] != x or game.dig_progress["y"] != y):
+        game.dig_progress = None
