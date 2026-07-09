@@ -131,3 +131,40 @@ def _apply_world_data(game, data):
     game.modified_tiles = {}
 
 
+
+# ═══════════════════════════════════
+# 存档状态检查（供主菜单使用）
+# ═══════════════════════════════════
+
+def check_save_status():
+    """返回存档状态: 'full' / 'world_only' / 'none'"""
+    import shutil
+    from pathlib import Path
+    from world_gen import SAVE_DIR
+    BASE_DIR = Path(__file__).parent.parent
+    PLAYER_PATH = BASE_DIR / "data" / "player.json"
+    WORLD_PATH = BASE_DIR / "data" / "world_meta.json"
+    LEGACY_SAVE_FILE = BASE_DIR / "data" / "save.json"
+
+    if PLAYER_PATH.exists() or LEGACY_SAVE_FILE.exists():
+        return 'full'
+    if WORLD_PATH.exists():
+        return 'world_only'
+    return 'none'
+
+
+def clear_all_saves():
+    """清空所有存档"""
+    import shutil
+    from pathlib import Path
+    from world_gen import SAVE_DIR
+    BASE_DIR = Path(__file__).parent.parent
+    LEGACY_SAVE_FILE = BASE_DIR / "data" / "save.json"
+    PLAYER_PATH = BASE_DIR / "data" / "player.json"
+    WORLD_PATH = BASE_DIR / "data" / "world_meta.json"
+
+    for p in [LEGACY_SAVE_FILE, PLAYER_PATH, WORLD_PATH]:
+        if p.exists():
+            p.unlink()
+    if SAVE_DIR.exists():
+        shutil.rmtree(SAVE_DIR)
