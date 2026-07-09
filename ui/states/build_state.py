@@ -6,6 +6,7 @@ from config import (
     DIRECTIONS,
     KEY_QUIT, KEY_QUIT_UPPER, KEY_REPEAT,
 )
+from systems.player_action import do_place
 import items as items_mod
 
 
@@ -101,7 +102,7 @@ class BuildState(State):
             return None
 
         if key in (curses.KEY_ENTER, 10, 13):
-            game._do_place()
+            do_place(game)
             if game.place_mode is None:
                 self.game.engine.pop_state()
             return None

@@ -2,6 +2,7 @@
 
 import curses
 from core.state_machine import State
+from systems.inventory_actions import get_equipment_instance
 
 
 SLOTS = [
@@ -110,7 +111,7 @@ class EquipmentState(State):
                 game.message = f"卸下了 {old_name}。"
             else:
                 # 从背包获取装备实例对象
-                inst = game._get_equipment_instance(chosen)
+                inst = get_equipment_instance(game, chosen)
                 if old:
                     game.equipment[self._slot_id] = None
                 game.equipment[self._slot_id] = inst if inst else chosen

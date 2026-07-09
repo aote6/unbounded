@@ -12,6 +12,9 @@ from config import (
     KEY_MOVE_UP_ALT, KEY_MOVE_DOWN_ALT, KEY_MOVE_LEFT_ALT, KEY_MOVE_RIGHT_ALT,
 )
 from ui.game_renderer import draw
+from systems.turn_system import advance_turn
+from systems.player_action import try_move_or_dig
+from systems.save_manager import save_game, load_game
 from ui.states.crafting_state import CraftingState
 from ui.states.equipment_state import EquipmentState
 from ui.states.build_state import BuildState
@@ -50,11 +53,11 @@ class PlayState(State):
         elif key == KEY_BUILD:
             return BuildState(game)
         elif key in (KEY_RELOAD, KEY_RELOAD_UPPER):
-            game._handle_reload()
+            game._load_static_data(); game.message = '数据已重载'
         elif key in (KEY_SAVE, KEY_SAVE_UPPER):
-            game._handle_save()
+            save_game(game)
         elif key in (KEY_LOAD, KEY_LOAD_UPPER):
-            game._handle_load()
+            load_game(game)
         elif key == KEY_LOOK:
             from ui.states.look_state import LookState
             return LookState(game)
@@ -63,11 +66,11 @@ class PlayState(State):
             return DigState(game)
         elif key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
-            game.try_move_or_dig(dx, dy)
+            try_move_or_dig(game, dx, dy)
             acted = True
 
         if acted:
-            game.advance_turn()
+            advance_turn(game)
 
         return None
 
