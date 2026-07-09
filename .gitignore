@@ -1,11 +1,15 @@
+# Python
 __pycache__/
 *.pyc
-*.bak
-*.bak_*
-patch_*.py
-data/save.json
-data/chunks/
-fix_*.py
+
+# 崩溃日志
 crash_*.log
-data/legacy.json
+
+# 备份
+*.bak
+*/*.bak
+
+# 运行时存档
+data/player.json
 data/world_meta.json
+data/save.json
