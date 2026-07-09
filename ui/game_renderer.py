@@ -75,7 +75,8 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
     current_attr = None
     current_chars = []
     wy = oy + row
-    for col in range(VIEW_WIDTH):
+    view_w = stdscr.getmaxyx()[1]
+    for col in range(view_w):
         wx = ox + col
         ch, attr = _compute_cell(game, wx, wy)
         if ambient <= 2:
@@ -100,8 +101,8 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
 
 def draw(game):
     stdscr = game.engine.stdscr
-    stdscr.erase()
     ox, oy = game.get_viewport_origin()
+    view_w = stdscr.getmaxyx()[1]
     time_name, ambient = _get_time_of_day(game.turn)
 
     for row in range(VIEW_HEIGHT):
