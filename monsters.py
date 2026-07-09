@@ -50,7 +50,7 @@ def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
     if mtype is None:
         return None
     monster_index = {(m["x"], m["y"]) for m in monsters}
-    for _ in range(50):
+    for _ in range(15):
         sx = px + random.randint(-20, 20)
         sy = py + random.randint(-15, 15)
         if chebyshev(sx, sy, px, py) < min_dist:

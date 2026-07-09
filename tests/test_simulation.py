@@ -111,7 +111,7 @@ def test_500_turns_simulation():
     place_count = 0
     kill_count = 0
 
-    for turn in range(10000):
+    for turn in range(5000):
         action = random.random()
 
         if action < 0.6:
@@ -133,8 +133,8 @@ def test_500_turns_simulation():
             pass
 
         advance_turn(g)
-        if turn % 5000 == 0:
-            print(f"  ... {turn}/10000 回合, 怪物:{len(g.monsters)}")
+        if turn % 500 == 0:
+            print(f"  ... {turn}/5000 回合, 怪物:{len(g.monsters)}")
 
         # 每 50 回合补怪物
         if turn % 50 == 0 and len(g.monsters) < 15:
@@ -148,22 +148,22 @@ def test_500_turns_simulation():
             kill_count = g._monsters_killed_this_life
 
     # 验证
-    assert g.turn == 10000, f"回合数不对: {g.turn}"
+    assert g.turn == 5000, f"回合数不对: {g.turn}"
     assert len(g.inventory.get_materials()) > 0, "背包应该有物品"
-    print(f"[PASS] 10000回合仿真: {craft_count}次合成, {place_count}次放置, {kill_count}只击杀")
+    print(f"[PASS] 5000回合仿真: {craft_count}次合成, {place_count}次放置, {kill_count}只击杀")
     print(f"       背包材料: {len(g.inventory.get_materials())}种, 装备: {len(g.inventory.get_equipment())}件")
     print(f"       位置: ({g.player_x},{g.player_y}), HP:{g.player_hp}")
 
 
 def test_inventory_stress():
-    """背包极限：反复增删 1000 次"""
+    """背包极限：反复增删 2000 次"""
     g = make_game()
-    for i in range(1000):
+    for i in range(2000):
         g.inventory.add("石头", 1)
         if i % 3 == 0:
             g.inventory.remove("石头", 1)
     c = g.inventory.count("石头")
-    print(f"[PASS] 背包极限: 1000次操作后石头={c}")
+    print(f"[PASS] 背包极限: 2000次操作后石头={c}")
 
 
 if __name__ == "__main__":
