@@ -17,3 +17,4 @@ data/save.json
 # 运行时数据
 data/chunks/
 data/legacy.json
+data/birth.json

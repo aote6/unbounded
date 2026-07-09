@@ -10,7 +10,7 @@ def gain_skill(game, name, amount=1):
     game.skills[name] = game.skills.get(name, 0) + amount
     if game.skills[name] >= game.skill_levels[name] * SKILL_LEVEL_THRESHOLD:
         game.skill_levels[name] += 1
-        game.message = f"【{SKILL_NAMES_CN[name]}】升到了 {game.skill_levels[name]} 级！"
+        pass
 
 
 def best_equipped_tool_bonus(game, tool_type):

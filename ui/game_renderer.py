@@ -121,11 +121,14 @@ def draw(game):
     hp_str = f"HP: {game.player_hp}/{game.player_max_hp}"
     if def_bonus > 0:
         hp_str += f" 防:{def_bonus}"
-    sk_str = f"挖掘:{game.skill_levels['digging']} 战斗:{game.skill_levels['combat']} 防御:{game.skill_levels['defense']}"
+    from systems.age_system import get_age, get_age_bonus
+    age = get_age()
+    bonus = get_age_bonus()
+    sk_str = f"年龄:{age}岁 闪避:{bonus['evasion']}%"
     goal_names = {"build_first_room": "建造第一个房间", "explore_cave": "深入地下探索",
                   "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
     goal_text = goal_names.get(game.goal, game.goal)
-    s1 = f"[{time_name}] | {hp_str} | 技能 {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text}"
+    s1 = f"[{time_name}] | {hp_str} | {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text}"
     if game.place_mode:
         s1 += f" | [建造: {game.place_mode}]"
     if game.dig_progress:
