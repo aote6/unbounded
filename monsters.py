@@ -71,22 +71,9 @@ def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
     return None
 
 def make_monster(name, x, y, monster_data):
-    t = monster_data.get(name, {})
-    return {
-        "name": name, "char": t.get("char", "?"), "x": x, "y": y,
-        "hp": t.get("hp", 10), "max_hp": t.get("hp", 10),
-        "attack_power": tuple(t.get("attack_power", [1, 3])),
-        "hit_chance": t.get("hit_chance", 0.7),
-        "vision": t.get("vision", 6),
-        "flee_at_hp_ratio": t.get("flee_at_hp_ratio", 0.3),
-        "scores": t.get("scores", {}), "drop": t.get("drop", {}),
-        "corpse_tile": t.get("corpse_tile"),
-        "split_into": t.get("split_into"),
-        "special_behavior": t.get("special_behavior"),
-        "properties": t.get("properties", {}),
-        "tags": t.get("tags", []),
-        "faction": t.get("faction", "hostile"),
-    }
+    """创建怪物。返回兼容字典访问和属性访问的 Monster 对象。"""
+    from systems.entity import monster_to_entity
+    return monster_to_entity(name, x, y, monster_data)
 
 def get_split_spawns(monster, monster_data):
     split_info = monster.get("split_into")

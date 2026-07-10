@@ -88,13 +88,59 @@ class Entity:
 # 工厂函数：从 monsters.json 创建 Entity
 # ═══════════════════════════════════
 
-def monster_to_entity(name: str, x: int, y: int, monster_data: dict) -> Entity:
-    """将旧版 monster 字典转换为 Entity。
-    
-    暂时保留此适配层，等怪物系统完全迁移后删除。
-    """
+class Monster(dict):
+    """兼容旧代码的怪物对象：既是字典（支持 monster["x"]）又是 Entity（支持 monster.x）。"""
+    __slots__ = ('_entity',)
+
+    def __init__(self, entity: Entity, extra: dict = None):
+        self._entity = entity
+        d = {
+            "name": entity.name, "char": entity.char,
+            "x": entity.x, "y": entity.y,
+            "hp": entity.hp, "max_hp": entity.max_hp,
+            "faction": entity.faction, "tags": entity.tags,
+        }
+        if extra:
+            d.update(extra)
+        super().__init__(d)
+
+    def __getattr__(self, key):
+        if hasattr(self._entity, key):
+            return getattr(self._entity, key)
+        raise AttributeError(key)
+
+    def __setattr__(self, key, value):
+        if key in ('_entity',) or key in self.__slots__:
+            super().__setattr__(key, value)
+        elif hasattr(self._entity, key):
+            setattr(self._entity, key, value)
+            if key in self:
+                self[key] = value
+        else:
+            self[key] = value
+
+    def __getitem__(self, key):
+        return dict.__getitem__(self, key)
+
+    def __setitem__(self, key, value):
+        dict.__setitem__(self, key, value)
+        if key == "x":
+            self._entity.x = value
+        elif key == "y":
+            self._entity.y = value
+        elif key == "hp":
+            self._entity.hp = value
+        elif key == "max_hp":
+            self._entity.max_hp = value
+
+    def get(self, key, default=None):
+        return super().get(key, default)
+
+
+def monster_to_entity(name: str, x: int, y: int, monster_data: dict) -> Monster:
+    """创建怪物：返回兼容字典+属性的 Monster 对象。"""
     t = monster_data.get(name, {})
-    return Entity(
+    entity = Entity(
         entity_id=f"monster_{name}_{x}_{y}",
         name=name,
         category="monster",
@@ -107,12 +153,20 @@ def monster_to_entity(name: str, x: int, y: int, monster_data: dict) -> Entity:
             "hit_chance": t.get("hit_chance", 0.7),
             "vision": t.get("vision", 6),
             "flee_at_hp_ratio": t.get("flee_at_hp_ratio", 0.3),
-            "scores": t.get("scores", {}),
-            "drop": t.get("drop", {}),
-            "corpse_tile": t.get("corpse_tile"),
-            "split_into": t.get("split_into"),
-            "special_behavior": t.get("special_behavior"),
         },
         tags=t.get("tags", []),
         faction=t.get("faction", "hostile"),
     )
+    extra = {
+        "scores": t.get("scores", {}),
+        "drop": t.get("drop", {}),
+        "corpse_tile": t.get("corpse_tile"),
+        "split_into": t.get("split_into"),
+        "special_behavior": t.get("special_behavior"),
+        "properties": t.get("properties", {}),
+        "attack_power": tuple(t.get("attack_power", [1, 3])),
+        "hit_chance": t.get("hit_chance", 0.7),
+        "vision": t.get("vision", 6),
+        "flee_at_hp_ratio": t.get("flee_at_hp_ratio", 0.3),
+    }
+    return Monster(entity, extra)
