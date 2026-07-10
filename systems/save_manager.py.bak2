@@ -30,10 +30,7 @@ def new_game(game, inherit_world=False):
             with open(world_path) as f:
                 world_data = json.load(f)
             seed = world_data.get("seed", WORLD_SEED)
-            # decorate=False: 跳过洞穴/树木/特殊地貌重新雕刻，
-            # 这些内容已经作为 chunk delta 存盘，靠 chunk 懒加载时 load_from_disk 自动恢复。
-            # 重新雕刻不仅浪费几十秒，还会在雕刻范围内产生大量无意义的临时计算。
-            game.world = generate_world(seed=seed, decorate=False)
+            game.world = generate_world(seed=seed)
             _apply_world_data(game, world_data)
         else:
             if SAVE_DIR.exists():
@@ -83,10 +80,6 @@ def new_game(game, inherit_world=False):
 
 def save_game(game):
     """保存游戏状态。M25: player.json + world_meta.json + save.json 兼容。"""
-    # 把所有还在内存里、尚未被 keep_radius 自然卸载的脏 chunk 一并落盘，
-    # 否则挖矿/建造等地形修改如果没走出半径就存档退出，会在下次读档时丢失。
-    if game.world:
-        game.world.save_all()
     player_data, world_data = build_save_data(game)
     save_data = {"player": player_data, "world": world_data}
     player_path = BASE_DIR / "data" / "player.json"

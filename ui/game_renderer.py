@@ -86,6 +86,7 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
 
 def draw(game):
     stdscr = game.engine.stdscr
+    stdscr.erase()
     ox, oy = game.get_viewport_origin()
     view_w = stdscr.getmaxyx()[1]
     time_name, ambient = _get_time_of_day(game.turn)

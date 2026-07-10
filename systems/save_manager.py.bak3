@@ -83,10 +83,6 @@ def new_game(game, inherit_world=False):
 
 def save_game(game):
     """保存游戏状态。M25: player.json + world_meta.json + save.json 兼容。"""
-    # 把所有还在内存里、尚未被 keep_radius 自然卸载的脏 chunk 一并落盘，
-    # 否则挖矿/建造等地形修改如果没走出半径就存档退出，会在下次读档时丢失。
-    if game.world:
-        game.world.save_all()
     player_data, world_data = build_save_data(game)
     save_data = {"player": player_data, "world": world_data}
     player_path = BASE_DIR / "data" / "player.json"

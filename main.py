@@ -100,6 +100,10 @@ class LegacyState:
 # 顶级容器
 # ═══════════════════════════════════
 
+
+# ── 模块级静态数据缓存（避免重复加载 JSON）──
+_static_cache = {}
+
 class Game:
     """顶级聚合根 (Aggregate Root)。底层存储为结构化 dataclass，
        通过 @property 保持 game.player_x 等旧调用方式兼容。
@@ -356,6 +360,15 @@ class Game:
 
     def _load_static_data(self):
         """加载静态资源，明确报错而非静默失败"""
+        global _static_cache
+        
+        # 如果已缓存，直接复用（加速重启）
+        if _static_cache:
+            self.recipes = _static_cache['recipes']
+            self.items = _static_cache['items']
+            self.monster_data = _static_cache['monster_data']
+            return
+        
         recipe_path = BASE_DIR / "data" / "recipes.json"
         if recipe_path.exists():
             try:
@@ -375,6 +388,11 @@ class Game:
             self.monster_data = load_monsters()
         except Exception as e:
             logger.error(f"加载怪物失败: {e}")
+        
+        # 存入缓存
+        _static_cache['recipes'] = self.recipes
+        _static_cache['items'] = self.items
+        _static_cache['monster_data'] = self.monster_data
 
         from systems.entity_validator import validate_all
         try:

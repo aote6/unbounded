@@ -59,16 +59,6 @@ class Engine:
                 current = self.state_stack[-1]
                 key = self.stdscr.getch()
                 if key != -1:
-                    # 阻塞式拿到第一个按键后，非阻塞倒空缓冲区堆积的按键，只保留最新一个
-                    # 避免手机虚拟键盘按键重复/终端输入缓冲堆积导致"松手了还在走"的惯性感
-                    self.stdscr.nodelay(True)
-                    while True:
-                        k2 = self.stdscr.getch()
-                        if k2 == -1:
-                            break
-                        key = k2
-                    self.stdscr.nodelay(False)
-                    curses.halfdelay(2)
                     result = current.handle_input(key)
                     if result is not None:
                         self.push_state(result)
@@ -101,12 +91,3 @@ class Engine:
                 traceback.print_exc()
                 input("\n按回车键退出...")
                 self._running = False
-        # 正常退出主循环前，强制把所有还在内存里的脏 chunk 落盘，
-        # 避免挖矿/建造等地形修改因为没有自然卸载而在下次读档时丢失。
-        try:
-            if self.state_stack and hasattr(self.state_stack[-1], "game"):
-                game = self.state_stack[-1].game
-                if getattr(game, "world", None):
-                    game.world.save_all()
-        except Exception:
-            pass

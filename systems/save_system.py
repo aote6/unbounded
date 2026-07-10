@@ -31,7 +31,7 @@ def build_save_data(game):
         "player_hp": game.player_hp,
         "player_max_hp": game.player_max_hp,
         "turn": game.turn,
-        "equipment": game.equipment,
+        "equipment": _serialize_equipment(game.equipment),
         "inventory": game.inventory.to_dict(),
         "skills": game.skills,
         "respawn_x": game.respawn_x,
@@ -47,6 +47,33 @@ def build_save_data(game):
         "seed": game.world.seed if hasattr(game.world, 'seed') else None,
     }
     return player_data, world_data
+
+
+def _serialize_equipment(equipment):
+    """把 equipment 字典里的 EquipmentInstance 对象转换成可 JSON 序列化的 dict。"""
+    result = {}
+    for slot_id, inst in equipment.items():
+        if inst is None:
+            result[slot_id] = None
+        elif hasattr(inst, "to_dict"):
+            result[slot_id] = inst.to_dict()
+        else:
+            result[slot_id] = inst  # 兼容旧存档里可能存的纯字符串
+    return result
+
+
+def _deserialize_equipment(data):
+    """把存档里的 equipment dict 还原成 EquipmentInstance 对象。"""
+    from equipment import EquipmentInstance
+    result = {}
+    for slot_id, val in data.items():
+        if val is None:
+            result[slot_id] = None
+        elif isinstance(val, dict):
+            result[slot_id] = EquipmentInstance.from_dict(val)
+        else:
+            result[slot_id] = val  # 兼容旧存档里可能存的纯字符串
+    return result
 
 
 def _serialize_monster(m):
@@ -91,7 +118,7 @@ def _apply_player_data(game, data):
     game.player_hp = data.get("player_hp", game.player_max_hp)
     game.player_max_hp = data.get("player_max_hp", game.player_max_hp)
     game.turn = data.get("turn", 0)
-    game.equipment = data.get("equipment", {})
+    game.equipment = _deserialize_equipment(data.get("equipment", {}))
     game.skills = data.get("skills", {"digging": 0, "combat": 0, "defense": 0})
     game.respawn_x = data.get("respawn_x", 0)
     game.respawn_y = data.get("respawn_y", 0)

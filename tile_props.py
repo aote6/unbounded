@@ -292,8 +292,5 @@ def get_tile_char(tile):
     return get_tile_props(tile)["char"]
 
 def get_dig_turns(tile, tool_power=1):
-    props = get_tile_props(tile)
-    hardness = props.get("hardness", 3.0)
-    if hardness <= 0:
-        return 1
-    return max(1, int((hardness * 2) / max(1, tool_power)))
+    # 简化为一击一回合，避免同一方块反复按几十次键的无意义操作
+    return 1

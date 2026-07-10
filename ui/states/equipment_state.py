@@ -28,6 +28,16 @@ class EquipmentState(State):
         self._slot_id = ""
         self._slot_name = ""
 
+
+    def _close_sub_win(self):
+        """安全关闭子窗口，清除残影"""
+        if self.sub_win:
+            self.sub_win.erase()
+            self.sub_win.noutrefresh()
+            del self.sub_win
+            self.sub_win = None
+        self._choosing = False
+
     def enter(self):
         h, w = len(SLOTS) + 6, 50
         y = max(0, (curses.LINES - h) // 2)
@@ -42,7 +52,8 @@ class EquipmentState(State):
         if self.win:
             del self.win
             self.win = None
-        self.game.engine.stdscr.touchwin()
+        # 强制全量刷新 stdscr，清除所有子窗口残影
+        self.game.engine.stdscr.clear()
         self.game.engine.stdscr.refresh()
 
     def handle_input(self, key):
@@ -87,14 +98,14 @@ class EquipmentState(State):
         sub_w = 40
         sub_y = max(0, (curses.LINES - sub_h) // 2)
         sub_x = max(0, (curses.COLS - sub_w) // 2)
+        if self.sub_win:
+            self._close_sub_win()
         self.sub_win = curses.newwin(sub_h, sub_w, sub_y, sub_x)
         self.sub_win.keypad(True)
 
     def _handle_sub_input(self, key):
         if key in (ord('c'), ord('q')):
-            self._choosing = False
-            del self.sub_win
-            self.sub_win = None
+            self._close_sub_win()
             return None
         elif key == curses.KEY_UP:
             self._sub_sel = (self._sub_sel - 1) % len(self._candidates)
@@ -116,9 +127,7 @@ class EquipmentState(State):
                     game.equipment[self._slot_id] = None
                 game.equipment[self._slot_id] = inst if inst else chosen
                 game.message = f"装备了 {chosen} 到{self._slot_name}。"
-            self._choosing = False
-            del self.sub_win
-            self.sub_win = None
+            self._close_sub_win()
         return None
 
     def update(self):
@@ -150,7 +159,7 @@ class EquipmentState(State):
         if self.status_msg:
             self.win.addstr(h - 2, 2, self.status_msg[:w - 4], curses.A_BOLD)
 
-        self.win.refresh()
+        self.win.noutrefresh()
 
         if self._choosing and self.sub_win:
             self.sub_win.erase()
@@ -161,4 +170,4 @@ class EquipmentState(State):
                 label = "（卸下）" if cname == "__unequip__" else cname
                 attr = curses.A_REVERSE if ci == self._sub_sel else curses.A_NORMAL
                 self.sub_win.addstr(2 + ci, 2, label[:sw - 4], attr)
-            self.sub_win.refresh()
+            self.sub_win.noutrefresh()

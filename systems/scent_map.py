@@ -15,7 +15,7 @@ DIRS_8 = [
 class ScentMap:
     """玩家气味扩散场。每回合重建，怪物查询 O(1)。"""
 
-    def __init__(self, max_range=30):
+    def __init__(self, max_range=15):
         self.max_range = max_range
         self._grid = {}          # {(x,y): scent_value}
         self._player_pos = None

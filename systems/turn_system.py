@@ -11,7 +11,10 @@ def advance_turn(game):
     """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     game.turn += 1
 
-    rebuild_scent_map(game)
+    # 只在附近有怪物时才重建气味场，避免无怪物区域每步全量计算
+    if any(abs(m["x"] - game.player_x) <= 20 and abs(m["y"] - game.player_y) <= 20
+           for m in game.monsters):
+        rebuild_scent_map(game)
     game.buff_manager.tick_all(game)
     tick_corpses(game)
     tick_monsters(game)

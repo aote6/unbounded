@@ -19,6 +19,11 @@ from ui.states.crafting_state import CraftingState
 from ui.states.equipment_state import EquipmentState
 from ui.states.build_state import BuildState
 from ui.states.chest_state import ChestState
+from config import _init_keybinds
+from systems.keybind import reload_keybinds
+from systems.save_manager import save_game, load_game
+from ui.states.dig_state import DigState
+from ui.states.look_state import LookState
 
 
 
@@ -33,12 +38,9 @@ class PlayState(State):
         game = self.game
 
         if key in (KEY_QUIT, KEY_QUIT_UPPER):
-            from systems.save_manager import save_game; save_game(game)
             game.engine._running = False
             return None
         elif key == ord("?"):
-            from systems.keybind import reload_keybinds
-            from config import _init_keybinds
             reload_keybinds()
             _init_keybinds()
             game.message = "键位已重新加载。"
@@ -60,10 +62,8 @@ class PlayState(State):
         elif key in (KEY_LOAD, KEY_LOAD_UPPER):
             load_game(game)
         elif key == KEY_LOOK:
-            from ui.states.look_state import LookState
             return LookState(game)
         elif key == KEY_DIG:
-            from ui.states.dig_state import DigState
             return DigState(game)
         elif key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
