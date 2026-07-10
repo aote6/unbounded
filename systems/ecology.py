@@ -1,0 +1,83 @@
+"""生态数据层：统一的物种查询引擎。
+
+所有自然物（植物/药材/未来的矿物、动物）共享同一套按气候/群系过滤 + 
+按网格聚簇分配的查询方式，新增物种只需要往 data/flora.json 里加数据，
+不需要改这里的任何逻辑。
+"""
+import json
+import random
+from pathlib import Path
+from systems.climate import get_biome
+from systems.noise_engine import _hash_uniform
+
+BASE_DIR = Path(__file__).parent.parent
+FLORA_FILE = BASE_DIR / "data" / "flora.json"
+
+_FLORA_CACHE = None
+_SPECIES_CELL_CACHE: dict = {}
+_SPECIES_CELL_SIZE = 10  # 同一个网格内的树默认使用同一批伴生物种，形成小片林子而非杂乱单株
+
+
+def load_flora():
+    global _FLORA_CACHE
+    if _FLORA_CACHE is not None:
+        return _FLORA_CACHE
+    if not FLORA_FILE.exists():
+        _FLORA_CACHE = []
+        return _FLORA_CACHE
+    try:
+        with open(FLORA_FILE, "r", encoding="utf-8") as f:
+            _FLORA_CACHE = json.load(f)
+    except Exception:
+        _FLORA_CACHE = []
+    return _FLORA_CACHE
+
+
+def clear_flora_cache():
+    global _FLORA_CACHE
+    _FLORA_CACHE = None
+    _SPECIES_CELL_CACHE.clear()
+
+
+def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, category: str = "tree"):
+    """为一个网格单元确定性地选出一个"主物种"（及其伴生物种池）。
+    同一网格内所有格子共用这个结果，形成成片、伴生物种一致的效果。"""
+    key = (cell_x, cell_y, biome, category, seed)
+    if key in _SPECIES_CELL_CACHE:
+        return _SPECIES_CELL_CACHE[key]
+
+    flora = load_flora()
+    candidates = [f for f in flora if f.get("category") == category and biome in f.get("biomes", [])]
+    if not candidates:
+        _SPECIES_CELL_CACHE[key] = None
+        return None
+
+    rng_seed = seed + cell_x * 71317 + cell_y * 57923 + hash(category) % 100000
+    rng = random.Random(rng_seed)
+    weights = [c.get("rarity", 1) for c in candidates]
+    primary = rng.choices(candidates, weights=weights, k=1)[0]
+
+    # 伴生物种池：主物种 + 它的伴生物种（如果伴生物种也适合这个群系）
+    pool = [primary]
+    for companion_id in primary.get("companion_with", []):
+        companion = next((c for c in candidates if c["id"] == companion_id), None)
+        if companion and companion not in pool:
+            pool.append(companion)
+
+    _SPECIES_CELL_CACHE[key] = pool
+    return pool
+
+
+def get_flora_species(x: int, y: int, seed: int = 12345, category: str = "tree"):
+    """查询 (x,y) 这个位置应该是什么物种。返回物种 dict 或 None（不适合任何物种时）。"""
+    biome = get_biome(x, y, seed)
+    cell_x, cell_y = x // _SPECIES_CELL_SIZE, y // _SPECIES_CELL_SIZE
+    pool = _pick_species_for_cell(cell_x, cell_y, biome, seed, category)
+    if not pool:
+        return None
+    if len(pool) == 1:
+        return pool[0]
+    # 伴生物种池内，按格子哈希决定具体是哪一种（同一片林子里橡树和枫树交替出现）
+    idx = int(_hash_uniform(x, y, seed + 5555) * len(pool))
+    idx = min(idx, len(pool) - 1)
+    return pool[idx]

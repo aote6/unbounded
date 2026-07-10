@@ -1,0 +1,106 @@
+[
+  {
+    "id": "oak",
+    "name": "橡树",
+    "category": "tree",
+    "biomes": ["温带森林"],
+    "rarity": 5,
+    "companion_with": ["maple"]
+  },
+  {
+    "id": "maple",
+    "name": "枫树",
+    "category": "tree",
+    "biomes": ["温带森林"],
+    "rarity": 3,
+    "companion_with": ["oak"]
+  },
+  {
+    "id": "birch",
+    "name": "白桦",
+    "category": "tree",
+    "biomes": ["温带森林", "针叶林"],
+    "rarity": 2,
+    "companion_with": []
+  },
+  {
+    "id": "pine",
+    "name": "松树",
+    "category": "tree",
+    "biomes": ["针叶林"],
+    "rarity": 6,
+    "companion_with": ["fir", "spruce"]
+  },
+  {
+    "id": "fir",
+    "name": "冷杉",
+    "category": "tree",
+    "biomes": ["针叶林"],
+    "rarity": 4,
+    "companion_with": ["pine", "spruce"]
+  },
+  {
+    "id": "spruce",
+    "name": "云杉",
+    "category": "tree",
+    "biomes": ["针叶林"],
+    "rarity": 3,
+    "companion_with": ["pine", "fir"]
+  },
+  {
+    "id": "willow",
+    "name": "柳树",
+    "category": "tree",
+    "biomes": ["草原", "温带森林"],
+    "rarity": 3,
+    "companion_with": ["poplar"]
+  },
+  {
+    "id": "poplar",
+    "name": "杨树",
+    "category": "tree",
+    "biomes": ["草原"],
+    "rarity": 5,
+    "companion_with": ["willow"]
+  },
+  {
+    "id": "banyan",
+    "name": "榕树",
+    "category": "tree",
+    "biomes": ["雨林"],
+    "rarity": 4,
+    "companion_with": ["bamboo"]
+  },
+  {
+    "id": "coconut_palm",
+    "name": "椰子树",
+    "category": "tree",
+    "biomes": ["雨林"],
+    "rarity": 3,
+    "companion_with": []
+  },
+  {
+    "id": "bamboo",
+    "name": "竹子",
+    "category": "tree",
+    "biomes": ["雨林"],
+    "rarity": 5,
+    "companion_with": ["banyan"]
+  },
+  {
+    "id": "cactus",
+    "name": "仙人掌",
+    "category": "tree",
+    "biomes": ["沙漠"],
+    "rarity": 5,
+    "companion_with": []
+  },
+  {
+    "id": "dwarf_pine",
+    "name": "矮松",
+    "category": "tree",
+    "biomes": ["苔原"],
+    "rarity": 3,
+    "companion_with": []
+  }
+]
