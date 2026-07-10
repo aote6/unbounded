@@ -50,13 +50,14 @@ TILE_DROPS = {
 
 class Chunk:
     """16×16 区块。管理自身地形数据与脏状态。"""
-    __slots__ = ('cx', 'cy', 'tiles', 'is_dirty', '_seed')
+    __slots__ = ('cx', 'cy', 'tiles', '_species', 'is_dirty', '_seed')
 
     def __init__(self, cx: int, cy: int, seed: int):
         self.cx = cx
         self.cy = cy
         self._seed = seed
         self.tiles = self._generate_tiles()
+        self._species = self._generate_species()
         self.is_dirty = False
 
     def _generate_tiles(self):
@@ -71,13 +72,44 @@ class Chunk:
             rows.append(row)
         return rows
 
+    def _generate_species(self):
+        """生成每个格子的物种信息（当前仅树木）。与 tiles 同步生成，确定性。"""
+        start_x = self.cx * CHUNK_SIZE
+        start_y = self.cy * CHUNK_SIZE
+        from systems.ecology import get_flora_species
+        species_grid = []
+        for dy in range(CHUNK_SIZE):
+            row = []
+            for dx in range(CHUNK_SIZE):
+                wx, wy = start_x + dx, start_y + dy
+                tid = self.tiles[dy][dx]
+                if tid == TILE_TREE:
+                    sp = get_flora_species(wx, wy, self._seed, category="tree")
+                    row.append(sp["id"] if sp else None)
+                else:
+                    row.append(None)
+            species_grid.append(row)
+        return species_grid
+
     def get_tile(self, local_x: int, local_y: int) -> int:
         """读取本地坐标的 tile ID。"""
         return self.tiles[local_y][local_x]
 
+    def get_species(self, local_x: int, local_y: int) -> str | None:
+        """读取本地坐标的物种 ID（当前仅树木有效）。"""
+        return self._species[local_y][local_x]
+
     def set_tile(self, local_x: int, local_y: int, tile_id: int):
-        """写入本地坐标的 tile ID，并标记脏数据。"""
+        """写入本地坐标的 tile ID，自动同步物种信息，标记脏数据。"""
         self.tiles[local_y][local_x] = tile_id
+        if tile_id == TILE_TREE:
+            from systems.ecology import get_flora_species
+            wx = self.cx * CHUNK_SIZE + local_x
+            wy = self.cy * CHUNK_SIZE + local_y
+            sp = get_flora_species(wx, wy, self._seed, category="tree")
+            self._species[local_y][local_x] = sp["id"] if sp else None
+        else:
+            self._species[local_y][local_x] = None
         self.is_dirty = True
 
     def apply_delta(self, delta: dict):
@@ -162,13 +194,16 @@ class World:
             del self._chunks[(cx, cy)]
 
     def get_tile(self, x: int, y: int) -> dict:
-        """获取 (x, y) 的 tile 数据，返回 {"tile": int, "extra": {}} 兼容旧接口。"""
+        """获取 (x, y) 的 tile 数据，返回 {"tile": int, "extra": {"species": str|None}}。"""
         cx, cy = self._chunk_key(x, y)
         self._load_chunk(cx, cy)
+        chunk = self._chunks[(cx, cy)]
         local_x = x - cx * CHUNK_SIZE
         local_y = y - cy * CHUNK_SIZE
-        tile_id = self._chunks[(cx, cy)].get_tile(local_x, local_y)
-        return {"tile": tile_id, "extra": {}}
+        tile_id = chunk.get_tile(local_x, local_y)
+        species = chunk.get_species(local_x, local_y) if tile_id == TILE_TREE else None
+        extra = {"species": species} if species else {}
+        return {"tile": tile_id, "extra": extra}
 
     def set_tile(self, x: int, y: int, tile_id: int):
         """修改 (x, y) 的 tile ID。"""
@@ -206,14 +241,7 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
                 below = world.get_tile(x, y + 1)["tile"]
                 # 必须站在实体方块上，头顶是空气
                 if current == TILE_AIR and below not in (TILE_AIR, TILE_WATER, TILE_TREE):
-                    # 在出生点周围5格内种3-5棵树
-                    import random
-                    rng = random.Random(x * 1000 + y)
-                    for _ in range(5):
-                        tx = x + rng.randint(-5, 5)
-                        ty = y + rng.randint(-2, 1)
-                        if world.get_tile(tx, ty)["tile"] in (TILE_AIR, TILE_DIRT):
-                            world.set_tile(tx, ty, TILE_TREE)
+                    # 树木已在 generate_tile 阶段由生态层统一生成，不需要额外撒树
                     return x, y
     # 最终保底：返回原点并强制设为空气
     world.set_tile(0, 0, TILE_AIR)
@@ -331,7 +359,6 @@ def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
     w = World(seed=seed + layer * 10000)
     if decorate:
         _clear_spawn_area(w)
-        _scatter_trees(w)
         w.special_locations = _place_special_locations(w)
     else:
         w.special_locations = []

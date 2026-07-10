@@ -6,16 +6,39 @@
 """
 import json
 import random
+import hashlib
 from pathlib import Path
 from systems.climate import get_biome
 from systems.noise_engine import _hash_uniform
+
+# Biome 配置（聚簇大小等环境参数由 Biome 决定，不在物种数据中）
+_BIOME_CONFIG = None
+
+def _load_biome_config():
+    global _BIOME_CONFIG
+    if _BIOME_CONFIG is not None:
+        return _BIOME_CONFIG
+    biome_file = BASE_DIR / "data" / "biomes.json"
+    if biome_file.exists():
+        with open(biome_file, "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        _BIOME_CONFIG = {b["name"]: b for b in raw}
+    else:
+        _BIOME_CONFIG = {}
+    return _BIOME_CONFIG
+
+def _get_biome_cluster(biome_name: str, default: int = 10) -> int:
+    """从 Biome 配置读取聚簇大小。环境决定分布，物种描述自己。"""
+    cfg = _load_biome_config()
+    biome = cfg.get(biome_name, {})
+    return biome.get("ecology", {}).get("tree_cluster", default)
 
 BASE_DIR = Path(__file__).parent.parent
 FLORA_FILE = BASE_DIR / "data" / "flora.json"
 
 _FLORA_CACHE = None
 _SPECIES_CELL_CACHE: dict = {}
-_SPECIES_CELL_SIZE = 10  # 同一个网格内的树默认使用同一批伴生物种，形成小片林子而非杂乱单株
+_DEFAULT_CELL_SIZE = 10  # 回退值，实际由 Biome 配置决定
 
 
 def load_flora():
@@ -34,8 +57,9 @@ def load_flora():
 
 
 def clear_flora_cache():
-    global _FLORA_CACHE
+    global _FLORA_CACHE, _BIOME_CONFIG
     _FLORA_CACHE = None
+    _BIOME_CONFIG = None
     _SPECIES_CELL_CACHE.clear()
 
 
@@ -52,7 +76,7 @@ def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, cate
         _SPECIES_CELL_CACHE[key] = None
         return None
 
-    rng_seed = seed + cell_x * 71317 + cell_y * 57923 + hash(category) % 100000
+    rng_seed = seed + cell_x * 71317 + cell_y * 57923 + int(hashlib.md5(category.encode()).hexdigest()[:8], 16) % 100000
     rng = random.Random(rng_seed)
     weights = [c.get("rarity", 1) for c in candidates]
     primary = rng.choices(candidates, weights=weights, k=1)[0]
@@ -65,13 +89,16 @@ def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, cate
             pool.append(companion)
 
     _SPECIES_CELL_CACHE[key] = pool
-    return pool
+    return list(pool)  # 返回副本，防止外部修改污染缓存
 
 
 def get_flora_species(x: int, y: int, seed: int = 12345, category: str = "tree"):
     """查询 (x,y) 这个位置应该是什么物种。返回物种 dict 或 None（不适合任何物种时）。"""
     biome = get_biome(x, y, seed)
-    cell_x, cell_y = x // _SPECIES_CELL_SIZE, y // _SPECIES_CELL_SIZE
+    cluster_size = _get_biome_cluster(biome, _DEFAULT_CELL_SIZE)
+    if cluster_size <= 0:
+        return None
+    cell_x, cell_y = x // cluster_size, y // cluster_size
     pool = _pick_species_for_cell(cell_x, cell_y, biome, seed, category)
     if not pool:
         return None

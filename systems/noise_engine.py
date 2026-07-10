@@ -101,67 +101,29 @@ def _find_nearby_deposit(x: int, y: int, seed: int):
 # 各生物群系的地形阈值参数：water_thresh/sand_thresh 越大代表该地形越常见；
 # sand_thresh=None 表示该群系不生成沙滩（比如苔原/冰原/草原直接跳过沙子）。
 # tree_thresh 越低代表树木越密集（噪声高于此阈值才长树）。
+# tree_thresh 已废弃，由 biomes.json 的 tree_density 替代。保留字段向后兼容。
 _BIOME_TERRAIN_PARAMS = {
-    "冰原":     {"water_thresh": -0.55, "sand_thresh": None,  "tree_thresh": 0.92},
-    "苔原":     {"water_thresh": -0.45, "sand_thresh": None,  "tree_thresh": 0.85},
-    "针叶林":   {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_thresh": 0.45},
-    "草原":     {"water_thresh": -0.40, "sand_thresh": None,  "tree_thresh": 0.75},
-    "温带森林": {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_thresh": 0.55},
-    "沙漠":     {"water_thresh": -0.60, "sand_thresh": -0.05, "tree_thresh": 0.93},
-    "雨林":     {"water_thresh": -0.25, "sand_thresh": -0.32, "tree_thresh": 0.35},
+    "冰原":     {"water_thresh": -0.55, "sand_thresh": None,  "tree_density": 0.0},
+    "苔原":     {"water_thresh": -0.45, "sand_thresh": None,  "tree_density": 0.08},
+    "针叶林":   {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_density": 0.55},
+    "草原":     {"water_thresh": -0.40, "sand_thresh": None,  "tree_density": 0.15},
+    "温带森林": {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_density": 0.45},
+    "沙漠":     {"water_thresh": -0.60, "sand_thresh": -0.05, "tree_density": 0.05},
+    "雨林":     {"water_thresh": -0.25, "sand_thresh": -0.32, "tree_density": 0.65},
 }
 
 
 def generate_tile(x: int, y: int, seed: int = 12345) -> int:
-    """俯视图地形生成：默认大面积可通行（地面/草地），
-    石头与矿脉只以局部团块形式聚集出现，不再区分"地下/地表"（无深度轴）。"""
-    from world_gen import (TILE_AIR, TILE_DIRT, TILE_STONE, TILE_WATER, TILE_TREE, TILE_SAND,
-                            TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_DIAMOND,
-                            TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_OBSIDIAN)
+    """地形生成：委托给 Feature Engine 统一调度。
+    
+    所有自然物（水/沙/石/矿/树）都是 Feature，
+    新增内容不改此函数，只在 feature_engine.py 注册。
+    """
     key = (x, y, seed)
     if key in _PERLIN_CACHE:
         return _PERLIN_CACHE[key]
-
-    # 大尺度噪声：决定水域/沙滩，阈值按所属生物群系微调
-    from systems.climate import get_biome
-    biome = get_biome(x, y, seed)
-    params = _BIOME_TERRAIN_PARAMS.get(biome, _BIOME_TERRAIN_PARAMS["温带森林"])
-    h = perlin_2d(x / 25, y / 25, seed, octaves=3)
-    water_thresh = params["water_thresh"]
-    sand_thresh = params["sand_thresh"]
-    if h < water_thresh:
-        tile = TILE_WATER
-    elif sand_thresh is not None and h < sand_thresh:
-        tile = TILE_SAND
-    else:
-        tile = TILE_AIR  # 可通行地面（草地/泥地/雪地等，视觉细节由群系决定），俯视图下的默认地表
-
-    # 石头/矿脉团块：只在局部聚集区域内出现，边缘越远越稀疏
-    if tile == TILE_AIR:
-        found = _find_nearby_deposit(x, y, seed)
-        if found is not None:
-            dist, radius = found
-            edge_fade = 1 - dist / radius
-            if _hash_uniform(x, y, seed + 9001) < (0.3 + 0.7 * edge_fade):
-                tile = TILE_STONE
-                ore = perlin_2d(x / 5 + 100, y / 5 + 100, seed, octaves=3)
-                if ore > 0.85: tile = TILE_DIAMOND
-                elif ore > 0.80: tile = TILE_OBSIDIAN
-                elif ore > 0.75: tile = TILE_GOLD
-                elif ore > 0.70: tile = TILE_SILVER
-                elif ore > 0.65: tile = TILE_IRON
-                elif ore > 0.60: tile = TILE_COPPER
-                elif ore > 0.55: tile = TILE_COAL
-                elif ore > 0.50: tile = TILE_SULFUR
-                elif ore > 0.45: tile = TILE_SALT
-                elif ore > 0.40: tile = TILE_CLAY
-
-    # 树木：噪声阈值按生物群系调整（雨林密集、苔原/沙漠稀疏）
-    if tile == TILE_AIR:
-        tree_noise = perlin_2d(x / 6 + 300, y / 6 + 300, seed, octaves=3)
-        if tree_noise > params["tree_thresh"]:
-            tile = TILE_TREE
-
+    from systems.feature_engine import natural_generator
+    tile = natural_generator(x, y, seed)
     _PERLIN_CACHE[key] = tile
     return tile
 

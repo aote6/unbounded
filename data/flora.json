@@ -3,104 +3,385 @@
     "id": "oak",
     "name": "橡树",
     "category": "tree",
-    "biomes": ["温带森林"],
+    "biomes": [
+      "温带森林"
+    ],
     "rarity": 5,
-    "companion_with": ["maple"]
+    "companion_with": [
+      "maple"
+    ],
+    "tags": [
+      "hardwood",
+      "deciduous",
+      "temperate"
+    ]
   },
   {
     "id": "maple",
     "name": "枫树",
     "category": "tree",
-    "biomes": ["温带森林"],
+    "biomes": [
+      "温带森林"
+    ],
     "rarity": 3,
-    "companion_with": ["oak"]
+    "companion_with": [
+      "oak"
+    ],
+    "tags": [
+      "hardwood",
+      "deciduous",
+      "temperate"
+    ]
   },
   {
     "id": "birch",
     "name": "白桦",
     "category": "tree",
-    "biomes": ["温带森林", "针叶林"],
+    "biomes": [
+      "温带森林",
+      "针叶林"
+    ],
     "rarity": 2,
-    "companion_with": []
+    "companion_with": [],
+    "tags": [
+      "softwood",
+      "deciduous",
+      "temperate",
+      "boreal"
+    ]
   },
   {
     "id": "pine",
     "name": "松树",
     "category": "tree",
-    "biomes": ["针叶林"],
+    "biomes": [
+      "针叶林"
+    ],
     "rarity": 6,
-    "companion_with": ["fir", "spruce"]
+    "companion_with": [
+      "fir",
+      "spruce"
+    ],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "boreal"
+    ]
   },
   {
     "id": "fir",
     "name": "冷杉",
     "category": "tree",
-    "biomes": ["针叶林"],
+    "biomes": [
+      "针叶林"
+    ],
     "rarity": 4,
-    "companion_with": ["pine", "spruce"]
+    "companion_with": [
+      "pine",
+      "spruce"
+    ],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "boreal"
+    ]
   },
   {
     "id": "spruce",
     "name": "云杉",
     "category": "tree",
-    "biomes": ["针叶林"],
+    "biomes": [
+      "针叶林"
+    ],
     "rarity": 3,
-    "companion_with": ["pine", "fir"]
+    "companion_with": [
+      "pine",
+      "fir"
+    ],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "boreal"
+    ]
   },
   {
     "id": "willow",
     "name": "柳树",
     "category": "tree",
-    "biomes": ["草原", "温带森林"],
+    "biomes": [
+      "草原",
+      "温带森林"
+    ],
     "rarity": 3,
-    "companion_with": ["poplar"]
+    "companion_with": [
+      "poplar"
+    ],
+    "tags": [
+      "softwood",
+      "deciduous",
+      "riparian"
+    ]
   },
   {
     "id": "poplar",
     "name": "杨树",
     "category": "tree",
-    "biomes": ["草原"],
+    "biomes": [
+      "草原"
+    ],
     "rarity": 5,
-    "companion_with": ["willow"]
+    "companion_with": [
+      "willow"
+    ],
+    "tags": [
+      "softwood",
+      "deciduous",
+      "temperate"
+    ]
   },
   {
     "id": "banyan",
     "name": "榕树",
     "category": "tree",
-    "biomes": ["雨林"],
+    "biomes": [
+      "雨林"
+    ],
     "rarity": 4,
-    "companion_with": ["bamboo"]
+    "companion_with": [
+      "bamboo"
+    ],
+    "tags": [
+      "hardwood",
+      "evergreen",
+      "tropical"
+    ]
   },
   {
     "id": "coconut_palm",
     "name": "椰子树",
     "category": "tree",
-    "biomes": ["雨林"],
+    "biomes": [
+      "雨林"
+    ],
     "rarity": 3,
-    "companion_with": []
+    "companion_with": [],
+    "tags": [
+      "palm",
+      "evergreen",
+      "tropical",
+      "coastal"
+    ]
   },
   {
     "id": "bamboo",
     "name": "竹子",
     "category": "tree",
-    "biomes": ["雨林"],
+    "biomes": [
+      "雨林"
+    ],
     "rarity": 5,
-    "companion_with": ["banyan"]
+    "companion_with": [
+      "banyan"
+    ],
+    "tags": [
+      "grass",
+      "evergreen",
+      "tropical"
+    ]
   },
   {
     "id": "cactus",
     "name": "仙人掌",
     "category": "tree",
-    "biomes": ["沙漠"],
+    "biomes": [
+      "沙漠"
+    ],
     "rarity": 5,
-    "companion_with": []
+    "companion_with": [],
+    "tags": [
+      "succulent",
+      "evergreen",
+      "desert"
+    ]
   },
   {
     "id": "dwarf_pine",
     "name": "矮松",
     "category": "tree",
-    "biomes": ["苔原"],
+    "biomes": [
+      "苔原"
+    ],
     "rarity": 3,
-    "companion_with": []
+    "companion_with": [],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "tundra"
+    ]
+  },
+  {
+    "id": "ginseng",
+    "name": "人参",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 1,
+    "companion_with": [],
+    "tags": [
+      "rare",
+      "medicinal",
+      "root"
+    ]
+  },
+  {
+    "id": "licorice",
+    "name": "甘草",
+    "category": "herb",
+    "biomes": [
+      "草原"
+    ],
+    "rarity": 3,
+    "companion_with": [],
+    "tags": [
+      "common",
+      "medicinal",
+      "root"
+    ]
+  },
+  {
+    "id": "aloe",
+    "name": "芦荟",
+    "category": "herb",
+    "biomes": [
+      "沙漠"
+    ],
+    "rarity": 2,
+    "companion_with": [],
+    "tags": [
+      "succulent",
+      "medicinal",
+      "desert"
+    ]
+  },
+  {
+    "id": "mint",
+    "name": "薄荷",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林"
+    ],
+    "rarity": 4,
+    "companion_with": [],
+    "tags": [
+      "common",
+      "medicinal",
+      "aromatic"
+    ]
+  },
+  {
+    "id": "lotus",
+    "name": "莲花",
+    "category": "herb",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 2,
+    "companion_with": [],
+    "tags": [
+      "rare",
+      "medicinal",
+      "aquatic"
+    ]
+  },
+  {
+    "id": "snow_lotus",
+    "name": "雪莲",
+    "category": "herb",
+    "biomes": [
+      "冰原",
+      "苔原"
+    ],
+    "rarity": 1,
+    "companion_with": [],
+    "tags": [
+      "rare",
+      "medicinal",
+      "alpine"
+    ]
+  },
+  {
+    "id": "mushroom_lingzhi",
+    "name": "灵芝",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "雨林"
+    ],
+    "rarity": 1,
+    "companion_with": [
+      "oak",
+      "maple"
+    ],
+    "tags": [
+      "rare",
+      "medicinal",
+      "fungus"
+    ]
+  },
+  {
+    "id": "mushroom_red",
+    "name": "红菇",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 3,
+    "companion_with": [
+      "pine",
+      "fir"
+    ],
+    "tags": [
+      "common",
+      "medicinal",
+      "fungus"
+    ]
+  },
+  {
+    "id": "ginger",
+    "name": "姜",
+    "category": "herb",
+    "biomes": [
+      "雨林",
+      "草原"
+    ],
+    "rarity": 3,
+    "companion_with": [],
+    "tags": [
+      "common",
+      "medicinal",
+      "root"
+    ]
+  },
+  {
+    "id": "cactus_flower",
+    "name": "仙人掌花",
+    "category": "herb",
+    "biomes": [
+      "沙漠"
+    ],
+    "rarity": 2,
+    "companion_with": [
+      "cactus"
+    ],
+    "tags": [
+      "rare",
+      "medicinal",
+      "desert"
+    ]
   }
 ]
