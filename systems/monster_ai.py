@@ -171,10 +171,10 @@ def ai_act(monster, world, px, py, turn, monster_index):
     candidates = []
     if dist <= 1:
         if _has_line_of_sight(world, mx, my, px, py):
-            candidates.append(("attack", monster.get("scores", {}).get("attack", 10), px, py))
+            candidates.append(("attack", monster.get("scores", {}).get("attack", 0), px, py))
     vis = monster.get("vision", 6)
     if 1 < dist <= vis:
-        candidates.append(("chase", monster.get("scores", {}).get("chase", 8), px, py))
+        candidates.append(("chase", monster.get("scores", {}).get("chase", 0), px, py))
     if dist <= vis and monster["hp"] < monster["max_hp"] * monster.get("flee_at_hp_ratio", 0.3):
         candidates.append(("flee", monster.get("scores", {}).get("flee", 12), px, py))
     candidates.append(("wander", monster.get("scores", {}).get("wander", 1), None, None))

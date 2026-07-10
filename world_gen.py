@@ -253,32 +253,15 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
                 x += rng.choice([-1, 0, 1, 1, 1])
                 y += rng.choice([-1, 0, 0, 0, 0, 1])
 
-def _carve_caves(world):
-    """在每层挖出横向洞穴通道，确保有行走空间"""
-    import random
-    rng = random.Random(world.seed + 9999)
+def _clear_spawn_area(world):
+    """只清出生点附近一小块平地，确保新角色不会卡在障碍物里。
+    （旧版 _carve_caves 隧道雕刻逻辑已废弃：新地形生成本身大面积可通行，
+    不再需要在实心地形里凿隧道，避免重复大范围性能开销。）"""
     for x in range(-10, 10):
         for y in range(-2, 3):
             world.set_tile(x, y, TILE_AIR)
     world.set_tile(0, 1, TILE_DIRT)
-    for depth_band in [(-15, -3), (-35, -15), (-55, -35)]:
-        for _ in range(rng.randint(3, 5)):
-            x = rng.randint(-200, 200)
-            y = rng.randint(depth_band[0], depth_band[1])
-            length = rng.randint(100, 250)
-            height = rng.randint(3, 5)
-            for step in range(length):
-                for dy in range(-height//2, height//2 + 1):
-                    try:
-                        tile = world.get_tile(x, y+dy)["tile"]
-                        if tile in (TILE_STONE, TILE_DIRT, TILE_COAL, TILE_COPPER,
-                                   TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_LIMESTONE,
-                                   TILE_MARBLE, TILE_GRANITE, TILE_CLAY, TILE_SAND):
-                            world.set_tile(x, y+dy, TILE_AIR)
-                    except:
-                        pass
-                x += rng.choice([-1, 0, 1, 1, 1])
-                y += rng.choice([-1, 0, 0, 0, 0, 1])
+
 
 def _scatter_trees(world):
     """在地表随机撒树，确保有足够的树可砍"""
@@ -347,7 +330,7 @@ def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
     clear_perlin_cache()
     w = World(seed=seed + layer * 10000)
     if decorate:
-        _carve_caves(w)
+        _clear_spawn_area(w)
         _scatter_trees(w)
         w.special_locations = _place_special_locations(w)
     else:
