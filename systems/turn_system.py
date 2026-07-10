@@ -5,6 +5,7 @@ from systems.tile_interaction import tick_tile_interactions
 from systems.legacy_system import check_death, show_death_screen
 from systems.save_manager import new_game
 from systems.goal_system import check_goals
+from systems.civilization import check_player_near_settlement
 
 
 def advance_turn(game):
@@ -26,6 +27,9 @@ def advance_turn(game):
 
     if game.turn % 10 == 0:
         check_goals(game)
+
+    # 聚落发现：轻量的距离判断+缓存查询，每回合检查，玩家走近应立即触发
+    check_player_near_settlement(game)
 
     if check_death(game):
         show_death_screen(game)

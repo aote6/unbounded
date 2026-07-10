@@ -90,6 +90,8 @@ def draw(game):
     ox, oy = game.get_viewport_origin()
     view_w = stdscr.getmaxyx()[1]
     time_name, ambient = _get_time_of_day(game.turn)
+    from systems.weather_system import get_weather_at
+    weather = get_weather_at(game.player_x, game.player_y, game.world.seed, game.turn)
 
     # 确保实体颜色对已注册（256色需要 init_pair）
     for pair_id, fg in [(198, 197), (11, 10), (228, 227)]:
@@ -117,7 +119,7 @@ def draw(game):
     goal_names = {"build_first_room": "建造第一个房间", "explore_cave": "深入地下探索",
                   "kill_spiders": "狩猎怪物收集材料", "build_luxury": "建造豪华基地", "survive": "活下去"}
     goal_text = goal_names.get(game.goal, game.goal)
-    s1 = f"[{time_name}] | {hp_str} | {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text}"
+    s1 = f"[{time_name}] | {hp_str} | {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text} | {weather["name"]}"
     if game.place_mode:
         s1 += f" | [建造: {game.place_mode}]"
     if game.dig_progress:

@@ -69,7 +69,11 @@ def _try_spawn_neutral(game):
     """每回合有概率在玩家远处生成中立生物，类型按该位置所属的生物群系决定。"""
     import random as _random
     from systems.climate import get_biome
-    if _random.random() > 0.25:  # 25% 概率
+    # 天气影响生成密度
+    from systems.weather_system import get_weather_at
+    weather_mod = get_weather_at(game.player_x, game.player_y, game.world.seed, game.turn)
+    density_mult = weather_mod.get("modifiers", {}).get("animal_density_mult", 1.0)
+    if _random.random() > 0.25 * density_mult:
         return
     for _ in range(20):
         sx = game.player_x + _random.randint(-15, 15)
