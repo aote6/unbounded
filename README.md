@@ -1,6 +1,13 @@
 # Unbounded
 
-终端俯视角 Roguelike 沙盒游戏。无尽世界，向下挖掘，与怪物战斗，锻造装备。
+> **Unbounded 不是 Open World，是 Open Rule World。**
+> 
+> 世界先存在。玩家后来进入。玩家离开以后，世界依然存在。
+> 这是一个由规律驱动而非内容驱动的电子世界。
+>
+> 📖 [项目宪法](docs/00_PROJECT_PHILOSOPHY.md) | 🌍 [世界模型](docs/01_WORLD_MODEL.md) | 🏗 [架构](docs/02_ARCHITECTURE.md)
+
+终端俯视角沙盒。无尽世界，遵循统一规律运行。
 
 ## 快速开始
 
