@@ -52,14 +52,14 @@ TILE_DROPS = {
 
 class Chunk:
     """16×16 区块。管理自身地形数据与脏状态。"""
-    __slots__ = ('cx', 'cy', 'tiles', '_species', 'is_dirty', '_seed')
+    __slots__ = ('cx', 'cy', 'tiles', '_species', '_herbs', 'is_dirty', '_seed')
 
     def __init__(self, cx: int, cy: int, seed: int):
         self.cx = cx
         self.cy = cy
         self._seed = seed
         self.tiles = self._generate_tiles()
-        self._species = self._generate_species()
+        self._species, self._herbs = self._generate_species()
         self.is_dirty = False
 
     def _generate_tiles(self):
@@ -75,31 +75,44 @@ class Chunk:
         return rows
 
     def _generate_species(self):
-        """生成每个格子的物种信息（当前仅树木）。与 tiles 同步生成，确定性。"""
+        """生成每个格子的物种信息（树木 + 药材）。确定性，仅对已存在的地形填充。"""
         start_x = self.cx * CHUNK_SIZE
         start_y = self.cy * CHUNK_SIZE
         from systems.ecology import get_flora_species
         species_grid = []
+        herbs_grid = []
         for dy in range(CHUNK_SIZE):
-            row = []
+            s_row = []
+            h_row = []
             for dx in range(CHUNK_SIZE):
                 wx, wy = start_x + dx, start_y + dy
                 tid = self.tiles[dy][dx]
                 if tid == TILE_TREE:
                     sp = get_flora_species(wx, wy, self._seed, category="tree")
-                    row.append(sp["id"] if sp else None)
+                    s_row.append(sp["id"] if sp else None)
                 else:
-                    row.append(None)
-            species_grid.append(row)
-        return species_grid
+                    s_row.append(None)
+                # 药材：只在 AIR 格子上查询（不覆盖已有地形）
+                if tid == 0:  # TILE_AIR
+                    herb = get_flora_species(wx, wy, self._seed, category="herb")
+                    h_row.append(herb["id"] if herb else None)
+                else:
+                    h_row.append(None)
+            species_grid.append(s_row)
+            herbs_grid.append(h_row)
+        return species_grid, herbs_grid
 
     def get_tile(self, local_x: int, local_y: int) -> int:
         """读取本地坐标的 tile ID。"""
         return self.tiles[local_y][local_x]
 
-    def get_species(self, local_x: int, local_y: int) -> str | None:
-        """读取本地坐标的物种 ID（当前仅树木有效）。"""
-        return self._species[local_y][local_x]
+    def get_flora(self, local_x: int, local_y: int, kind: str = "tree") -> str | None:
+        """读取本地坐标的物种 ID。kind: 'tree' | 'herb'"""
+        if kind == "tree":
+            return self._species[local_y][local_x]
+        elif kind == "herb":
+            return self._herbs[local_y][local_x]
+        return None
 
     def set_tile(self, local_x: int, local_y: int, tile_id: int):
         """写入本地坐标的 tile ID，自动同步物种信息，标记脏数据。"""
@@ -112,6 +125,15 @@ class Chunk:
             self._species[local_y][local_x] = sp["id"] if sp else None
         else:
             self._species[local_y][local_x] = None
+        # 药材同步：AIR 格子可能有药材
+        if tile_id == 0:
+            from systems.ecology import get_flora_species
+            wx = self.cx * CHUNK_SIZE + local_x
+            wy = self.cy * CHUNK_SIZE + local_y
+            herb = get_flora_species(wx, wy, self._seed, category="herb")
+            self._herbs[local_y][local_x] = herb["id"] if herb else None
+        else:
+            self._herbs[local_y][local_x] = None
         self.is_dirty = True
 
     def apply_delta(self, delta: dict):
@@ -203,8 +225,13 @@ class World:
         local_x = x - cx * CHUNK_SIZE
         local_y = y - cy * CHUNK_SIZE
         tile_id = chunk.get_tile(local_x, local_y)
-        species = chunk.get_species(local_x, local_y) if tile_id == TILE_TREE else None
-        extra = {"species": species} if species else {}
+        species = chunk.get_flora(local_x, local_y, "tree") if tile_id == TILE_TREE else None
+        herb = chunk.get_flora(local_x, local_y, "herb") if tile_id == 0 else None
+        extra = {}
+        if species:
+            extra["species"] = species
+        if herb:
+            extra["herb"] = herb
         return {"tile": tile_id, "extra": extra}
 
     def set_tile(self, x: int, y: int, tile_id: int):
