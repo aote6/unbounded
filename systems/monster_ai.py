@@ -24,7 +24,7 @@ def tick_monsters(game):
         old_x, old_y = m["x"], m["y"]
         act = ai_act(
             m, game.world, game.player_x, game.player_y,
-            game.turn, game._monster_index
+            game.turn, game._monster_index, game
         )
         # 更新空间索引
         if m["x"] != old_x or m["y"] != old_y:
@@ -159,12 +159,12 @@ def _has_line_of_sight(world, x1, y1, x2, y2):
             err += dx; cy += sy
     return True
 
-def ai_act(monster, world, px, py, turn, monster_index):
+def ai_act(monster, world, px, py, turn, monster_index, game=None):
     dist = chebyshev(monster["x"], monster["y"], px, py)
     if dist > MONSTER_SLEEP_DISTANCE:
         if turn % MONSTER_SLEEP_TICKS != 0:
             return ""
-    special = _ai_special_behavior(monster, world, px, py, monster_index)
+    special = _ai_special_behavior(monster, world, px, py, monster_index, game)
     if special is not None:
         return special
     mx, my = monster["x"], monster["y"]
@@ -190,7 +190,7 @@ def ai_act(monster, world, px, py, turn, monster_index):
         return _move_random(monster, world, monster_index, px, py)
     return ""
 
-def _ai_special_behavior(monster, world, px, py, monster_index):
+def _ai_special_behavior(monster, world, px, py, monster_index, game=None):
     special = monster.get("special_behavior")
     if special is None:
         return None
@@ -198,6 +198,10 @@ def _ai_special_behavior(monster, world, px, py, monster_index):
         return _behavior_never_flee(monster, world, px, py, monster_index)
     if special == "erratic_movement":
         return _behavior_erratic(monster, world, px, py, monster_index)
+    if special == "always_flee":
+        return _behavior_always_flee(monster, world, px, py, monster_index)
+    if special == "hunt_prey":
+        return _ai_hunt_prey(monster, world, px, py, monster_index, game)
     return None
 
 def _behavior_never_flee(monster, world, px, py, monster_index):
@@ -338,15 +342,44 @@ def _behavior_always_flee(monster, world, px, py, monster_index):
     return _move_random(monster, world, monster_index, px, py)
 
 
-def _ai_hunt_prey(monster, world, px, py, monster_index):
-    """狐狸 AI: 猎杀中立生物, 躲开玩家"""
+def _ai_hunt_prey(monster, world, px, py, monster_index, game=None):
+    """捕食者 AI: 主动搜寻视野内带 'prey' 标签的猎物，追踪并猎杀；
+    没有猎物时才会躲避玩家或随机游荡，不主动招惹玩家。"""
     mx, my = monster["x"], monster["y"]
+    vis = monster.get("vision", 8)
+
+    target = None
+    target_dist = None
+    for (ox, oy), other in monster_index.items():
+        if other is monster:
+            continue
+        if "prey" not in other.get("tags", []):
+            continue
+        d = chebyshev(mx, my, ox, oy)
+        if d <= vis and (target_dist is None or d < target_dist):
+            target, target_dist = other, d
+
+    if target is not None:
+        if target_dist <= 1 and _has_line_of_sight(world, mx, my, target["x"], target["y"]):
+            _attack_other_monster(monster, target, game)
+            return "hunt_attack"
+        return _move_toward(monster, target["x"], target["y"], world, monster_index, px, py)
+
     dist_to_player = chebyshev(mx, my, px, py)
-    
     if dist_to_player <= 4:
         return _move_away(monster, px, py, world, monster_index, px, py)
-    
     return _move_random(monster, world, monster_index, px, py)
+
+
+def _attack_other_monster(attacker, target, game=None):
+    """捕食者攻击另一只怪物（而非玩家），直接扣血并在死亡时正确清理。"""
+    ap = attacker.get("attack_power", (1, 3))
+    dmg = random.randint(ap[0], ap[1])
+    if random.random() > attacker.get("hit_chance", 0.6):
+        return
+    target["hp"] -= dmg
+    if target["hp"] <= 0 and game is not None:
+        kill_monster(game, target, cause="predator")
 
 
 def _pick_neutral_type(depth=0):
