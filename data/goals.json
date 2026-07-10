@@ -1,0 +1,47 @@
+[
+  {
+    "id": "build_first_room",
+    "name": "建造第一个房间",
+    "desc": "收集材料，建造一个遮风挡雨的房间。",
+    "complete_if": {"room_built": true},
+    "complete_msg": "家已建成！深入地下探索吧。",
+    "next": "explore_cave",
+    "hint": "用 d 挖掘石头，b 进入建造模式放置墙壁。"
+  },
+  {
+    "id": "explore_cave",
+    "name": "深入地下探索",
+    "desc": "往深处走，地下藏着稀有资源。",
+    "complete_if": {"player_y_below": -20},
+    "complete_msg": "你进入了深层地下！狩猎怪物收集稀有材料。",
+    "next": "kill_spiders",
+    "hint": "往下走，越深的地方矿物越丰富。"
+  },
+  {
+    "id": "kill_spiders",
+    "name": "狩猎怪物",
+    "desc": "猎杀怪物，收集稀有掉落物。",
+    "complete_if": {"turns_played": 500},
+    "complete_msg": "收集了足够的材料，建造豪华基地吧！",
+    "next": "build_luxury",
+    "hint": "怪物在黑暗处出没，击败它们获得稀有材料。"
+  },
+  {
+    "id": "build_luxury",
+    "name": "建造豪华基地",
+    "desc": "用收集到的稀有材料，打造一个宏伟的基地。",
+    "complete_if": {"turns_played": 2000},
+    "complete_msg": "你的基地已经成为这片大陆的传奇！",
+    "next": "survive",
+    "hint": "使用大理石、黑曜石等稀有方块装饰你的基地。"
+  },
+  {
+    "id": "survive",
+    "name": "活下去",
+    "desc": "世界无限延伸，探索未知的角落。",
+    "complete_if": {},
+    "complete_msg": "",
+    "next": null,
+    "hint": "世界是你的。没有终点。"
+  }
+]
