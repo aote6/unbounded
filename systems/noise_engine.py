@@ -98,6 +98,20 @@ def _find_nearby_deposit(x: int, y: int, seed: int):
     return None
 
 
+# 各生物群系的地形阈值参数：water_thresh/sand_thresh 越大代表该地形越常见；
+# sand_thresh=None 表示该群系不生成沙滩（比如苔原/冰原/草原直接跳过沙子）。
+# tree_thresh 越低代表树木越密集（噪声高于此阈值才长树）。
+_BIOME_TERRAIN_PARAMS = {
+    "冰原":     {"water_thresh": -0.55, "sand_thresh": None,  "tree_thresh": 0.92},
+    "苔原":     {"water_thresh": -0.45, "sand_thresh": None,  "tree_thresh": 0.85},
+    "针叶林":   {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_thresh": 0.45},
+    "草原":     {"water_thresh": -0.40, "sand_thresh": None,  "tree_thresh": 0.75},
+    "温带森林": {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_thresh": 0.55},
+    "沙漠":     {"water_thresh": -0.60, "sand_thresh": -0.05, "tree_thresh": 0.93},
+    "雨林":     {"water_thresh": -0.25, "sand_thresh": -0.32, "tree_thresh": 0.35},
+}
+
+
 def generate_tile(x: int, y: int, seed: int = 12345) -> int:
     """俯视图地形生成：默认大面积可通行（地面/草地），
     石头与矿脉只以局部团块形式聚集出现，不再区分"地下/地表"（无深度轴）。"""
@@ -108,14 +122,19 @@ def generate_tile(x: int, y: int, seed: int = 12345) -> int:
     if key in _PERLIN_CACHE:
         return _PERLIN_CACHE[key]
 
-    # 大尺度噪声：决定水域/沙滩，其余默认可通行地面
+    # 大尺度噪声：决定水域/沙滩，阈值按所属生物群系微调
+    from systems.climate import get_biome
+    biome = get_biome(x, y, seed)
+    params = _BIOME_TERRAIN_PARAMS.get(biome, _BIOME_TERRAIN_PARAMS["温带森林"])
     h = perlin_2d(x / 25, y / 25, seed, octaves=3)
-    if h < -0.35:
+    water_thresh = params["water_thresh"]
+    sand_thresh = params["sand_thresh"]
+    if h < water_thresh:
         tile = TILE_WATER
-    elif h < -0.28:
+    elif sand_thresh is not None and h < sand_thresh:
         tile = TILE_SAND
     else:
-        tile = TILE_AIR  # 可通行地面（草地/泥地），俯视图下的默认地表
+        tile = TILE_AIR  # 可通行地面（草地/泥地/雪地等，视觉细节由群系决定），俯视图下的默认地表
 
     # 石头/矿脉团块：只在局部聚集区域内出现，边缘越远越稀疏
     if tile == TILE_AIR:
@@ -137,10 +156,10 @@ def generate_tile(x: int, y: int, seed: int = 12345) -> int:
                 elif ore > 0.45: tile = TILE_SALT
                 elif ore > 0.40: tile = TILE_CLAY
 
-    # 树木：沿用连续噪声阈值（Perlin 本身空间连续，自然形成小片树林，而非孤立点）
+    # 树木：噪声阈值按生物群系调整（雨林密集、苔原/沙漠稀疏）
     if tile == TILE_AIR:
         tree_noise = perlin_2d(x / 6 + 300, y / 6 + 300, seed, octaves=3)
-        if tree_noise > 0.55:
+        if tree_noise > params["tree_thresh"]:
             tile = TILE_TREE
 
     _PERLIN_CACHE[key] = tile
