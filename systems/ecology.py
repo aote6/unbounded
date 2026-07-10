@@ -1,7 +1,7 @@
 """生态数据层：统一的物种查询引擎。
 
 所有自然物（植物/药材/未来的矿物、动物）共享同一套按气候/群系过滤 + 
-按网格聚簇分配的查询方式，新增物种只需要往 data/flora.json 里加数据，
+按网格聚簇分配的查询方式，新增物种只需要往 data/natural.json 里加数据，
 不需要改这里的任何逻辑。
 """
 import json
@@ -34,31 +34,31 @@ def _get_biome_cluster(biome_name: str, default: int = 10) -> int:
     return biome.get("ecology", {}).get("tree_cluster", default)
 
 BASE_DIR = Path(__file__).parent.parent
-FLORA_FILE = BASE_DIR / "data" / "flora.json"
+NATURAL_FILE = BASE_DIR / "data" / "natural.json"
 
-_FLORA_CACHE = None
+_NATURAL_CACHE = None
 _SPECIES_CELL_CACHE: dict = {}
 _DEFAULT_CELL_SIZE = 10  # 回退值，实际由 Biome 配置决定
 
 
-def load_flora():
-    global _FLORA_CACHE
-    if _FLORA_CACHE is not None:
-        return _FLORA_CACHE
-    if not FLORA_FILE.exists():
-        _FLORA_CACHE = []
-        return _FLORA_CACHE
+def load_natural():
+    global _NATURAL_CACHE
+    if _NATURAL_CACHE is not None:
+        return _NATURAL_CACHE
+    if not NATURAL_FILE.exists():
+        _NATURAL_CACHE = []
+        return _NATURAL_CACHE
     try:
-        with open(FLORA_FILE, "r", encoding="utf-8") as f:
-            _FLORA_CACHE = json.load(f)
+        with open(NATURAL_FILE, "r", encoding="utf-8") as f:
+            _NATURAL_CACHE = json.load(f)
     except Exception:
-        _FLORA_CACHE = []
-    return _FLORA_CACHE
+        _NATURAL_CACHE = []
+    return _NATURAL_CACHE
 
 
-def clear_flora_cache():
-    global _FLORA_CACHE, _BIOME_CONFIG
-    _FLORA_CACHE = None
+def clear_natural_cache():
+    global _NATURAL_CACHE, _BIOME_CONFIG
+    _NATURAL_CACHE = None
     _BIOME_CONFIG = None
     _SPECIES_CELL_CACHE.clear()
 
@@ -70,8 +70,8 @@ def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, cate
     if key in _SPECIES_CELL_CACHE:
         return _SPECIES_CELL_CACHE[key]
 
-    flora = load_flora()
-    candidates = [f for f in flora if f.get("category") == category and biome in f.get("biomes", [])]
+    natural = load_natural()
+    candidates = [f for f in natural if f.get("category") == category and biome in f.get("biomes", [])]
     if not candidates:
         _SPECIES_CELL_CACHE[key] = None
         return None

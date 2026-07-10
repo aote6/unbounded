@@ -64,7 +64,7 @@ def sand_feature(x, y, seed, biome, current_tile):
 
 
 def stone_deposit_feature(x, y, seed, biome, current_tile):
-    """石头+矿脉团块：局部聚集，边缘渐疏"""
+    """石头+矿脉团块：局部聚集，边缘渐疏。矿石分层由 minerals.json 数据驱动。"""
     if current_tile != TILE_AIR:
         return None
     found = _find_nearby_deposit(x, y, seed)
@@ -74,19 +74,30 @@ def stone_deposit_feature(x, y, seed, biome, current_tile):
     edge_fade = 1 - dist / radius
     if _hash_uniform(x, y, seed + 9001) >= (0.3 + 0.7 * edge_fade):
         return None
-    # 矿石分层
-    ore = perlin_2d(x / 5 + 100, y / 5 + 100, seed, octaves=3)
-    if ore > 0.85:   return TILE_DIAMOND
-    elif ore > 0.80: return TILE_OBSIDIAN
-    elif ore > 0.75: return TILE_GOLD
-    elif ore > 0.70: return TILE_SILVER
-    elif ore > 0.65: return TILE_IRON
-    elif ore > 0.60: return TILE_COPPER
-    elif ore > 0.55: return TILE_COAL
-    elif ore > 0.50: return TILE_SULFUR
-    elif ore > 0.45: return TILE_SALT
-    elif ore > 0.40: return TILE_CLAY
+    # 矿石分层：从 minerals.json 读取，按 rarity 升序匹配
+    # ore_noise 越高 → 越稀有的矿石（rarity 越小）
+    ore_noise = perlin_2d(x / 5 + 100, y / 5 + 100, seed, octaves=3)
+    minerals = _load_minerals()
+    for m in minerals:
+        if ore_noise < m["rarity"]:
+            return m["tile_id"]
     return TILE_STONE
+
+
+def _load_minerals():
+    """加载矿物数据（带缓存）"""
+    import json
+    from pathlib import Path as _Path
+    if not hasattr(_load_minerals, "_cache"):
+        mineral_file = _Path(__file__).parent.parent / "data" / "minerals.json"
+        if mineral_file.exists():
+            with open(mineral_file, "r", encoding="utf-8") as f:
+                # 按 rarity 降序排列（稀有矿优先匹配）
+                raw = json.load(f)
+                _load_minerals._cache = sorted(raw, key=lambda m: m["rarity"])
+        else:
+            _load_minerals._cache = []
+    return _load_minerals._cache
 
 
 def tree_feature(x, y, seed, biome, current_tile):
