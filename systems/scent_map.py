@@ -99,3 +99,8 @@ def rebuild_scent_map(game):
 def scent_best_direction(mx, my):
     """怪物查询最佳移动方向。"""
     return get_scent_map().best_direction(mx, my)
+
+
+def clear_global_scent_map():
+    global _scent_map
+    _scent_map = None

@@ -185,3 +185,8 @@ def get_inventory() -> Inventory:
     if _inventory_instance is None:
         _inventory_instance = Inventory()
     return _inventory_instance
+
+
+def clear_inventory_instance():
+    global _inventory_instance
+    _inventory_instance = None

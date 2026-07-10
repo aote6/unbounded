@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 from world_gen import generate_world, find_spawn, SAVE_DIR
 from config import WORLD_SEED, PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN
-from inventory import Inventory
+from inventory import Inventory, clear_inventory_instance
+from systems.scent_map import clear_global_scent_map
 from systems.save_system import build_save_data, apply_load_data, _apply_world_data
 from systems.legacy_system import apply_legacy_perks
 from systems.buff_system import create_buff_manager
@@ -20,6 +21,8 @@ SAVE_FILE = BASE_DIR / "data" / "save.json"
 
 def new_game(game, inherit_world=False):
     """开始新游戏，可选继承世界。"""
+    clear_inventory_instance()
+    clear_global_scent_map()
     if not inherit_world:
         if SAVE_DIR.exists():
             shutil.rmtree(SAVE_DIR)
