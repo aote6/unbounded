@@ -98,21 +98,6 @@ def _find_nearby_deposit(x: int, y: int, seed: int):
     return None
 
 
-# 各生物群系的地形阈值参数：water_thresh/sand_thresh 越大代表该地形越常见；
-# sand_thresh=None 表示该群系不生成沙滩（比如苔原/冰原/草原直接跳过沙子）。
-# tree_thresh 越低代表树木越密集（噪声高于此阈值才长树）。
-# tree_thresh 已废弃，由 biomes.json 的 tree_density 替代。保留字段向后兼容。
-_BIOME_TERRAIN_PARAMS = {
-    "冰原":     {"water_thresh": -0.55, "sand_thresh": None,  "tree_density": 0.0},
-    "苔原":     {"water_thresh": -0.45, "sand_thresh": None,  "tree_density": 0.08},
-    "针叶林":   {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_density": 0.55},
-    "草原":     {"water_thresh": -0.40, "sand_thresh": None,  "tree_density": 0.15},
-    "温带森林": {"water_thresh": -0.35, "sand_thresh": -0.28, "tree_density": 0.45},
-    "沙漠":     {"water_thresh": -0.60, "sand_thresh": -0.05, "tree_density": 0.05},
-    "雨林":     {"water_thresh": -0.25, "sand_thresh": -0.32, "tree_density": 0.65},
-}
-
-
 def generate_tile(x: int, y: int, seed: int = 12345) -> int:
     """地形生成：委托给 Feature Engine 统一调度。
     

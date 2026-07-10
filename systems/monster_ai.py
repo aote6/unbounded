@@ -66,15 +66,21 @@ def try_spawn_monster(game):
 
 
 def _try_spawn_neutral(game):
-    """每回合有概率在玩家远处生成中立生物，类型按该位置所属的生物群系决定。"""
+    """每回合有概率在玩家远处生成中立生物。
+    
+    物种由生态层 get_flora_species(category='animal') 决定，
+    替代旧的按群系随机挑选逻辑，与植物/药材共用同一套引擎。
+    """
     import random as _random
-    from systems.climate import get_biome
-    # 天气影响生成密度
+    from systems.ecology import get_flora_species
     from systems.weather_system import get_weather_at
+
+    # 天气影响生成密度
     weather_mod = get_weather_at(game.player_x, game.player_y, game.world.seed, game.turn)
     density_mult = weather_mod.get("modifiers", {}).get("animal_density_mult", 1.0)
     if _random.random() > 0.25 * density_mult:
         return
+
     for _ in range(20):
         sx = game.player_x + _random.randint(-15, 15)
         sy = game.player_y + _random.randint(-10, 10)
@@ -84,11 +90,28 @@ def _try_spawn_neutral(game):
             continue
         if (sx, sy) in game._monster_index:
             continue
-        biome = get_biome(sx, sy, game.world.seed)
-        neutral_type = monsters_mod._pick_neutral_type(game.monster_data, biome)
-        if not neutral_type:
+
+        # 生态层决定该位置是否有动物、什么物种
+        animal_sp = get_flora_species(sx, sy, game.world.seed, category="animal")
+        if animal_sp is None:
             continue
-        nm = monsters_mod.make_monster(neutral_type, sx, sy, game.monster_data)
+
+        animal_name = animal_sp["name"]
+        # 如果 monsters.json 里有对应条目，用它；否则用通用模板
+        if animal_name in game.monster_data:
+            nm = monsters_mod.make_monster(animal_name, sx, sy, game.monster_data)
+        else:
+            # 生态层有定义但 monsters.json 没有 —— 用通用中立生物模板
+            nm = {
+                "name": animal_name, "char": animal_sp.get("char", "a"),
+                "x": sx, "y": sy, "hp": 5, "max_hp": 5,
+                "attack_power": (1, 2), "hit_chance": 0.5,
+                "vision": 6, "flee_at_hp_ratio": 0.5,
+                "scores": {}, "drop": {}, "corpse_tile": None,
+                "split_into": None, "special_behavior": None,
+                "properties": {}, "tags": animal_sp.get("tags", []),
+                "faction": "neutral",
+            }
         if hasattr(game, 'buff_manager'):
             game.buff_manager.migrate_legacy(nm)
         add_monster(game, nm)
