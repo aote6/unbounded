@@ -5,7 +5,7 @@ from world_gen import (
     TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_DIAMOND,
     TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_SAND,
     TILE_LIMESTONE, TILE_MARBLE, TILE_GRANITE, TILE_OBSIDIAN,
-    TILE_WATER, TILE_TREE,
+    TILE_WATER, TILE_TREE, TILE_TORCH,
 )
 
 TILE_PROPS = {
@@ -98,6 +98,10 @@ TILE_PROPS = {
         "name": "水域", "passable": False, "transparent": True,
         "blocks_vision": False, "diggable": False, "hardness": 999.0,
         "drop": None, "char": "~",
+    },
+    TILE_TORCH: {
+        "name": "火把", "passable": True, "transparent": True,
+        "char": "!", "drop": None, "color_idx": 228,
     },
     TILE_TREE: {
         "name": "树木", "passable": True, "transparent": False,

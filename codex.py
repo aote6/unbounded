@@ -132,7 +132,7 @@ from tile_props import (
     TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_DIAMOND,
     TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_SAND,
     TILE_LIMESTONE, TILE_MARBLE, TILE_GRANITE, TILE_OBSIDIAN,
-    TILE_WATER, TILE_TREE,
+    TILE_WATER, TILE_TREE, TILE_TORCH,
 )
 
 TILE_ID_TO_NAME = {
@@ -155,6 +155,7 @@ TILE_ID_TO_NAME = {
     TILE_OBSIDIAN:  "黑曜石",
     TILE_WATER:     "水域",
     TILE_TREE:      "树木",
+    TILE_TORCH:     "火把",
 }
 
 # ═══════════════════════════════════════════════════

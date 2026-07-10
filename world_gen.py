@@ -31,6 +31,7 @@ TILE_STAIRS_DOWN = 17
 TILE_STAIRS_UP = 18
 TILE_WATER = 19
 TILE_TREE = 20
+TILE_TORCH = 21
 
 TILE_DROPS = {
     TILE_DIRT: "泥土", TILE_STONE: "石头",
@@ -41,6 +42,7 @@ TILE_DROPS = {
     TILE_GRANITE: "花岗岩", TILE_OBSIDIAN: "黑曜石",
     TILE_STAIRS_DOWN: "楼梯下", TILE_STAIRS_UP: "楼梯上",
     TILE_WATER: "水域", TILE_TREE: "树木",
+    TILE_TORCH: "火把",
 }
 
 
@@ -346,7 +348,7 @@ def _place_special_locations(world):
                     for dy in range(-size, size+1):
                         world.set_tile(x+dx, y+dy, TILE_AIR)
                 # 放标志物
-                world.set_tile(x, y, "火把")
+                world.set_tile(x, y, TILE_TORCH)
                 placed.append((x, y, name))
                 break
     
@@ -374,7 +376,7 @@ __all__ = [
     'TILE_AIR', 'TILE_DIRT', 'TILE_STONE',
     'TILE_COAL', 'TILE_COPPER', 'TILE_IRON', 'TILE_SILVER', 'TILE_GOLD', 'TILE_DIAMOND',
     'TILE_SULFUR', 'TILE_SALT', 'TILE_CLAY', 'TILE_SAND',
-    'TILE_LIMESTONE', 'TILE_MARBLE', 'TILE_GRANITE', 'TILE_OBSIDIAN', 'TILE_STAIRS_DOWN', 'TILE_STAIRS_UP', 'TILE_WATER', 'TILE_TREE',
+    'TILE_LIMESTONE', 'TILE_MARBLE', 'TILE_GRANITE', 'TILE_OBSIDIAN', 'TILE_STAIRS_DOWN', 'TILE_STAIRS_UP', 'TILE_WATER', 'TILE_TREE', 'TILE_TORCH',
     'TILE_DROPS',
     'World', 'Chunk', 'generate_tile', 'find_spawn', 'perlin_2d', 'generate_world',
 ]
