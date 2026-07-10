@@ -1,6 +1,6 @@
 """生态数据层：统一的物种查询引擎。
 
-所有自然物（植物/药材/未来的矿物、动物）共享同一套按气候/群系过滤 + 
+所有自然物（植物/药材/未来的矿物、动物）共享同一套按气候/群系过滤 +
 按网格聚簇分配的查询方式，新增物种只需要往 data/natural.json 里加数据，
 不需要改这里的任何逻辑。
 """
@@ -13,6 +13,7 @@ from systems.noise_engine import _hash_uniform
 
 # Biome 配置（聚簇大小等环境参数由 Biome 决定，不在物种数据中）
 _BIOME_CONFIG = None
+
 
 def _load_biome_config():
     global _BIOME_CONFIG
@@ -27,11 +28,13 @@ def _load_biome_config():
         _BIOME_CONFIG = {}
     return _BIOME_CONFIG
 
+
 def _get_biome_cluster(biome_name: str, default: int = 10) -> int:
     """从 Biome 配置读取聚簇大小。环境决定分布，物种描述自己。"""
     cfg = _load_biome_config()
     biome = cfg.get(biome_name, {})
     return biome.get("ecology", {}).get("tree_cluster", default)
+
 
 BASE_DIR = Path(__file__).parent.parent
 NATURAL_FILE = BASE_DIR / "data" / "natural.json"
@@ -63,7 +66,12 @@ def clear_natural_cache():
     _SPECIES_CELL_CACHE.clear()
 
 
-def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, category: str = "tree"):
+def _pick_species_for_cell(
+        cell_x: int,
+        cell_y: int,
+        biome: str,
+        seed: int,
+        category: str = "tree"):
     """为一个网格单元确定性地选出一个"主物种"（及其伴生物种池）。
     同一网格内所有格子共用这个结果，形成成片、伴生物种一致的效果。"""
     key = (cell_x, cell_y, biome, category, seed)
@@ -71,12 +79,14 @@ def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, cate
         return _SPECIES_CELL_CACHE[key]
 
     natural = load_natural()
-    candidates = [f for f in natural if f.get("category") == category and biome in f.get("biomes", [])]
+    candidates = [f for f in natural if f.get(
+        "category") == category and biome in f.get("biomes", [])]
     if not candidates:
         _SPECIES_CELL_CACHE[key] = None
         return None
 
-    rng_seed = seed + cell_x * 71317 + cell_y * 57923 + int(hashlib.md5(category.encode()).hexdigest()[:8], 16) % 100000
+    rng_seed = seed + cell_x * 71317 + cell_y * 57923 + \
+        int(hashlib.md5(category.encode()).hexdigest()[:8], 16) % 100000
     rng = random.Random(rng_seed)
     weights = [c.get("rarity", 1) for c in candidates]
     primary = rng.choices(candidates, weights=weights, k=1)[0]
@@ -84,7 +94,8 @@ def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, cate
     # 伴生物种池：主物种 + 它的伴生物种（如果伴生物种也适合这个群系）
     pool = [primary]
     for companion_id in primary.get("companion_with", []):
-        companion = next((c for c in candidates if c["id"] == companion_id), None)
+        companion = next(
+            (c for c in candidates if c["id"] == companion_id), None)
         if companion and companion not in pool:
             pool.append(companion)
 
@@ -92,7 +103,11 @@ def _pick_species_for_cell(cell_x: int, cell_y: int, biome: str, seed: int, cate
     return list(pool)  # 返回副本，防止外部修改污染缓存
 
 
-def get_flora_species(x: int, y: int, seed: int = 12345, category: str = "tree"):
+def get_flora_species(
+        x: int,
+        y: int,
+        seed: int = 12345,
+        category: str = "tree"):
     """查询 (x,y) 这个位置应该是什么物种。返回物种 dict 或 None（不适合任何物种时）。"""
     biome = get_biome(x, y, seed)
     cluster_size = _get_biome_cluster(biome, _DEFAULT_CELL_SIZE)

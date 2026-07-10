@@ -51,7 +51,10 @@ def main():
 
         gen = get_generator()
         # 尝试常见的原型/材质参数名，具体archetype/material请按你实际数据调整
-        item_dict = gen.generate(archetype_name="剑", material_name="石头", affix_count=0)
+        item_dict = gen.generate(
+            archetype_name="剑",
+            material_name="石头",
+            affix_count=0)
         inst = EquipmentInstance(
             name=item_dict["name"],
             slot=item_dict.get("slot"),
@@ -127,8 +130,7 @@ def main():
             )
 
         found_after_load = any(
-            inst and inst.name == equipped_name for inst in game.equipment.values()
-        )
+            inst and inst.name == equipped_name for inst in game.equipment.values())
         assert found_after_load, "读档后装备应仍然存在于装备槽"
 
     check("存档/读档装备持久化", test_save_load_roundtrip)

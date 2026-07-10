@@ -53,18 +53,34 @@ def _on_damage_dealt(event, game):
     effects = game._collect_attack_effects()
     for effect in effects:
         if effect == "fire":
-            bm.add(target, "burning", duration=3, damage_per_turn=2, source="fire")
+            bm.add(
+                target,
+                "burning",
+                duration=3,
+                damage_per_turn=2,
+                source="fire")
         elif effect == "poison":
-            bm.add(target, "poisoned", duration=5, damage_per_turn=1, source="poison")
+            bm.add(
+                target,
+                "poisoned",
+                duration=5,
+                damage_per_turn=1,
+                source="poison")
 
     # ── 标签交互（规则矩阵）──
-    source_tags = _player_attack_tags(game) if attacker == "player" else _tags_of(attacker)
+    source_tags = _player_attack_tags(
+        game) if attacker == "player" else _tags_of(attacker)
     target_tags = _tags_of(target)
     for rule in check_interaction(source_tags, target_tags):
         if rule["effect"] == "apply_burning":
             duration = rule.get("duration", 3)
             dpt = rule.get("damage_per_turn", 2)
-            bm.add(target, "burning", duration=duration, damage_per_turn=dpt, source="fire")
+            bm.add(
+                target,
+                "burning",
+                duration=duration,
+                damage_per_turn=dpt,
+                source="fire")
             game.message = f"{target.get('name', '目标')}  燃烧起来了！"
 
     # ── 吸血（仅玩家攻击时触发）──
@@ -83,12 +99,11 @@ def _on_damage_dealt(event, game):
 
 def _on_turn_start(event, game):
     """TURN_START: 委托给 BuffManager 处理所有实体状态。
-    
+
     M21: 不再直接遍历怪物字典，改为调用 buff_manager.tick_all()。
     该调用已整合到 advance_turn 中，此处保留为事件钩子占位。
     """
     # Buff tick 已由 advance_turn → buff_manager.tick_all() 统一处理
-    pass
 
 
 # ═══════════════════════════════════════════════

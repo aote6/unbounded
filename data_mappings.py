@@ -3,6 +3,8 @@
 # ═══════════════════════════════════
 # 矿石 → 材质映射（合成装备时使用）
 # ═══════════════════════════════════
+from pathlib import Path
+import json
 ORE_TO_MATERIAL = {
     "石头": "石头", "泥土": "皮",
     "煤矿": "铁",
@@ -22,10 +24,9 @@ ORE_TO_MATERIAL = {
     "史莱姆凝胶": "骨",
 }
 
-import json
-from pathlib import Path
 
 RECIPES_FILE = Path(__file__).parent / "data" / "recipes.json"
+
 
 def load_recipes():
     """加载合成配方。"""
@@ -36,5 +37,6 @@ def load_recipes():
         with open(RECIPES_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        import logging; logging.warning(f"recipes.json 解析失败: {e}")
+        import logging
+        logging.warning(f"recipes.json 解析失败: {e}")
         return {}

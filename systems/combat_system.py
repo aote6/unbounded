@@ -1,7 +1,7 @@
 """战斗系统：接管击杀怪物、掉落、分裂等逻辑"""
 import monsters as monsters_mod
 from systems.event_bus import EventBus, EventType, GameEvent
-from systems.inventory_actions import add_material, add_equipment_instance, remove_monster, add_monster
+from systems.inventory_actions import add_material, add_equipment_instance, remove_monster, add_monster, get_equipment_instance
 from tile_props import TILE_AIR
 CORPSE_DECAY_TURNS = 100  # 尸体 decay 回合数
 
@@ -13,7 +13,10 @@ def kill_monster(game, monster, cause="attack"):
     mname = monster["name"]
 
     # 发送事件
-    EventBus().emit(GameEvent(EventType.MONSTER_KILLED, {"monster": monster, "cause": cause}), game)
+    EventBus().emit(
+        GameEvent(
+            EventType.MONSTER_KILLED, {
+                "monster": monster, "cause": cause}), game)
 
     corpse_tile = monster.get("corpse_tile")
     splits = monsters_mod.get_split_spawns(monster, game.monster_data)
@@ -57,7 +60,6 @@ def collect_attack_effects(game):
     """收集所有装备的 on_attack 效果"""
     effects = []
     for item_name in game.equipment.values():
-        from systems.inventory_actions import get_equipment_instance
         inst = get_equipment_instance(game, item_name)
         if inst:
             effects.extend(inst.on_attack)

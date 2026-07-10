@@ -23,8 +23,10 @@ def dig_adjacent(game, dx, dy):
         old_tile = game.world.get_tile(nx, ny)["tile"]
         game.world.set_tile(nx, ny, TILE_AIR)
         game.modified_tiles[(nx, ny)] = TILE_AIR
-        EventBus().emit(GameEvent(EventType.TILE_CHANGED,
-            {"x": nx, "y": ny, "old": old_tile, "new": TILE_AIR}), game)
+        EventBus().emit(
+            GameEvent(
+                EventType.TILE_CHANGED, {
+                    "x": nx, "y": ny, "old": old_tile, "new": TILE_AIR}), game)
         if (nx, ny) in game.corpses:
             del game.corpses[(nx, ny)]
         if (nx, ny) in game.chests:
@@ -45,7 +47,8 @@ def dig_adjacent(game, dx, dy):
 
 def do_place(game):
     """在光标位置放置方块。"""
-    if game.place_item_name and game.inventory.count(game.place_item_name) <= 0:
+    if game.place_item_name and game.inventory.count(
+            game.place_item_name) <= 0:
         game.message = f"背包里已经没有 {game.place_item_name} 了。"
         game.place_mode = None
         game.place_item_name = None
@@ -77,8 +80,10 @@ def do_place(game):
     old_tile = game.world.get_tile(bx, by)["tile"]
     game.world.set_tile(bx, by, game.place_mode)
     game.modified_tiles[(bx, by)] = game.place_mode
-    EventBus().emit(GameEvent(EventType.TILE_CHANGED,
-        {"x": bx, "y": by, "old": old_tile, "new": game.place_mode}), game)
+    EventBus().emit(
+        GameEvent(
+            EventType.TILE_CHANGED, {
+                "x": bx, "y": by, "old": old_tile, "new": game.place_mode}), game)
 
     game._blocks_placed_this_life += 1
 
@@ -103,12 +108,17 @@ def dig_any_tile(game, x, y):
     if not props["diggable"]:
         return False
 
-    if not (game.dig_progress and game.dig_progress["x"] == x and game.dig_progress["y"] == y):
+    if not (
+            game.dig_progress and game.dig_progress["x"] == x and game.dig_progress["y"] == y):
         tool_power = 1 + game._best_equipped_tool_bonus("digging")
         base_turns = get_dig_turns(tile, tool_power)
         speed_bonus = game._digging_speed_bonus()
         total = max(1, base_turns - speed_bonus)
-        game.dig_progress = {"x": x, "y": y, "remaining": total, "total": total}
+        game.dig_progress = {
+            "x": x,
+            "y": y,
+            "remaining": total,
+            "total": total}
 
     game.dig_progress["remaining"] -= 1
     if game.dig_progress["remaining"] <= 0:
@@ -121,8 +131,10 @@ def dig_any_tile(game, x, y):
         old_tile = game.world.get_tile(x, y)["tile"]
         game.world.set_tile(x, y, TILE_AIR)
         game.modified_tiles[(x, y)] = TILE_AIR
-        EventBus().emit(GameEvent(EventType.TILE_CHANGED,
-            {"x": x, "y": y, "old": old_tile, "new": TILE_AIR}), game)
+        EventBus().emit(
+            GameEvent(
+                EventType.TILE_CHANGED, {
+                    "x": x, "y": y, "old": old_tile, "new": TILE_AIR}), game)
         if (x, y) in game.corpses:
             del game.corpses[(x, y)]
         game.dig_progress = None
@@ -151,7 +163,9 @@ def try_move_or_dig(game, dx, dy):
         from config import PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX, PLAYER_BASE_HIT_CHANCE
         import random
         if random.random() < PLAYER_BASE_HIT_CHANCE:
-            dmg = random.randint(PLAYER_BASE_DAMAGE_MIN, PLAYER_BASE_DAMAGE_MAX)
+            dmg = random.randint(
+                PLAYER_BASE_DAMAGE_MIN,
+                PLAYER_BASE_DAMAGE_MAX)
             dmg += game._combat_damage_bonus()
             mon["hp"] -= dmg
             game.message = f"攻击 {mon['name']}，造成 {dmg} 点伤害"
@@ -177,5 +191,6 @@ def try_move_or_dig(game, dx, dy):
 
 def _maybe_cancel_dig(game, x, y):
     """如果挖掘目标改变，取消当前进度。"""
-    if game.dig_progress and (game.dig_progress["x"] != x or game.dig_progress["y"] != y):
+    if game.dig_progress and (
+            game.dig_progress["x"] != x or game.dig_progress["y"] != y):
         game.dig_progress = None

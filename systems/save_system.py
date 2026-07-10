@@ -1,12 +1,9 @@
 """存档系统：构建/恢复 + 存档管理 API"""
 from systems.inventory_actions import add_monster
-import json, shutil
 from pathlib import Path
-from world_gen import SAVE_DIR
 from equipment import EquipmentInstance
 from inventory import Inventory
 import monsters as monsters_mod
-import items as items_mod
 
 BASE_DIR = Path(__file__).parent.parent
 SAVE_FILE = BASE_DIR / "data" / "save.json"
@@ -99,7 +96,13 @@ def _serialize_chests(chests):
 
 
 def apply_load_data(game, data):
-    save_version = data.get("player", {}).get("version", data.get("version", 1))
+    save_version = data.get(
+        "player",
+        {}).get(
+        "version",
+        data.get(
+            "version",
+            1))
     if save_version < CURRENT_SAVE_VERSION:
         game.message = f"旧版本存档(v{save_version})已自动升级到v{CURRENT_SAVE_VERSION}"
     if "player" in data:
@@ -132,7 +135,8 @@ def _apply_world_data(game, data):
     game.monsters = []
     game._monster_index = {}
     for md in data.get("monsters", []):
-        m = monsters_mod.make_monster(md["name"], md["x"], md["y"], game.monster_data)
+        m = monsters_mod.make_monster(
+            md["name"], md["x"], md["y"], game.monster_data)
         if m:
             m["hp"] = md.get("hp", m["max_hp"])
             add_monster(game, m)
@@ -159,16 +163,13 @@ def _apply_world_data(game, data):
     game.modified_tiles = {}
 
 
-
 # ═══════════════════════════════════
 # 存档状态检查（供主菜单使用）
 # ═══════════════════════════════════
 
 def check_save_status():
     """返回存档状态: 'full' / 'world_only' / 'none'"""
-    import shutil
     from pathlib import Path
-    from world_gen import SAVE_DIR
     BASE_DIR = Path(__file__).parent.parent
     PLAYER_PATH = BASE_DIR / "data" / "player.json"
     WORLD_PATH = BASE_DIR / "data" / "world_meta.json"

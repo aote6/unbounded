@@ -56,8 +56,8 @@ def get_equipment_instance(game, name):
 
 
 def count_equipment(game, name):
-    return sum(1 for _, item in game.inventory.all_items()
-               if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name)
+    return sum(1 for _, item in game.inventory.all_items() if item.item_type ==
+               ItemCategory.EQUIPMENT and item.instance and item.instance.name == name)
 
 
 def get_item_attr(game, item_name, field_name):

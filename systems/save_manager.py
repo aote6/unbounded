@@ -1,5 +1,6 @@
 """存档管理器：新游戏、保存、加载。"""
-import shutil, json
+import shutil
+import json
 from pathlib import Path
 from world_gen import generate_world, find_spawn, SAVE_DIR
 from config import WORLD_SEED, PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN
@@ -131,7 +132,8 @@ def load_game(game):
         game.message = "没有找到存档文件。"
         return False
 
-    seed = data.get("seed") or (data.get("world", {}).get("seed") if "world" in data else WORLD_SEED)
+    seed = data.get("seed") or (data.get("world", {}).get(
+        "seed") if "world" in data else WORLD_SEED)
     game.world = generate_world(seed=seed, decorate=False)
     apply_load_data(game, data)
     if hasattr(game, 'buff_manager'):

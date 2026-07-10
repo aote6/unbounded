@@ -23,12 +23,18 @@ class EquipmentInstance:
     def to_dict(self) -> dict:
         """序列化为普通 dict（用于 JSON 存档）。"""
         return {
-            "name": self.name, "slot": self.slot,
-            "attack_bonus": self.attack_bonus, "defense_bonus": self.defense_bonus,
-            "tool_bonus": self.tool_bonus, "damage_min": self.damage_min,
-            "damage_max": self.damage_max, "hit_bonus": self.hit_bonus,
-            "affixes": self.affixes, "on_attack": self.on_attack,
-            "lifesteal": self.lifesteal, "speed_bonus": self.speed_bonus,
+            "name": self.name,
+            "slot": self.slot,
+            "attack_bonus": self.attack_bonus,
+            "defense_bonus": self.defense_bonus,
+            "tool_bonus": self.tool_bonus,
+            "damage_min": self.damage_min,
+            "damage_max": self.damage_max,
+            "hit_bonus": self.hit_bonus,
+            "affixes": self.affixes,
+            "on_attack": self.on_attack,
+            "lifesteal": self.lifesteal,
+            "speed_bonus": self.speed_bonus,
             "tags": self.tags,
         }
 
@@ -47,4 +53,5 @@ class EquipmentInstance:
     @classmethod
     def from_dict(cls, data: dict) -> "EquipmentInstance":
         """从 dict 反序列化。"""
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(**{k: v for k, v in data.items()
+                   if k in cls.__dataclass_fields__})

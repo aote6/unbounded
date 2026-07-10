@@ -47,10 +47,11 @@ def get_settlement_at(x: int, y: int, seed: int = 12345) -> dict | None:
 
     # 确定性：该网格是否生成聚落
     r = _hash_uniform(cx, cy, seed + 99999)
-    biome = get_biome(cx * CELL + CELL//2, cy * CELL + CELL//2, seed)
+    biome = get_biome(cx * CELL + CELL // 2, cy * CELL + CELL // 2, seed)
 
     # 筛选适合该群系的聚落类型
-    candidates = [(c, c["rarity"]) for c in civs if biome in c.get("biomes", [])]
+    candidates = [(c, c["rarity"])
+                  for c in civs if biome in c.get("biomes", [])]
     if not candidates or r > sum(w for _, w in candidates) * 0.3:
         _GEN_CACHE[key] = None
         return None
@@ -62,8 +63,8 @@ def get_settlement_at(x: int, y: int, seed: int = 12345) -> dict | None:
     chosen = rng.choices(types, weights=weights, k=1)[0]
 
     # 聚落中心在该网格内的位置
-    sx = cx * CELL + rng.randint(CELL//4, 3*CELL//4)
-    sy = cy * CELL + rng.randint(CELL//4, 3*CELL//4)
+    sx = cx * CELL + rng.randint(CELL // 4, 3 * CELL // 4)
+    sy = cy * CELL + rng.randint(CELL // 4, 3 * CELL // 4)
 
     result = {
         "type": chosen["id"],
@@ -82,11 +83,14 @@ def get_settlement_at(x: int, y: int, seed: int = 12345) -> dict | None:
 
 def check_player_near_settlement(game) -> dict | None:
     """检查玩家是否接近聚落，返回聚落数据并触发事件。"""
-    settlement = get_settlement_at(game.player_x, game.player_y, game.world.seed)
+    settlement = get_settlement_at(
+        game.player_x, game.player_y, game.world.seed)
     if settlement is None:
         return None
-    
-    dist = max(abs(game.player_x - settlement["x"]), abs(game.player_y - settlement["y"]))
+
+    dist = max(abs(game.player_x -
+                   settlement["x"]), abs(game.player_y -
+                                         settlement["y"]))
     if dist <= 10 and not settlement.get("discovered"):
         settlement["discovered"] = True
         # 触发发现事件

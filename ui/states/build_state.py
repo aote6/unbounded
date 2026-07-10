@@ -4,12 +4,10 @@ import curses
 from core.state_machine import State
 from config import (
     DIRECTIONS,
-    KEY_QUIT, KEY_QUIT_UPPER, KEY_REPEAT,
+    KEY_REPEAT,
 )
 from systems.player_action import do_place
 import items as items_mod
-
-
 
 
 class BuildState(State):

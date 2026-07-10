@@ -1,14 +1,29 @@
 """冒烟测试：不依赖 curses，验证核心系统不崩溃。"""
-import sys, json
+from systems.monster_index import build_monster_index
+from systems.monster_ai import tick_monsters
+import main
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+
 class FakeCurses:
-    KEY_LEFT = 260; KEY_RIGHT = 261; KEY_UP = 259; KEY_DOWN = 258; KEY_ENTER = 10; KEY_BACKSPACE = 127
-    COLOR_WHITE = 1; COLOR_YELLOW = 2; COLOR_CYAN = 3; COLOR_BLACK = 0
-    COLOR_GREEN = 4; COLOR_RED = 5; COLOR_MAGENTA = 6
-    A_BOLD = 2097152; A_NORMAL = 0
+    KEY_LEFT = 260
+    KEY_RIGHT = 261
+    KEY_UP = 259
+    KEY_DOWN = 258
+    KEY_ENTER = 10
+    KEY_BACKSPACE = 127
+    COLOR_WHITE = 1
+    COLOR_YELLOW = 2
+    COLOR_CYAN = 3
+    COLOR_BLACK = 0
+    COLOR_GREEN = 4
+    COLOR_RED = 5
+    COLOR_MAGENTA = 6
+    A_BOLD = 2097152
+    A_NORMAL = 0
     def __init__(self): pass
     @staticmethod
     def curs_set(v): pass
@@ -25,6 +40,7 @@ class FakeCurses:
     @staticmethod
     def wrapper(f): return f(None)
 
+
 class FakeStdscr:
     def __init__(self): self.lines, self.cols = 40, 120
     def getmaxyx(self): return (self.lines, self.cols)
@@ -38,11 +54,10 @@ class FakeStdscr:
     def touchwin(self): pass
     def box(self): pass
 
+
 sys.modules['curses'] = FakeCurses()
 
 print("=== Test 1: import main ===")
-from systems.inventory_actions import add_equipment_instance
-import main
 
 print("\n=== Test 2: Game.__init__ ===")
 game = main.Game()
@@ -61,10 +76,11 @@ if hasattr(game, 'recipes') and game.recipes:
             game.inventory.add(mat, 100)
 
 print("\n=== Test 5: monster AI tick ===")
-from systems.monster_ai import tick_monsters
-game.monsters = [{"name": "史莱姆", "x": 5, "y": 5, "hp": 10, "dmg": 3, "speed": 1}]
+game.monsters = [{"name": "史莱姆", "x": 5,
+                  "y": 5, "hp": 10, "max_hp": 10, "dmg": 3, "speed": 1}]
 build_monster_index(game) if hasattr(main, 'build_monster_index') else None
-for _ in range(10): tick_monsters(game)
+for _ in range(10):
+    tick_monsters(game)
 print(f"  OK, {len(game.monsters)} monsters ticked 10 turns")
 
 print("\n=== Test 6: save/load ===")

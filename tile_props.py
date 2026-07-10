@@ -110,6 +110,7 @@ TILE_PROPS = {
     },
 }
 
+
 def _build_placeable_props():
     """从 items.json 自动生成 PLACEABLE_PROPS，不再手动维护两份。"""
     import json
@@ -134,6 +135,7 @@ def _build_placeable_props():
     # 系统生成的方块（尸体/楼梯/火）仍手动维护
     props.update(_SYSTEM_TILES)
     return props
+
 
 _SYSTEM_TILES = {
     "石墙": {
@@ -292,8 +294,10 @@ def get_tile_props(tile):
         "blocks_vision": True, "diggable": False, "hardness": 3.0, "char": "?",
     })
 
+
 def get_tile_char(tile):
     return get_tile_props(tile)["char"]
+
 
 def get_dig_turns(tile, tool_power=1):
     # 简化为一击一回合，避免同一方块反复按几十次键的无意义操作

@@ -58,16 +58,20 @@ class LegacyState(State):
         self.win.box()
         self.win.addstr(0, 2, " 遗产商店 ")
         self.win.addstr(1, 2, "↑↓选择 Enter购买 c继续游戏")
-        
+
         h, w = self.win.getmaxyx()
         for i, perk in enumerate(self.perks):
             if i >= h - 6:
                 break
-            mark = "✓" if perk.get("owned") else ("$" if perk["affordable"] else "✗")
-            line = f" [{mark}] {perk['name']} ({perk['cost']}点) - {perk['desc']}"
+            mark = "✓" if perk.get("owned") else (
+                "$" if perk["affordable"] else "✗")
+            line = f" [{mark}] {
+                perk['name']} ({
+                perk['cost']}点) - {
+                perk['desc']}"
             attr = curses.A_REVERSE if i == self.selected else curses.A_NORMAL
             self.win.addstr(3 + i, 2, line[:w - 4], attr)
-        
+
         if self.status_msg:
             self.win.addstr(h - 2, 2, self.status_msg[:w - 4], curses.A_BOLD)
         self.win.refresh()

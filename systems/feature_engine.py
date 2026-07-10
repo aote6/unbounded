@@ -9,9 +9,11 @@
 设计原则（公理四）：规则决定结果，数据决定内容。
 """
 
-from world_gen import (TILE_AIR, TILE_WATER, TILE_SAND, TILE_STONE,
-    TILE_COAL, TILE_COPPER, TILE_IRON, TILE_SILVER, TILE_GOLD,
-    TILE_DIAMOND, TILE_SULFUR, TILE_SALT, TILE_CLAY, TILE_OBSIDIAN,
+from world_gen import (
+    TILE_AIR,
+    TILE_WATER,
+    TILE_SAND,
+    TILE_STONE,
     TILE_TREE)
 
 from systems.noise_engine import perlin_2d, _hash_uniform, _find_nearby_deposit
@@ -117,16 +119,11 @@ def tree_feature(x, y, seed, biome, current_tile):
 # ═══════════════════════════════════
 
 
-
-
-
-
 def herb_feature(x, y, seed, biome, current_tile):
     """药材：生态层决定物种，Biome 决定密度。只在森林/草原等植被区生成。"""
     if current_tile != TILE_AIR:
         return None
     from systems.ecology import get_flora_species
-    from systems.ecology import _get_biome_cluster
     # 药材密度由 Biome 的 herb_density 控制
     cfg = _load_biome_params(biome)
     density = cfg.get("herb_density", 0.1)
@@ -180,6 +177,7 @@ FEATURE_CHAIN = [
     animal_spawn_feature,
     settlement_feature,
 ]
+
 
 def natural_generator(x: int, y: int, seed: int = 12345) -> int:
     """统一自然生成入口。遍历 Feature 链，返回第一个匹配的 tile。

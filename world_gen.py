@@ -2,8 +2,10 @@
 每个 Chunk 管理自身生命周期，支持脏标记与差分持久化。"""
 
 # 噪声函数已迁移至 systems/noise_engine.py
-from systems.noise_engine import (_hash2d, _hash_uniform, _smooth_noise,
-    _interpolated_noise, perlin_2d, generate_tile, clear_perlin_cache)
+from systems.noise_engine import (
+    perlin_2d,
+    generate_tile,
+    clear_perlin_cache)
 import json
 from pathlib import Path
 
@@ -52,7 +54,14 @@ TILE_DROPS = {
 
 class Chunk:
     """16×16 区块。管理自身地形数据与脏状态。"""
-    __slots__ = ('cx', 'cy', 'tiles', '_species', '_herbs', 'is_dirty', '_seed')
+    __slots__ = (
+        'cx',
+        'cy',
+        'tiles',
+        '_species',
+        '_herbs',
+        'is_dirty',
+        '_seed')
 
     def __init__(self, cx: int, cy: int, seed: int):
         self.cx = cx
@@ -70,7 +79,11 @@ class Chunk:
         for dy in range(CHUNK_SIZE):
             row = []
             for dx in range(CHUNK_SIZE):
-                row.append(generate_tile(start_x + dx, start_y + dy, self._seed))
+                row.append(
+                    generate_tile(
+                        start_x + dx,
+                        start_y + dy,
+                        self._seed))
             rows.append(row)
         return rows
 
@@ -94,7 +107,8 @@ class Chunk:
                     s_row.append(None)
                 # 药材：只在 AIR 格子上查询（不覆盖已有地形）
                 if tid == 0:  # TILE_AIR
-                    herb = get_flora_species(wx, wy, self._seed, category="herb")
+                    herb = get_flora_species(
+                        wx, wy, self._seed, category="herb")
                     h_row.append(herb["id"] if herb else None)
                 else:
                     h_row.append(None)
@@ -106,7 +120,8 @@ class Chunk:
         """读取本地坐标的 tile ID。"""
         return self.tiles[local_y][local_x]
 
-    def get_flora(self, local_x: int, local_y: int, kind: str = "tree") -> str | None:
+    def get_flora(self, local_x: int, local_y: int,
+                  kind: str = "tree") -> str | None:
         """读取本地坐标的物种 ID。kind: 'tree' | 'herb'"""
         if kind == "tree":
             return self._species[local_y][local_x]
@@ -153,7 +168,8 @@ class Chunk:
         for ly in range(CHUNK_SIZE):
             for lx in range(CHUNK_SIZE):
                 current = self.tiles[ly][lx]
-                original = generate_tile(start_x + lx, start_y + ly, self._seed)
+                original = generate_tile(
+                    start_x + lx, start_y + ly, self._seed)
                 if current != original:
                     delta[f"{lx},{ly}"] = current
         return delta
@@ -225,8 +241,10 @@ class World:
         local_x = x - cx * CHUNK_SIZE
         local_y = y - cy * CHUNK_SIZE
         tile_id = chunk.get_tile(local_x, local_y)
-        species = chunk.get_flora(local_x, local_y, "tree") if tile_id == TILE_TREE else None
-        herb = chunk.get_flora(local_x, local_y, "herb") if tile_id == 0 else None
+        species = chunk.get_flora(
+            local_x, local_y, "tree") if tile_id == TILE_TREE else None
+        herb = chunk.get_flora(
+            local_x, local_y, "herb") if tile_id == 0 else None
         extra = {}
         if species:
             extra["species"] = species
@@ -261,6 +279,7 @@ class World:
 # 辅助函数
 # ═══════════════════════════════════════
 
+
 def find_spawn(world: World, start_x: int = 0) -> tuple:
     """寻找合适的出生点。确保玩家站在实体上，且周围有空位。"""
     for offset in range(80):
@@ -269,7 +288,8 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
                 current = world.get_tile(x, y)["tile"]
                 below = world.get_tile(x, y + 1)["tile"]
                 # 必须站在实体方块上，头顶是空气
-                if current == TILE_AIR and below not in (TILE_AIR, TILE_WATER, TILE_TREE):
+                if current == TILE_AIR and below not in (
+                        TILE_AIR, TILE_WATER, TILE_TREE):
                     # 树木已在 generate_tile 阶段由生态层统一生成，不需要额外撒树
                     return x, y
     # 最终保底：返回原点并强制设为空气
@@ -280,35 +300,46 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
     """在每层挖出横向洞穴通道，确保有行走空间"""
     import random
     rng = random.Random(world.seed + 9999)
-    
+
     # 额外：在出生点附近清理一片空地
     for x in range(-10, 10):
         for y in range(-2, 3):
             world.set_tile(x, y, TILE_AIR)
     world.set_tile(0, 1, TILE_DIRT)  # 确保脚下有东西
-    
+
     for depth_band in [(-15, -3), (-35, -15), (-55, -35)]:
         for _ in range(rng.randint(3, 5)):
             x = rng.randint(-200, 200)
             y = rng.randint(depth_band[0], depth_band[1])
             length = rng.randint(100, 250)
             height = rng.randint(3, 5)
-            
+
             for step in range(length):
                 # 挖出横向通道
-                for dy in range(-height//2, height//2 + 1):
+                for dy in range(-height // 2, height // 2 + 1):
                     try:
-                        tile = world.get_tile(x, y+dy)["tile"]
-                        if tile in (TILE_STONE, TILE_DIRT, TILE_COAL, TILE_COPPER, 
-                                   TILE_IRON, TILE_SILVER, TILE_GOLD, TILE_LIMESTONE,
-                                   TILE_MARBLE, TILE_GRANITE, TILE_CLAY, TILE_SAND):
-                            world.set_tile(x, y+dy, TILE_AIR)
-                    except:
+                        tile = world.get_tile(x, y + dy)["tile"]
+                        if tile in (
+                                TILE_STONE,
+                                TILE_DIRT,
+                                TILE_COAL,
+                                TILE_COPPER,
+                                TILE_IRON,
+                                TILE_SILVER,
+                                TILE_GOLD,
+                                TILE_LIMESTONE,
+                                TILE_MARBLE,
+                                TILE_GRANITE,
+                                TILE_CLAY,
+                                TILE_SAND):
+                            world.set_tile(x, y + dy, TILE_AIR)
+                    except BaseException:
                         pass
-                
+
                 # 随机游走，偏向水平
                 x += rng.choice([-1, 0, 1, 1, 1])
                 y += rng.choice([-1, 0, 0, 0, 0, 1])
+
 
 def _clear_spawn_area(world):
     """只清出生点附近一小块平地，确保新角色不会卡在障碍物里。
@@ -324,7 +355,7 @@ def _scatter_trees(world):
     """在地表随机撒树，确保有足够的树可砍"""
     import random
     rng = random.Random(world.seed + 8888)
-    
+
     planted = 0
     for _ in range(200):
         x = rng.randint(-60, 60)
@@ -347,11 +378,12 @@ def _scatter_trees(world):
             if planted >= 60:
                 break
 
+
 def _place_special_locations(world):
     """在地图里埋藏特殊地貌，给玩家探索的惊喜"""
     import random
     rng = random.Random(world.seed + 4444)
-    
+
     locations = [
         ("废弃矿洞", TILE_STONE, 5, {"铁矿石": 15, "石头": 30}),
         ("蜘蛛巢穴", TILE_DIRT, 3, {"蜘蛛丝": 20}),
@@ -361,25 +393,27 @@ def _place_special_locations(world):
         ("蘑菇洞", TILE_DIRT, 3, {"黏土": 25}),
         ("硫磺温泉", TILE_STONE, 3, {"硫磺": 15}),
     ]
-    
+
     placed = []
     for name, base_tile, size, loot in locations:
         for _ in range(30):
             x = rng.randint(-150, 150)
             y = rng.randint(-60, -8)
             # 确保不重叠
-            too_close = any(abs(x-px) < 15 and abs(y-py) < 15 for px, py, _ in placed)
+            too_close = any(abs(x - px) < 15 and abs(y - py)
+                            < 15 for px, py, _ in placed)
             if not too_close:
                 # 挖出一个空间
-                for dx in range(-size, size+1):
-                    for dy in range(-size, size+1):
-                        world.set_tile(x+dx, y+dy, TILE_AIR)
+                for dx in range(-size, size + 1):
+                    for dy in range(-size, size + 1):
+                        world.set_tile(x + dx, y + dy, TILE_AIR)
                 # 放标志物
                 world.set_tile(x, y, TILE_TORCH)
                 placed.append((x, y, name))
                 break
-    
+
     return placed
+
 
 def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
     """返回 World 对象。decorate=False 用于读档，跳过洞穴/树木/特殊地貌生成，
@@ -399,11 +433,35 @@ def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
 # ═══════════════════════════════════════
 
 __all__ = [
-    'CHUNK_SIZE', 'SAVE_DIR',
-    'TILE_AIR', 'TILE_DIRT', 'TILE_STONE',
-    'TILE_COAL', 'TILE_COPPER', 'TILE_IRON', 'TILE_SILVER', 'TILE_GOLD', 'TILE_DIAMOND',
-    'TILE_SULFUR', 'TILE_SALT', 'TILE_CLAY', 'TILE_SAND',
-    'TILE_LIMESTONE', 'TILE_MARBLE', 'TILE_GRANITE', 'TILE_OBSIDIAN', 'TILE_STAIRS_DOWN', 'TILE_STAIRS_UP', 'TILE_WATER', 'TILE_TREE', 'TILE_TORCH',
+    'CHUNK_SIZE',
+    'SAVE_DIR',
+    'TILE_AIR',
+    'TILE_DIRT',
+    'TILE_STONE',
+    'TILE_COAL',
+    'TILE_COPPER',
+    'TILE_IRON',
+    'TILE_SILVER',
+    'TILE_GOLD',
+    'TILE_DIAMOND',
+    'TILE_SULFUR',
+    'TILE_SALT',
+    'TILE_CLAY',
+    'TILE_SAND',
+    'TILE_LIMESTONE',
+    'TILE_MARBLE',
+    'TILE_GRANITE',
+    'TILE_OBSIDIAN',
+    'TILE_STAIRS_DOWN',
+    'TILE_STAIRS_UP',
+    'TILE_WATER',
+    'TILE_TREE',
+    'TILE_TORCH',
     'TILE_DROPS',
-    'World', 'Chunk', 'generate_tile', 'find_spawn', 'perlin_2d', 'generate_world',
+    'World',
+    'Chunk',
+    'generate_tile',
+    'find_spawn',
+    'perlin_2d',
+    'generate_world',
 ]

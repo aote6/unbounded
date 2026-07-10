@@ -10,14 +10,18 @@ def gain_skill(game, name, amount=1):
     game.skills[name] = game.skills.get(name, 0) + amount
     if game.skills[name] >= game.skill_levels[name] * SKILL_LEVEL_THRESHOLD:
         game.skill_levels[name] += 1
-        pass
 
 
 def best_equipped_tool_bonus(game, tool_type):
     """获取装备中指定类型工具的最高加成。"""
     best = 0
     for inst in game.equipment.values():
-        if inst and hasattr(inst, "tool_bonus") and tool_type in getattr(inst, "tags", []):
+        if inst and hasattr(
+                inst,
+                "tool_bonus") and tool_type in getattr(
+                inst,
+                "tags",
+                []):
             best = max(best, inst.tool_bonus or 0)
     return best
 
@@ -27,8 +31,10 @@ def digging_speed_bonus(game):
 
 
 def combat_damage_bonus(game):
-    return game.player.equipment_bonus("attack_bonus") + (game.skills.get("combat", 0) // 3)
+    return game.player.equipment_bonus(
+        "attack_bonus") + (game.skills.get("combat", 0) // 3)
 
 
 def defense_bonus(game):
-    return game.player.equipment_bonus("defense_bonus") + (game.skills.get("defense", 0) // 3)
+    return game.player.equipment_bonus(
+        "defense_bonus") + (game.skills.get("defense", 0) // 3)

@@ -1,9 +1,9 @@
 """单元测试: systems/save_system.py"""
-import sys, json
+from main import Game
+import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import Game
 
 def test_build_save_data():
     g = Game()
@@ -13,6 +13,7 @@ def test_build_save_data():
     assert "player_hp" in player
     assert player["player_hp"] == 100
     print("[PASS] build_save_data 结构正确")
+
 
 def test_save_load_roundtrip():
     g = Game()
@@ -33,6 +34,7 @@ def test_save_load_roundtrip():
     assert g2.player_y == 24
     assert g2.player_hp == 80
     print("[PASS] save/load roundtrip 数据一致")
+
 
 if __name__ == "__main__":
     test_build_save_data()

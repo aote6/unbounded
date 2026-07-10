@@ -1,5 +1,6 @@
 """ item_generator.py  三层物品组装引擎。原型 × 材质 × 词缀 → 具体物品。"""
-import json, random
+import json
+import random
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -17,7 +18,8 @@ def load_json(path):
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        import logging; logging.warning(f"item_generator 解析失败: {path} - {e}")
+        import logging
+        logging.warning(f"item_generator 解析失败: {path} - {e}")
         return {}
 
 
@@ -45,18 +47,19 @@ class ItemGenerator:
                     "desc": data.get("desc", ""),
                 }
                 # 去掉 None
-                self.archetypes[item_id] = {k: v for k, v in self.archetypes[item_id].items() if v is not None}
+                self.archetypes[item_id] = {
+                    k: v for k, v in self.archetypes[item_id].items() if v is not None}
             if "material" in comps:
                 self.materials[item_id] = {
-                    "name": data.get("name", item_id),
-                    "damage_mult": comps["material"].get("damage_mult", 1.0),
-                    "defense_mult": comps["material"].get("defense_mult", 1.0),
-                    "durability_mult": comps["material"].get("durability_mult", 1.0),
-                    "tool_mult": comps["material"].get("tool_mult", 1.0),
-                    "weight_per_unit": comps["material"].get("weight_per_unit", 1),
-                    "tags": data.get("tags", []),
-                    "desc": data.get("desc", ""),
-                }
+                    "name": data.get(
+                        "name", item_id), "damage_mult": comps["material"].get(
+                        "damage_mult", 1.0), "defense_mult": comps["material"].get(
+                        "defense_mult", 1.0), "durability_mult": comps["material"].get(
+                        "durability_mult", 1.0), "tool_mult": comps["material"].get(
+                        "tool_mult", 1.0), "weight_per_unit": comps["material"].get(
+                            "weight_per_unit", 1), "tags": data.get(
+                                "tags", []), "desc": data.get(
+                                    "desc", ""), }
         self.affixes = load_json(AFFIXES_FILE)
         self._affix_pool = self._build_affix_pool()
 
@@ -68,7 +71,11 @@ class ItemGenerator:
             pool.extend([name] * weight)
         return pool
 
-    def generate(self, archetype_name=None, material_name=None, affix_count=None):
+    def generate(
+            self,
+            archetype_name=None,
+            material_name=None,
+            affix_count=None):
         """
         生成一件物品。
         不指定参数则随机生成。
@@ -79,7 +86,8 @@ class ItemGenerator:
         else:
             arch_name = random.choice(list(self.archetypes.keys()))
             arch = dict(self.archetypes[arch_name])
-        arch["name"] = archetype_name if archetype_name else arch.get("name", "未知原型")
+        arch["name"] = archetype_name if archetype_name else arch.get(
+            "name", "未知原型")
 
         # 选材质
         if material_name and material_name in self.materials:
@@ -87,7 +95,8 @@ class ItemGenerator:
         else:
             mat_name = random.choice(list(self.materials.keys()))
             mat = dict(self.materials[mat_name])
-        mat["name"] = material_name if material_name else mat.get("name", "未知材质")
+        mat["name"] = material_name if material_name else mat.get(
+            "name", "未知材质")
 
         # 选词缀（0-3条，不重复）
         if affix_count is None:
@@ -98,7 +107,12 @@ class ItemGenerator:
             if not available:
                 break
             # 按稀有度加权选
-            weights = [RARITY_WEIGHTS.get(self.affixes[a].get("rarity", "common"), 10) for a in available]
+            weights = [
+                RARITY_WEIGHTS.get(
+                    self.affixes[a].get(
+                        "rarity",
+                        "common"),
+                    10) for a in available]
             chosen = random.choices(available, weights=weights, k=1)[0]
             selected_affixes.append(chosen)
             available.remove(chosen)
@@ -157,31 +171,40 @@ class ItemGenerator:
             affix = self.affixes.get(affix_name, {})
             # 数值修正
             if "damage_bonus" in affix:
-                item["attack_bonus"] = item.get("attack_bonus", 0) + affix["damage_bonus"]
+                item["attack_bonus"] = item.get(
+                    "attack_bonus", 0) + affix["damage_bonus"]
             if "damage_penalty" in affix:
-                item["attack_bonus"] = item.get("attack_bonus", 0) + affix["damage_penalty"]
+                item["attack_bonus"] = item.get(
+                    "attack_bonus", 0) + affix["damage_penalty"]
             if "defense_bonus" in affix and "defense_bonus" in item:
                 item["defense_bonus"] += affix["defense_bonus"]
             if "defense_penalty" in affix and "defense_bonus" in item:
-                item["defense_bonus"] = max(0, item["defense_bonus"] + affix["defense_penalty"])
+                item["defense_bonus"] = max(
+                    0, item["defense_bonus"] + affix["defense_penalty"])
             if "durability_bonus" in affix:
                 item["durability"] += affix["durability_bonus"]
                 item["durability_max"] = item["durability"]
             if "durability_penalty" in affix:
-                item["durability"] = max(5, item["durability"] + affix["durability_penalty"])
+                item["durability"] = max(
+                    5, item["durability"] + affix["durability_penalty"])
                 item["durability_max"] = item["durability"]
             if "hit_bonus" in affix:
-                item["hit_bonus"] = item.get("hit_bonus", 0) + affix["hit_bonus"]
+                item["hit_bonus"] = item.get(
+                    "hit_bonus", 0) + affix["hit_bonus"]
             if "hit_penalty" in affix:
-                item["hit_bonus"] = item.get("hit_bonus", 0) + affix["hit_penalty"]
+                item["hit_bonus"] = item.get(
+                    "hit_bonus", 0) + affix["hit_penalty"]
             if "weight_bonus" in affix:
                 item["weight"] += affix["weight_bonus"]
             if "weight_penalty" in affix:
-                item["weight"] = max(1, item["weight"] + affix["weight_penalty"])
+                item["weight"] = max(
+                    1, item["weight"] + affix["weight_penalty"])
             if "speed_bonus" in affix:
-                item["speed_bonus"] = item.get("speed_bonus", 0) + affix["speed_bonus"]
+                item["speed_bonus"] = item.get(
+                    "speed_bonus", 0) + affix["speed_bonus"]
             if "speed_penalty" in affix:
-                item["speed_bonus"] = item.get("speed_bonus", 0) - affix["speed_penalty"]
+                item["speed_bonus"] = item.get(
+                    "speed_bonus", 0) - affix["speed_penalty"]
             # 特殊效果
             if "on_attack" in affix:
                 item["on_attack"].extend(affix["on_attack"])
@@ -202,7 +225,12 @@ class ItemGenerator:
             del item["on_attack"]
 
         # 生成描述
-        affix_descs = [self.affixes[a].get("desc", "") for a in affix_names if self.affixes.get(a, {}).get("desc")]
+        affix_descs = [
+            self.affixes[a].get(
+                "desc",
+                "") for a in affix_names if self.affixes.get(
+                a,
+                {}).get("desc")]
         desc_parts = [mat.get("desc", "")]
         if affix_descs:
             desc_parts.append(" | ".join(affix_descs))
@@ -233,7 +261,9 @@ class ItemGenerator:
         material = random.choices(mat_names, weights=mat_w, k=1)[0]
 
         # 排除消耗品用于掉落
-        weapon_arches = [k for k, v in self.archetypes.items() if not v.get("consumable")]
+        weapon_arches = [
+            k for k,
+            v in self.archetypes.items() if not v.get("consumable")]
         archetype = random.choice(weapon_arches)
 
         return self.generate(archetype_name=archetype, material_name=material)
@@ -248,7 +278,6 @@ def get_generator():
     if _generator is None:
         _generator = ItemGenerator()
     return _generator
-
 
 
 def generate_loot(depth=0):

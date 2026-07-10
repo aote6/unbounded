@@ -1,53 +1,46 @@
 # Unbounded 开发路线图
 
-## 全部里程碑
+## 设计原则
+- 每个新系统必须和至少一个现存系统产生涌现交互
+- 数据字段必须在加入时就明确消费方
+- 先验证机制对不对，再堆数量
+- 所有物品通过统一接口存取
 
-### 基础系统 (M0-M16)
-M0-M16: 世界生成/怪物/装备/建造/背包/标签/状态统一
+## 已完成
 
-### 架构升级 (M17-M18)
-M17: 状态机驱动架构 ✅
-M18: 按键常量集中化 ✅
+M0: 世界基础 — Perlin噪声无限世界、方块属性查表、连续挖掘
+M1: 怪物系统 — 7种怪物、效用评分AI、碰撞检测、JSON驱动
+M2: 装备与建造 — 装备槽位、合成菜单、建造模式、尸体/箱子系统
+M3: 成长与存档 — 技能成长、存档读档、Chunk差分存档
+M4: 物品三层模型 — 原型×材质×词缀、深度加权掉落、吸血效果
+M5-M7: 生存/光照/深度生态 — 昼夜循环、怪物按深度生成
+M8: 架构重构 — 统一Inventory、EquipmentInstance dataclass
+M9: 物理世界地形 — 随机种子、高程系统、水域、地质分层
+M10: 箱子系统完善 — 存取界面、全部存取、存档
+M11: 性能优化 — Perlin缓存(58倍提升)
+M12: 建造系统扩展 — 完整建材链、房间评级、特殊地貌、目标系统
+M13: 统一背包系统 — Inventory类、清除双轨制
+M14: main.py拆分(2026-07-08) — 1396→1071行(-23%)、事件总线接入
+M15: 标签系统+涌现机制(2026-07-08) — tags字段、规则矩阵、燃烧系统
+M16: 架构收敛-路线C(2026-07-08) — combat_effects+burning_system合并为status_system，事件总线成为唯一副作用通道
 
-### 智能系统 (M19-M22)
-M19: 气味地图寻路 ✅
-M20: Tag扩展到方块 ✅
-M21: Buff统一管理 ✅
-M22: 中立生物+生态 ✅
+## 待完成
 
-### 渲染与存档 (M23-M26)
-M23: 双缓冲渲染 ✅
-M25: 存档分离 ✅
-M26: 永久世界 ✅
+M17: 状态机 — run()中_handle_xxx()改为State对象压栈/弹栈
+M18: 交互优化 — 合成菜单字母过滤、数字快捷键、一键重复合成
+M19: 地图与小地图
+M20: Buff/状态系统统一管理
+M21: 中立生物+生态
+M22: 终端渲染优化(双缓冲)
+M23: 多层地图(Z轴)
 
-### 玩法深度 (M27-M28)
-M27: 跨局遗产 ✅
-M28: 自定义键位 ✅
+## 暂缓/不做
+物品实例化(UUID)、载具、流体物理、FoV光照、Numpy
 
-## 项目统计
-- Python文件: 26个
-- 总代码: ~5100行
-- 生物: 10种 (7 hostile + 3 neutral)
-- 方块: 26种
-- 配方: 61个
-- 词缀: 15个
-- 按键: 20+可配置
-
-Step 2: ItemCategory枚举 ✅ (2026-07-08)
-  - inventory.py: ItemCategory(str, Enum) 替代 ITEM_TYPE 字典
-  - main.py/crafting_state.py/items.py/legacy_system.py: 字符串硬编码替换为枚举
-  - 共修改6个文件，枚举继承str保证JSON兼容
-
-Step 3: 配方Schema重构 ✅ (2026-07-08)
-  - recipes.json: 34个配方 "generated_equipment" → "equipment"，嵌入 generator_args
-  - crafting_state.py: 从 generator_args 取 archetype/material，不再从 result_def 直接取
-  - 现有 is_placeable 保留，不强制删除（build_state/inventory 仍在使用）
-
-Phase 2: main.py 彻底重构 ✅ (2026-07-09)
-  - main.py: 纯数据容器 GameState（43属性+11getter），零业务逻辑
-  - systems/turn_system.py: 接管 advance_turn（气味/Buff/怪物/区块/目标）
-  - systems/inventory_actions.py: 接管物品/怪物操作（9个函数）
-  - systems/combat_system.py: 接管 kill_monster + collect_attack_effects
-  - systems/save_manager.py: 接管 new_game/save_game/load_game（修复 self→game bug）
-  - systems/save_system.py: 追加 check_death/place_grave/save_world_on_death
-  - 与用户自建的 player_action.py/goal_system.py 无冲突
+## 更新日志
+2026-07-08 M16: 路线C架构收敛，status_system统一副作用通道
+2026-07-08 M15: 标签系统+涌现机制，tags字段/规则矩阵/燃烧系统
+2026-07-08 M14: main.py拆分(-23%)、事件总线、战斗效果解耦
+2026-07-07 M13: 统一背包、死代码清理、UI拆分
+2026-07-07 M12: 建造扩展、房间评级、特殊地貌
+2026-07-06 M9-M11: 地形优化、箱子系统、性能提升

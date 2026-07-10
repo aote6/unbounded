@@ -11,7 +11,7 @@ Player / NPC / Monster / Animal 共享：
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 
 @dataclass
@@ -137,7 +137,11 @@ class Monster(dict):
         return super().get(key, default)
 
 
-def monster_to_entity(name: str, x: int, y: int, monster_data: dict) -> Monster:
+def monster_to_entity(
+        name: str,
+        x: int,
+        y: int,
+        monster_data: dict) -> Monster:
     """创建怪物：返回兼容字典+属性的 Monster 对象。"""
     t = monster_data.get(name, {})
     entity = Entity(

@@ -1,19 +1,23 @@
 """仿真测试：模拟真实玩家行为，500回合自动运行"""
-import sys, random
+from main import Game
+import sys
+import random
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from main import Game
 
 
 class FakeWorld:
     """模拟无限世界——任何坐标都是空地"""
+
     def get_tile(self, x, y):
         return {"tile": 0, "passable": True}
+
     def set_tile(self, x, y, t):
         pass
+
     def keep_radius(self, *a):
         pass
+
     def __init__(self):
         self.seed = 12345
         self.special_locations = []
@@ -33,6 +37,7 @@ class FakeEngine:
     def __init__(self):
         self.stdscr = FakeStdscr()
         self._running = True
+
     def push_state(self, s): pass
     def pop_state(self): pass
 
@@ -71,7 +76,10 @@ def random_craft(game):
             from item_generator import get_generator
             from equipment import EquipmentInstance
             gen = get_generator()
-            item_dict = gen.generate(archetype_name=ga.get("archetype"), material_name=ga.get("material"), affix_count=0)
+            item_dict = gen.generate(
+                archetype_name=ga.get("archetype"),
+                material_name=ga.get("material"),
+                affix_count=0)
             inst = EquipmentInstance(
                 name=item_dict["name"], slot=item_dict.get("slot"),
                 attack_bonus=item_dict.get("attack_bonus", 0),
@@ -125,7 +133,8 @@ def test_500_turns_simulation():
         elif action < 0.9:
             # 10% 放置
             g.place_mode = random.choice(["石墙", "木墙", "火把"])
-            g.cursor_x, g.cursor_y = g.player_x + random.choice([-1, 0, 1]), g.player_y + random.choice([-1, 0, 1])
+            g.cursor_x, g.cursor_y = g.player_x + \
+                random.choice([-1, 0, 1]), g.player_y + random.choice([-1, 0, 1])
             do_place(g)
             place_count += 1
         else:
@@ -150,8 +159,10 @@ def test_500_turns_simulation():
     # 验证
     assert g.turn == 5000, f"回合数不对: {g.turn}"
     assert len(g.inventory.get_materials()) > 0, "背包应该有物品"
-    print(f"[PASS] 5000回合仿真: {craft_count}次合成, {place_count}次放置, {kill_count}只击杀")
-    print(f"       背包材料: {len(g.inventory.get_materials())}种, 装备: {len(g.inventory.get_equipment())}件")
+    print(
+        f"[PASS] 5000回合仿真: {craft_count}次合成, {place_count}次放置, {kill_count}只击杀")
+    print(
+        f"       背包材料: {len(g.inventory.get_materials())}种, 装备: {len(g.inventory.get_equipment())}件")
     print(f"       位置: ({g.player_x},{g.player_y}), HP:{g.player_hp}")
 
 

@@ -1,7 +1,6 @@
 """气味地图系统 - Dijkstra 气味场，替代贪心寻路"""
 
 from collections import deque
-from world_gen import TILE_AIR
 from tile_props import get_tile_props
 
 
@@ -41,7 +40,11 @@ class ScentMap:
                 nx, ny = x + dx, y + dy
                 if (nx, ny) in visited:
                     continue
-                if abs(nx - player_x) > self.max_range or abs(ny - player_y) > self.max_range:
+                if abs(
+                        nx -
+                        player_x) > self.max_range or abs(
+                        ny -
+                        player_y) > self.max_range:
                     continue
 
                 tile = world.get_tile(nx, ny)["tile"]

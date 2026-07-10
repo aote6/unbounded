@@ -36,13 +36,16 @@ def check_terminal_size(stdscr):
         msg2 = f"当前: {term_w}x{term_h} 需要至少: {MIN_TERM_W}x{MIN_TERM_H}"
         msg3 = "请缩小字号、横屏或调整窗口大小后按任意键..."
         h, w = term_h, term_w
-        stdscr.addstr(max(0, h // 2 - 1), max(0, w // 2 - len(msg1) // 2), msg1, curses.A_BOLD)
+        stdscr.addstr(max(0, h // 2 - 1), max(0, w // 2 -
+                      len(msg1) // 2), msg1, curses.A_BOLD)
         stdscr.addstr(max(0, h // 2), max(0, w // 2 - len(msg2) // 2), msg2)
-        stdscr.addstr(max(0, h // 2 + 1), max(0, w // 2 - len(msg3) // 2), msg3)
+        stdscr.addstr(max(0, h // 2 + 1),
+                      max(0, w // 2 - len(msg3) // 2), msg3)
         stdscr.refresh()
         stdscr.getch()
         return False
     return True
+
 
 def tile_attr(game, tile):
     """根据方块类型返回 curses 颜色属性。"""

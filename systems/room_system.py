@@ -31,7 +31,8 @@ def detect_room(game, start_x, start_y):
         else:
             continue
 
-        for dx, dy in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(1,-1),(-1,1),(1,1)]:
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1),
+                       (-1, -1), (1, -1), (-1, 1), (1, 1)]:
             nx, ny = x + dx, y + dy
             if (nx, ny) not in visited:
                 if abs(nx - start_x) > 25 or abs(ny - start_y) > 25:
@@ -47,8 +48,8 @@ def detect_room(game, start_x, start_y):
     has_door = False
     has_wall = False
     for x, y in tiles:
-        for dx, dy in [(-1,0),(1,0),(0,-1),(0,1)]:
-            adj = game.world.get_tile(x+dx, y+dy)["tile"]
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            adj = game.world.get_tile(x + dx, y + dy)["tile"]
             adj_props = get_tile_props(adj)
             if "door" in adj_props.get("tags", []):
                 has_door = True

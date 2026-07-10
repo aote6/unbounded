@@ -25,7 +25,8 @@ def tick_tile_interactions(game):
 
     positions = list(game.modified_tiles.keys())
     for (cx, cy) in positions:
-        for dx, dy in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+        for dx, dy in [(-1, -1), (-1, 0), (-1, 1), (0, -1),
+                       (0, 1), (1, -1), (1, 0), (1, 1)]:
             nx, ny = cx + dx, cy + dy
             pair = ((cx, cy), (nx, ny))
             if pair in checked:
@@ -46,7 +47,10 @@ def tick_tile_interactions(game):
                 for rule in rules:
                     effect = rule.get("effect", "")
                     if effect in ("ignite_tile", "apply_burning"):
-                        to_ignite.append((tx, ty, rule.get("burn_duration", rule.get("duration", 5))))
+                        to_ignite.append(
+                            (tx, ty, rule.get(
+                                "burn_duration", rule.get(
+                                    "duration", 5))))
                     elif effect == "extinguish":
                         target_tile = game.world.get_tile(tx, ty)["tile"]
                         if target_tile != TILE_AIR:

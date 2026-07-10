@@ -1,9 +1,9 @@
 """单元测试: systems/inventory_actions.py"""
+from main import Game
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from main import Game
 
 class TestInventoryActions:
     @classmethod
@@ -39,8 +39,14 @@ class TestInventoryActions:
 
     def test_add_and_remove_monster(self):
         g = self.game
-        from systems.inventory_actions import add_monster, remove_monster, build_monster_index
-        m = {"name": "史莱姆", "x": 5, "y": 5, "hp": 10, "max_hp": 10, "char": "S"}
+        from systems.inventory_actions import add_monster, remove_monster
+        m = {
+            "name": "史莱姆",
+            "x": 5,
+            "y": 5,
+            "hp": 10,
+            "max_hp": 10,
+            "char": "S"}
         add_monster(g, m)
         assert len(g.monsters) == 1
         assert g._monster_at(5, 5) is m

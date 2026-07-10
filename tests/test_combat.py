@@ -1,14 +1,14 @@
 """单元测试: systems/combat_system.py"""
+from main import Game
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from main import Game
 
 
 class FakeWorld:
     def get_tile(self, x, y):
         return {"tile": 0}
+
     def set_tile(self, x, y, t):
         pass
 

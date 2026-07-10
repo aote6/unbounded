@@ -1,6 +1,6 @@
 """轻量事件总线：发布-订阅模式，解耦游戏逻辑。"""
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Callable
 from enum import Enum, auto
 
 

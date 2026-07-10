@@ -1,3 +1,5 @@
+from systems.save_manager import save_game as sys_save_game, load_game as sys_load_game
+from systems.save_manager import new_game as sys_new_game
 """ main.py —— 纯入口与顶级状态聚合。
     业务逻辑已完全迁移至 systems/ 和 ui/states/。
     底层数据隔离为 PlayerState/WorldState/UIState，
@@ -11,10 +13,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Any, Tuple
 
 # ── 数据与系统层导入 ──
-from inventory import Inventory, ItemCategory
+from inventory import Inventory
 from items import load_items
 from monsters import load_monsters
-from systems.event_bus import EventBus, EventType
 from systems.status_system import register as register_status
 from systems.buff_system import create_buff_manager
 from systems.tag_system import load_rules
@@ -36,13 +37,19 @@ class PlayerState:
     z: int = 0
     hp: int = PLAYER_INITIAL_HP
     max_hp: int = PLAYER_INITIAL_HP
-    skills: Dict[str, int] = field(default_factory=lambda: {"digging": 0, "combat": 0, "defense": 0})
-    skill_levels: Dict[str, int] = field(default_factory=lambda: {"digging": 1, "combat": 1, "defense": 1})
+    skills: Dict[str, int] = field(default_factory=lambda: {
+                                   "digging": 0, "combat": 0, "defense": 0})
+    skill_levels: Dict[str, int] = field(
+        default_factory=lambda: {"digging": 1, "combat": 1, "defense": 1})
     inventory: Inventory = field(default_factory=Inventory)
     equipment: Dict[str, Any] = field(default_factory=dict)
 
     def equipment_bonus(self, attr: str) -> int:
-        return sum(getattr(inst, attr, 0) or 0 for inst in self.equipment.values() if inst)
+        return sum(
+            getattr(
+                inst,
+                attr,
+                0) or 0 for inst in self.equipment.values() if inst)
 
 
 @dataclass
@@ -57,7 +64,8 @@ class WorldState:
 
     monsters: List[Any] = field(default_factory=list)
     monster_index: Dict[Tuple[int, int], Any] = field(default_factory=dict)
-    spawn_counter: Dict[str, int] = field(default_factory=lambda: {"count": SPAWN_INITIAL_COUNTDOWN})
+    spawn_counter: Dict[str, int] = field(
+        default_factory=lambda: {"count": SPAWN_INITIAL_COUNTDOWN})
 
     corpses: Dict[Tuple[int, int], Any] = field(default_factory=dict)
     modified_tiles: Dict[Tuple[int, int], Any] = field(default_factory=dict)
@@ -104,6 +112,7 @@ class LegacyState:
 # ── 模块级静态数据缓存（避免重复加载 JSON）──
 _static_cache = {}
 
+
 class Game:
     """顶级聚合根 (Aggregate Root)。底层存储为结构化 dataclass，
        通过 @property 保持 game.player_x 等旧调用方式兼容。
@@ -124,6 +133,14 @@ class Game:
         self.engine: Any = None
 
         self._load_static_data()
+    def save_game(self):
+        return sys_save_game(self)
+
+    def load_game(self):
+        return sys_load_game(self)
+
+    def new_game(self, inherit_world=False):
+        return sys_new_game(self, inherit_world)
         register_status()
         load_rules()
 
@@ -177,13 +194,17 @@ class Game:
 
     # ── 数值计算 property（从 PlayerState 代理）──
     @property
-    def _equipment_bonus(self): return lambda attr: self.player.equipment_bonus(attr)
+    def _equipment_bonus(
+        self): return lambda attr: self.player.equipment_bonus(attr)
+
     def _combat_damage_bonus(self):
         from systems.skill_system import combat_damage_bonus
         return combat_damage_bonus(self)
+
     def _player_defense(self):
         from systems.skill_system import defense_bonus
         return defense_bonus(self)
+
     def _best_equipped_tool_bonus(self, tool_type):
         from systems.skill_system import best_equipped_tool_bonus
         return best_equipped_tool_bonus(self, tool_type)
@@ -361,14 +382,14 @@ class Game:
     def _load_static_data(self):
         """加载静态资源，明确报错而非静默失败"""
         global _static_cache
-        
+
         # 如果已缓存，直接复用（加速重启）
         if _static_cache:
             self.recipes = _static_cache['recipes']
             self.items = _static_cache['items']
             self.monster_data = _static_cache['monster_data']
             return
-        
+
         recipe_path = BASE_DIR / "data" / "recipes.json"
         if recipe_path.exists():
             try:
@@ -388,7 +409,7 @@ class Game:
             self.monster_data = load_monsters()
         except Exception as e:
             logger.error(f"加载怪物失败: {e}")
-        
+
         # 存入缓存
         _static_cache['recipes'] = self.recipes
         _static_cache['items'] = self.items

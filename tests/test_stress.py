@@ -1,18 +1,20 @@
 """压力测试：模拟极端场景，验证系统不崩溃"""
+from main import Game
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from main import Game
 
 
 class FakeWorld:
     def get_tile(self, x, y):
         return {"tile": 0, "passable": True}
+
     def set_tile(self, x, y, t):
         pass
+
     def keep_radius(self, *a):
         pass
+
     def __init__(self):
         self.seed = 12345
 
@@ -30,6 +32,7 @@ class FakeStdscr:
 class FakeEngine:
     def __init__(self):
         self.stdscr = FakeStdscr()
+
     def push_state(self, s): pass
     def pop_state(self): pass
     def _running(self): pass

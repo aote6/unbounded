@@ -1,4 +1,5 @@
 """ config.py 全局配置——按功能分组。所有旧常量名通过 Config 实例兼容。"""
+import systems.keybind as _kb
 import curses
 from dataclasses import dataclass
 
@@ -113,7 +114,7 @@ DIRECTIONS = {
 }
 
 # M28: 键位系统初始化覆盖
-import systems.keybind as _kb
+
 
 def _init_keybinds():
     kb = _kb.load_keybinds()
@@ -145,5 +146,6 @@ def _init_keybinds():
         "KEY_MOVE_LEFT_ALT": kb.get("move_left_alt", KEY_LEFT),
         "KEY_MOVE_RIGHT_ALT": kb.get("move_right_alt", KEY_RIGHT),
     })
+
 
 _init_keybinds()

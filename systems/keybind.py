@@ -66,7 +66,8 @@ def load_keybinds():
             data = json.load(f)
     except (json.JSONDecodeError, FileNotFoundError):
         data = DEFAULTS
-    _keymap = {k: _parse_key(v) for k, v in data.items() if not k.startswith("_")}
+    _keymap = {k: _parse_key(v)
+               for k, v in data.items() if not k.startswith("_")}
     _loaded = True
     return _keymap
 

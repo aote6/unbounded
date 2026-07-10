@@ -1,20 +1,21 @@
+import config
 """怪物AI系统：行为决策、移动索引、生成控制
-from config import MONSTER_SLEEP_DISTANCE, MONSTER_SLEEP_TICKS
+from config import config.MONSTER_SLEEP_DISTANCE, config.MONSTER_SLEEP_TICKS
 
 M21: tick_status_effects 改为委托 BuffManager.tick_all()，
      保留兼容包装函数供旧调用方使用。
 """
+import random
+import monsters as monsters_mod
+from tile_props import get_tile_props
 from systems.inventory_actions import add_monster, monster_moved
 from systems.combat_system import kill_monster
 
 # ── 工具函数（从 monsters.py 迁移，避免循环导入）──
+
+
 def chebyshev(x1, y1, x2, y2):
     return max(abs(x1 - x2), abs(y1 - y2))
-
-from config import MONSTER_SLEEP_DISTANCE, MONSTER_SLEEP_TICKS
-from tile_props import get_tile_props
-import monsters as monsters_mod
-import random
 
 
 def tick_monsters(game):
@@ -67,7 +68,7 @@ def try_spawn_monster(game):
 
 def _try_spawn_neutral(game):
     """每回合有概率在玩家远处生成中立生物。
-    
+
     物种由生态层 get_flora_species(category='animal') 决定，
     替代旧的按群系随机挑选逻辑，与植物/药材共用同一套引擎。
     """
@@ -76,8 +77,14 @@ def _try_spawn_neutral(game):
     from systems.weather_system import get_weather_at
 
     # 天气影响生成密度
-    weather_mod = get_weather_at(game.player_x, game.player_y, game.world.seed, game.turn)
-    density_mult = weather_mod.get("modifiers", {}).get("animal_density_mult", 1.0)
+    weather_mod = get_weather_at(
+        game.player_x,
+        game.player_y,
+        game.world.seed,
+        game.turn)
+    density_mult = weather_mod.get(
+        "modifiers", {}).get(
+        "animal_density_mult", 1.0)
     if _random.random() > 0.25 * density_mult:
         return
 
@@ -92,14 +99,16 @@ def _try_spawn_neutral(game):
             continue
 
         # 生态层决定该位置是否有动物、什么物种
-        animal_sp = get_flora_species(sx, sy, game.world.seed, category="animal")
+        animal_sp = get_flora_species(
+            sx, sy, game.world.seed, category="animal")
         if animal_sp is None:
             continue
 
         animal_name = animal_sp["name"]
         # 如果 monsters.json 里有对应条目，用它；否则用通用模板
         if animal_name in game.monster_data:
-            nm = monsters_mod.make_monster(animal_name, sx, sy, game.monster_data)
+            nm = monsters_mod.make_monster(
+                animal_name, sx, sy, game.monster_data)
         else:
             # 生态层有定义但 monsters.json 没有 —— 用通用中立生物模板
             nm = {
@@ -116,7 +125,6 @@ def _try_spawn_neutral(game):
             game.buff_manager.migrate_legacy(nm)
         add_monster(game, nm)
         break
-
 
 
 def tick_corpses(game):
@@ -138,7 +146,7 @@ def tick_corpses(game):
 
 def tick_status_effects(game):
     """每回合处理怪物身上的状态效果。
-    
+
     M21: 委托给 BuffManager.tick_all()，保留此函数供旧调用方兼容。
     新代码应直接在 advance_turn 中调用 game.buff_manager.tick_all(game)。
     """
@@ -156,7 +164,8 @@ def _tick_monster_vs_neutral(game):
         if m.get("faction") != "hostile":
             continue
         mx, my = m["x"], m["y"]
-        for dx, dy in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+        for dx, dy in [(-1, -1), (-1, 0), (-1, 1), (0, -1),
+                       (0, 1), (1, -1), (1, 0), (1, 1)]:
             nx, ny = mx + dx, my + dy
             target = game._monster_index.get((nx, ny))
             if target and target.get("faction") == "neutral":
@@ -166,6 +175,8 @@ def _tick_monster_vs_neutral(game):
                 if target["hp"] <= 0:
                     kill_monster(game, target, cause="predator")
                 break
+
+
 def _has_line_of_sight(world, x1, y1, x2, y2):
     dx, dy = abs(x2 - x1), abs(y2 - y1)
     sx = 1 if x2 > x1 else -1
@@ -183,15 +194,18 @@ def _has_line_of_sight(world, x1, y1, x2, y2):
             break
         e2 = 2 * err
         if e2 > -dy:
-            err -= dy; cx += sx
+            err -= dy
+            cx += sx
         if e2 < dx:
-            err += dx; cy += sy
+            err += dx
+            cy += sy
     return True
+
 
 def ai_act(monster, world, px, py, turn, monster_index, game=None):
     dist = chebyshev(monster["x"], monster["y"], px, py)
-    if dist > MONSTER_SLEEP_DISTANCE:
-        if turn % MONSTER_SLEEP_TICKS != 0:
+    if dist > config.MONSTER_SLEEP_DISTANCE:
+        if turn % config.MONSTER_SLEEP_TICKS != 0:
             return ""
     special = _ai_special_behavior(monster, world, px, py, monster_index, game)
     if special is not None:
@@ -200,13 +214,31 @@ def ai_act(monster, world, px, py, turn, monster_index, game=None):
     candidates = []
     if dist <= 1:
         if _has_line_of_sight(world, mx, my, px, py):
-            candidates.append(("attack", monster.get("scores", {}).get("attack", 0), px, py))
+            candidates.append(
+                ("attack", monster.get(
+                    "scores", {}).get(
+                    "attack", 0), px, py))
     vis = monster.get("vision", 6)
     if 1 < dist <= vis:
-        candidates.append(("chase", monster.get("scores", {}).get("chase", 0), px, py))
-    if dist <= vis and monster["hp"] < monster["max_hp"] * monster.get("flee_at_hp_ratio", 0.3):
-        candidates.append(("flee", monster.get("scores", {}).get("flee", 12), px, py))
-    candidates.append(("wander", monster.get("scores", {}).get("wander", 1), None, None))
+        candidates.append(
+            ("chase", monster.get(
+                "scores", {}).get(
+                "chase", 0), px, py))
+    if dist <= vis and monster["hp"] < monster["max_hp"] * \
+            monster.get("flee_at_hp_ratio", 0.3):
+        candidates.append(
+            ("flee", monster.get(
+                "scores", {}).get(
+                "flee", 12), px, py))
+    candidates.append(
+        ("wander",
+         monster.get(
+             "scores",
+             {}).get(
+             "wander",
+             1),
+            None,
+            None))
     candidates.sort(key=lambda c: c[1], reverse=True)
     action, _, tx, ty = candidates[0]
     if action == "attack":
@@ -218,6 +250,7 @@ def ai_act(monster, world, px, py, turn, monster_index, game=None):
     elif action == "wander":
         return _move_random(monster, world, monster_index, px, py)
     return ""
+
 
 def _ai_special_behavior(monster, world, px, py, monster_index, game=None):
     special = monster.get("special_behavior")
@@ -233,6 +266,7 @@ def _ai_special_behavior(monster, world, px, py, monster_index, game=None):
         return _ai_hunt_prey(monster, world, px, py, monster_index, game)
     return None
 
+
 def _behavior_never_flee(monster, world, px, py, monster_index):
     mx, my = monster["x"], monster["y"]
     dist = chebyshev(mx, my, px, py)
@@ -247,6 +281,7 @@ def _behavior_never_flee(monster, world, px, py, monster_index):
     if random.random() < 0.3:
         return _move_random(monster, world, monster_index, px, py)
     return "stand_firm"
+
 
 def _behavior_erratic(monster, world, px, py, monster_index):
     mx, my = monster["x"], monster["y"]
@@ -267,6 +302,7 @@ def _behavior_erratic(monster, world, px, py, monster_index):
         return _move_random(monster, world, monster_index, px, py)
     return "flutter"
 
+
 def _erratic_teleport(monster, world, mx, my, monster_index):
     for _ in range(10):
         dx = random.randint(-4, 4)
@@ -274,19 +310,23 @@ def _erratic_teleport(monster, world, mx, my, monster_index):
         nx, ny = mx + dx, my + dy
         if abs(dx) + abs(dy) >= 2:
             tile = world.get_tile(nx, ny)["tile"]
-            if get_tile_props(tile)["passable"] and (nx, ny) not in monster_index:
+            if get_tile_props(tile)["passable"] and (
+                    nx, ny) not in monster_index:
                 monster["x"], monster["y"] = nx, ny
                 return
+
 
 def _do_attack(monster, px, py):
     atk = monster.get("attack_power", (1, 3))
     dmg = random.randint(atk[0], atk[1])
     return dmg if random.random() < monster.get("hit_chance", 0.7) else 0
 
+
 def _step_toward(mx, my, tx, ty):
     dx = (tx - mx) // max(1, abs(tx - mx)) if tx != mx else 0
     dy = (ty - my) // max(1, abs(ty - my)) if ty != my else 0
     return dx, dy
+
 
 def _is_passable(world, x, y, monster_index, px, py):
     """检查格子是否可通行：地形 + 无怪物 + 非玩家位置"""
@@ -298,6 +338,7 @@ def _is_passable(world, x, y, monster_index, px, py):
     if x == px and y == py:
         return False
     return True
+
 
 def _move_toward(monster, tx, ty, world, monster_index, px, py):
     # 优先使用气味地图寻路（解决卡墙角问题）
@@ -325,6 +366,7 @@ def _move_toward(monster, tx, ty, world, monster_index, px, py):
             return "chase"
     return "blocked"
 
+
 def _move_away(monster, tx, ty, world, monster_index, px, py):
     dx, dy = _step_toward(monster["x"], monster["y"], tx, ty)
     nx, ny = monster["x"] - dx, monster["y"] - dy
@@ -333,8 +375,10 @@ def _move_away(monster, tx, ty, world, monster_index, px, py):
         return "flee"
     return "cower"
 
+
 def _move_random(monster, world, monster_index, px, py):
-    dirs = [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (1, -1), (-1, 1), (1, 1)]
+    dirs = [(0, -1), (0, 1), (-1, 0), (1, 0),
+            (-1, -1), (1, -1), (-1, 1), (1, 1)]
     random.shuffle(dirs)
     for dx, dy in dirs:
         nx, ny = monster["x"] + dx, monster["y"] + dy
@@ -343,21 +387,23 @@ def _move_random(monster, world, monster_index, px, py):
             return "wander"
     return "idle"
 
+
 def _ai_neutral(monster, world, px, py, turn, monster_index):
     """中立生物 AI: 逃跑或随机移动, 不攻击玩家"""
     mx, my = monster["x"], monster["y"]
     dist = chebyshev(mx, my, px, py)
     vis = monster.get("vision", 6)
-    
+
     if dist <= 3:
         return _move_away(monster, px, py, world, monster_index, px, py)
-    
-    if dist <= vis and monster["hp"] < monster["max_hp"] * monster.get("flee_at_hp_ratio", 0.5):
+
+    if dist <= vis and monster["hp"] < monster["max_hp"] * \
+            monster.get("flee_at_hp_ratio", 0.5):
         return _move_away(monster, px, py, world, monster_index, px, py)
-    
+
     if turn % 3 == 0:
         return _move_random(monster, world, monster_index, px, py)
-    
+
     return ""
 
 
@@ -389,10 +435,18 @@ def _ai_hunt_prey(monster, world, px, py, monster_index, game=None):
             target, target_dist = other, d
 
     if target is not None:
-        if target_dist <= 1 and _has_line_of_sight(world, mx, my, target["x"], target["y"]):
+        if target_dist <= 1 and _has_line_of_sight(
+                world, mx, my, target["x"], target["y"]):
             _attack_other_monster(monster, target, game)
             return "hunt_attack"
-        return _move_toward(monster, target["x"], target["y"], world, monster_index, px, py)
+        return _move_toward(
+            monster,
+            target["x"],
+            target["y"],
+            world,
+            monster_index,
+            px,
+            py)
 
     dist_to_player = chebyshev(mx, my, px, py)
     if dist_to_player <= 4:
@@ -409,5 +463,3 @@ def _attack_other_monster(attacker, target, game=None):
     target["hp"] -= dmg
     if target["hp"] <= 0 and game is not None:
         kill_monster(game, target, cause="predator")
-
-

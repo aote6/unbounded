@@ -1,5 +1,6 @@
 """年龄系统——基于游戏天数，永不重置。"""
-import json, os
+import json
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
@@ -13,7 +14,7 @@ def _load():
         if BIRTH_FILE.exists() and os.path.getsize(BIRTH_FILE) > 0:
             with open(BIRTH_FILE) as f:
                 return json.load(f)
-    except:
+    except BaseException:
         pass
     return {"total_turns": 0}
 

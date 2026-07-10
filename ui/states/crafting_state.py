@@ -1,3 +1,7 @@
+from inventory import ItemCategory
+from equipment import EquipmentInstance
+from core.state_machine import State
+import random
 from systems.inventory_actions import add_equipment_instance
 """CraftingState - 合成界面状态"""
 
@@ -8,15 +12,9 @@ ORE_TO_MATERIAL = {
     "煤矿": "煤", "铜矿": "铜", "铁矿": "铁",
     "银矿": "银", "金矿": "金", "钻石矿": "钻石",
 }
-import random
-from core.state_machine import State
-from equipment import EquipmentInstance
-from inventory import ItemCategory
-import items as items_mod
 
 
 # 矿石名到材质名映射
-
 
 
 class CraftingState(State):
@@ -75,7 +73,8 @@ class CraftingState(State):
             self.game.engine.pop_state()
             return None
         elif key == ord(','):
-            self.current_cat_idx = (self.current_cat_idx + 1) % len(self.ordered_cats)
+            self.current_cat_idx = (
+                self.current_cat_idx + 1) % len(self.ordered_cats)
             self.selected = 0
             self.status_msg = ""
         elif key == curses.KEY_UP:
@@ -118,9 +117,11 @@ class CraftingState(State):
             mat = ORE_TO_MATERIAL.get(mat, mat)
             affix_chance = result_def.get("affix_chance", 0.0)
             if affix_chance > 0 and random.random() < affix_chance:
-                item_dict = gen.generate(archetype_name=arch, material_name=mat)
+                item_dict = gen.generate(
+                    archetype_name=arch, material_name=mat)
             else:
-                item_dict = gen.generate(archetype_name=arch, material_name=mat, affix_count=0)
+                item_dict = gen.generate(
+                    archetype_name=arch, material_name=mat, affix_count=0)
             inst = EquipmentInstance(
                 name=item_dict["name"],
                 slot=item_dict.get("slot"),
@@ -145,12 +146,14 @@ class CraftingState(State):
             mat_name = result_def.get("name", name)
             mat_count = result_def.get("count", 1)
             game.inventory.add(mat_name, mat_count)
-            self.status_msg = f"合成了 {mat_name} x{mat_count}（共 {game.inventory.count(mat_name)}）"
+            self.status_msg = f"合成了 {mat_name} x{mat_count}（共 {
+                game.inventory.count(mat_name)}）"
 
         elif result_type == ItemCategory.PLACEABLE:
             # 统一处理：先加材料到背包，让玩家按 b 放置
             game.inventory.add(name, 1)
-            self.status_msg = f"合成了 {name} x1（共 {game.inventory.count(name)}）。按 b 放置。"
+            self.status_msg = f"合成了 {name} x1（共 {
+                game.inventory.count(name)}）。按 b 放置。"
 
         else:
             # 兜底分支改为报错，不再静默生成垃圾装备
@@ -182,7 +185,8 @@ class CraftingState(State):
                 self.win.addstr(3 + i, 2, f"  ... 还有 {len(names) - i} 项")
                 break
             r = self.recipes[name]
-            ing = " + ".join(f"{v}x{k}" for k, v in r.get("ingredients", {}).items())
+            ing = " + ".join(f"{v}x{k}" for k,
+                             v in r.get("ingredients", {}).items())
             line = f" {name} <- {ing}"
             if r.get("desc"):
                 line += f" ({r['desc']})"

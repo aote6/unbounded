@@ -44,8 +44,7 @@ def validate_all():
 
         if result_type not in valid_types:
             errors.append(
-                f"recipes.json: '{recipe_name}' 的 result.type='{result_type}' 不在 ItemCategory 枚举中"
-            )
+                f"recipes.json: '{recipe_name}' 的 result.type='{result_type}' 不在 ItemCategory 枚举中")
 
         # 材料/可放置物：result.name 必须在 items.json 中存在
         if result_type in (ItemCategory.MATERIAL, ItemCategory.PLACEABLE):

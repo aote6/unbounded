@@ -1,5 +1,4 @@
 """Perlin 噪声引擎：地形生成核心算法。从 world_gen.py 提取。"""
-import math
 import random as _random
 
 
@@ -8,6 +7,7 @@ import random as _random
 # ═══════════════════════════════════
 
 _PERLIN_CACHE: dict = {}
+
 
 def _hash2d(x: int, y: int, seed: int) -> int:
     h = seed + x * 374761393 + y * 668265263
@@ -20,10 +20,17 @@ def _hash_uniform(x: int, y: int, seed: int) -> float:
 
 
 def _smooth_noise(x: int, y: int, seed: int) -> float:
-    corners = (_hash_uniform(x-1, y-1, seed) + _hash_uniform(x+1, y-1, seed) +
-               _hash_uniform(x-1, y+1, seed) + _hash_uniform(x+1, y+1, seed)) / 16
-    sides = (_hash_uniform(x-1, y, seed) + _hash_uniform(x+1, y, seed) +
-             _hash_uniform(x, y-1, seed) + _hash_uniform(x, y+1, seed)) / 8
+    corners = (_hash_uniform(x - 1,
+                             y - 1,
+                             seed) + _hash_uniform(x + 1,
+                                                   y - 1,
+                                                   seed) + _hash_uniform(x - 1,
+                                                                         y + 1,
+                                                                         seed) + _hash_uniform(x + 1,
+                                                                                               y + 1,
+                                                                                               seed)) / 16
+    sides = (_hash_uniform(x - 1, y, seed) + _hash_uniform(x + 1, y, seed) +
+             _hash_uniform(x, y - 1, seed) + _hash_uniform(x, y + 1, seed)) / 8
     center = _hash_uniform(x, y, seed) / 4
     return corners + sides + center
 
@@ -36,11 +43,11 @@ def _interpolated_noise(x: float, y: float, seed: int) -> float:
     u, v = _fade(fx), _fade(fy)
 
     a = _smooth_noise(ix, iy, seed)
-    b = _smooth_noise(ix+1, iy, seed)
-    c = _smooth_noise(ix, iy+1, seed)
-    d = _smooth_noise(ix+1, iy+1, seed)
+    b = _smooth_noise(ix + 1, iy, seed)
+    c = _smooth_noise(ix, iy + 1, seed)
+    d = _smooth_noise(ix + 1, iy + 1, seed)
 
-    return a + u*(b-a) + v*(c-a) + u*v*(a-b-c+d)
+    return a + u * (b - a) + v * (c - a) + u * v * (a - b - c + d)
 
 
 def perlin_2d(x: float, y: float, seed: int = 0,
@@ -51,7 +58,8 @@ def perlin_2d(x: float, y: float, seed: int = 0,
     frequency = 1.0
     max_value = 0.0
     for _ in range(octaves):
-        value += amplitude * _interpolated_noise(x * frequency, y * frequency, seed)
+        value += amplitude * \
+            _interpolated_noise(x * frequency, y * frequency, seed)
         max_value += amplitude
         amplitude *= persistence
         frequency *= lacunarity
@@ -61,7 +69,7 @@ def perlin_2d(x: float, y: float, seed: int = 0,
 # 石头/矿脉团块缓存：以大网格为单位，每个格子最多一个"矿脉中心"。
 # 用缓存而不是每格都重新算随机数，避免性能问题。
 _STONE_CELL_CACHE: dict = {}
-_STONE_CELL_SIZE = 24
+_STONE_CELL_SIZE = 14
 
 
 def _get_stone_deposit(cell_x: int, cell_y: int, seed: int):
@@ -72,12 +80,12 @@ def _get_stone_deposit(cell_x: int, cell_y: int, seed: int):
     rng_seed = seed + cell_x * 92821 + cell_y * 68917
     rng = _random.Random(rng_seed)
     # 35% 的网格里有矿脉团块，其余是空地——这个比例决定"石头有多稀疏"
-    if rng.random() > 0.35:
+    if rng.random() > 0.55:
         result = None
     else:
         cx = cell_x * _STONE_CELL_SIZE + rng.randint(0, _STONE_CELL_SIZE - 1)
         cy = cell_y * _STONE_CELL_SIZE + rng.randint(0, _STONE_CELL_SIZE - 1)
-        radius = rng.randint(4, 9)
+        radius = rng.randint(3, 6)
         result = (cx, cy, radius)
     _STONE_CELL_CACHE[key] = result
     return result
@@ -100,7 +108,7 @@ def _find_nearby_deposit(x: int, y: int, seed: int):
 
 def generate_tile(x: int, y: int, seed: int = 12345) -> int:
     """地形生成：委托给 Feature Engine 统一调度。
-    
+
     所有自然物（水/沙/石/矿/树）都是 Feature，
     新增内容不改此函数，只在 feature_engine.py 注册。
     """

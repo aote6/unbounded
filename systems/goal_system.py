@@ -116,7 +116,10 @@ def check_special_location(game):
                 loot = loot_tables.get(name, {})
                 for item, count in loot.items():
                     game.inventory.add(item, count)
-                game.message += f" 获得: {', '.join(f'{c}x{k}' for k,c in loot.items())}"
+                game.message += f" 获得: {
+                    ', '.join(
+                        f'{c}x{k}' for k,
+                        c in loot.items())}"
             break
 
 

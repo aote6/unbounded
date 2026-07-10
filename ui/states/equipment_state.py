@@ -28,7 +28,6 @@ class EquipmentState(State):
         self._slot_id = ""
         self._slot_name = ""
 
-
     def _close_sub_win(self):
         """安全关闭子窗口，清除残影"""
         if self.sub_win:

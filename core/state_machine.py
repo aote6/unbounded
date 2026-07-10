@@ -2,7 +2,7 @@
 状态机引擎 - M17 核心架构
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class State(ABC):
@@ -52,7 +52,9 @@ class Engine:
     def run(self, initial_state):
         self._running = True
         self.push_state(initial_state)
-        import curses, traceback, datetime
+        import curses
+        import traceback
+        import datetime
         curses.halfdelay(2)
         while self._running and self.state_stack:
             try:
@@ -93,7 +95,8 @@ class Engine:
                 with open(f"crash_{ts}.log", "w", encoding="utf-8") as f:
                     f.write(f"Unbounded Crash Report - {ts}\n")
                     f.write(f"Error: {type(e).__name__}: {e}\n")
-                    f.write(f"State stack: {[type(s).__name__ for s in self.state_stack]}\n\n")
+                    f.write(
+                        f"State stack: {[type(s).__name__ for s in self.state_stack]}\n\n")
                     traceback.print_exc(file=f)
                 # 打印到终端
                 print(f"\n[游戏崩溃] {type(e).__name__}: {e}")

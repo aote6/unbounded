@@ -44,9 +44,11 @@ class ChestState(State):
         chest = self.chest
         game = self.game
         self.chest_mats = list(chest["materials"].items())
-        self.chest_equips = [(inst.name, inst) for inst in chest["equipment_instances"]]
+        self.chest_equips = [(inst.name, inst)
+                             for inst in chest["equipment_instances"]]
         self.backpack_mats = list(game.inventory.get_materials().items())
-        self.backpack_equips = [(inst.name, inst) for inst in game.inventory.get_equipment()]
+        self.backpack_equips = [(inst.name, inst)
+                                for inst in game.inventory.get_equipment()]
 
     def _get_items(self):
         if self.viewing_chest:
@@ -54,7 +56,8 @@ class ChestState(State):
             for k, v in self.chest_mats:
                 items.append(("material", k, v))
             for name, inst in self.chest_equips:
-                affix = " [" + "|".join(inst.affixes) + "]" if inst.affixes else ""
+                affix = " [" + "|".join(inst.affixes) + \
+                    "]" if inst.affixes else ""
                 items.append(("equip", f"{name}{affix}", inst))
             return items, "箱子内容"
         else:
@@ -62,7 +65,8 @@ class ChestState(State):
             for k, v in self.backpack_mats:
                 items.append(("material", k, v))
             for name, inst in self.backpack_equips:
-                affix = " [" + "|".join(inst.affixes) + "]" if inst.affixes else ""
+                affix = " [" + "|".join(inst.affixes) + \
+                    "]" if inst.affixes else ""
                 items.append(("equip", f"{name}{affix}", inst))
             return items, "你的背包"
 
@@ -94,10 +98,13 @@ class ChestState(State):
         if self.viewing_chest:
             for item_id, item in list(game.inventory.all_items()):
                 if item.item_type in ("material", "placeable"):
-                    chest["materials"][item_id] = chest["materials"].get(item_id, 0) + item.count
+                    chest["materials"][item_id] = chest["materials"].get(
+                        item_id, 0) + item.count
                     game.inventory.remove(item_id, item.count)
                 elif item.item_type == "equipment":
-                    chest["equipment_instances"].append(item.instance.clone() if hasattr(item.instance, "clone") else item.instance)
+                    chest["equipment_instances"].append(
+                        item.instance.clone() if hasattr(
+                            item.instance, "clone") else item.instance)
                     game.inventory.remove(item_id)
             game.message = "所有物品已存入箱子。"
         else:
@@ -130,11 +137,13 @@ class ChestState(State):
         else:
             if item[0] == "material":
                 mat_name, count = item[1], item[2]
-                chest["materials"][mat_name] = chest["materials"].get(mat_name, 0) + count
+                chest["materials"][mat_name] = chest["materials"].get(
+                    mat_name, 0) + count
                 game.inventory.remove(mat_name, count)
             else:
                 inst = item[2]
-                chest["equipment_instances"].append(inst.clone() if hasattr(inst, "clone") else inst)
+                chest["equipment_instances"].append(
+                    inst.clone() if hasattr(inst, "clone") else inst)
                 game.inventory.remove(inst.name)
             game.message = "已存入。"
 

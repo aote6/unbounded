@@ -1,4 +1,9 @@
 """跨局遗产系统：死亡积累点数，新角色兑换增益"""
+from world_gen import TILE_AIR
+from systems.save_system import build_save_data
+from inventory import Inventory
+from systems.event_bus import EventBus, EventType, GameEvent
+from systems.inventory_actions import add_equipment_instance
 from inventory import ItemCategory
 import json
 from pathlib import Path
@@ -98,24 +103,33 @@ def save_legacy(data):
 def record_death(game):
     """角色死亡时调用：记录前世信息，计算遗产点数"""
     legacy = load_legacy()
-    
+
     # 记录前世
     life_record = {
         "death_turn": game.turn,
         "death_x": game.player_x,
         "death_y": game.player_y,
         "death_z": game.player_z,
-        "skills": dict(game.skills),
-        "monsters_killed_this_life": getattr(game, '_monsters_killed_this_life', 0),
+        "skills": dict(
+            game.skills),
+        "monsters_killed_this_life": getattr(
+            game,
+            '_monsters_killed_this_life',
+            0),
     }
     legacy["previous_lives"].append(life_record)
-    
+
     # 更新统计
     legacy["total_deaths"] += 1
-    legacy["highest_depth"] = max(legacy.get("highest_depth", 0), abs(game.player_z))
-    legacy["total_monsters_killed"] += getattr(game, '_monsters_killed_this_life', 0)
-    legacy["total_blocks_placed"] += getattr(game, '_blocks_placed_this_life', 0)
-    
+    legacy["highest_depth"] = max(
+        legacy.get(
+            "highest_depth", 0), abs(
+            game.player_z))
+    legacy["total_monsters_killed"] += getattr(
+        game, '_monsters_killed_this_life', 0)
+    legacy["total_blocks_placed"] += getattr(game,
+                                             '_blocks_placed_this_life', 0)
+
     # 计算遗产点数：基于本局成就
     points = 1  # 基础
     points += min(game.skills.get("digging", 0) // 3, 3)    # 挖掘每3级+1，最多3
@@ -124,15 +138,15 @@ def record_death(game):
         points += 2  # 深度奖励
     if getattr(game, '_monsters_killed_this_life', 0) >= 10:
         points += 2  # 狩猎奖励
-    
+
     legacy["legacy_points"] += points
-    
+
     # 记录解锁的配方（本局合成过的）
     if hasattr(game, '_crafted_this_life'):
         for recipe_name in game._crafted_this_life:
             if recipe_name not in legacy["unlocked_recipes"]:
                 legacy["unlocked_recipes"].append(recipe_name)
-    
+
     save_legacy(legacy)
     return points
 
@@ -140,22 +154,23 @@ def record_death(game):
 def apply_legacy_perks(game):
     """新角色出生时应用已购买的遗产增益"""
     legacy = load_legacy()
-    
+
     for perk_id in legacy.get("unlocked_perks", []):
         perk = PERKS.get(perk_id)
         if not perk:
             continue
-        
+
         if perk["type"] == "item":
             add_equipment_instance(game, perk["item_name"])
         elif perk["type"] == ItemCategory.MATERIAL:
             game.inventory.add(perk["item_name"], perk.get("count", 1))
         elif perk["type"] == "skill":
-            game.skills[perk["skill"]] = game.skills.get(perk["skill"], 0) + perk["bonus"]
+            game.skills[perk["skill"]] = game.skills.get(
+                perk["skill"], 0) + perk["bonus"]
         elif perk["type"] == "hp_bonus":
             game.player_hp += perk["bonus"]
             game.player_max_hp += perk["bonus"]
-    
+
     # 应用解锁的配方
     for recipe_name in legacy.get("unlocked_recipes", []):
         if recipe_name in game.recipes:
@@ -171,7 +186,7 @@ def get_perks_shop():
     legacy = load_legacy()
     points = legacy.get("legacy_points", 0)
     unlocked = set(legacy.get("unlocked_perks", []))
-    
+
     available = []
     for perk_id, perk in PERKS.items():
         if perk_id not in unlocked:
@@ -183,7 +198,7 @@ def get_perks_shop():
                 "affordable": points >= perk["cost"],
                 "owned": False,
             })
-    
+
     return available
 
 
@@ -197,19 +212,12 @@ def purchase_perk(perk_id):
         return False, "已拥有"
     if legacy["legacy_points"] < perk["cost"]:
         return False, f"点数不足（需要 {perk['cost']}，当前 {legacy['legacy_points']}）"
-    
+
     legacy["legacy_points"] -= perk["cost"]
     legacy.setdefault("unlocked_perks", []).append(perk_id)
     save_legacy(legacy)
     return True, f"解锁了【{perk['name']}】！"
 
-from world_gen import TILE_AIR
-from systems.inventory_actions import add_equipment_instance
-from systems.event_bus import EventBus, EventType, GameEvent
-from inventory import Inventory
-import json
-from pathlib import Path
-from systems.save_system import build_save_data
 
 BASE_DIR = Path(__file__).parent.parent
 
@@ -228,7 +236,10 @@ def place_grave(game, x, y):
         old_tile = game.world.get_tile(x, y)["tile"]
         game.world.set_tile(x, y, "墓碑")
         game.modified_tiles[(x, y)] = "墓碑"
-        EventBus().emit(GameEvent(EventType.TILE_CHANGED, {"x": x, "y": y, "old": old_tile, "new": "墓碑"}), game)
+        EventBus().emit(
+            GameEvent(
+                EventType.TILE_CHANGED, {
+                    "x": x, "y": y, "old": old_tile, "new": "墓碑"}), game)
 
 
 def save_world_on_death(game):
@@ -264,10 +275,14 @@ def show_death_screen(game):
     m3 = "世界保留，新角色将继承一切。"
     m4 = "按任意键打开遗产商店..."
     h, w = game.engine.stdscr.getmaxyx()
-    game.engine.stdscr.addstr(h//2-3, max(0, w//2-len(m1)//2), m1, curses.A_BOLD | curses.color_pair(7))
-    game.engine.stdscr.addstr(h//2-1, max(0, w//2-len(m2)//2), m2)
-    game.engine.stdscr.addstr(h//2, max(0, w//2-len(m3)//2), m3)
-    game.engine.stdscr.addstr(h//2+2, max(0, w//2-len(m4)//2), m4)
+    game.engine.stdscr.addstr(h // 2 - 3,
+                              max(0,
+                                  w // 2 - len(m1) // 2),
+                              m1,
+                              curses.A_BOLD | curses.color_pair(7))
+    game.engine.stdscr.addstr(h // 2 - 1, max(0, w // 2 - len(m2) // 2), m2)
+    game.engine.stdscr.addstr(h // 2, max(0, w // 2 - len(m3) // 2), m3)
+    game.engine.stdscr.addstr(h // 2 + 2, max(0, w // 2 - len(m4) // 2), m4)
     game.engine.stdscr.refresh()
     game.engine.stdscr.getch()
     from ui.states.legacy_state import LegacyState
