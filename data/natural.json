@@ -570,5 +570,206 @@
     "biomes": [],
     "companion_with": [],
     "drops": "黏土"
+  },
+  {
+    "id": "rabbit",
+    "name": "兔子",
+    "category": "animal",
+    "biomes": [
+      "草原",
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 0.3,
+    "tags": [
+      "animal",
+      "prey",
+      "flammable"
+    ],
+    "companion_with": [],
+    "drops": "兔肉",
+    "tile_id": null
+  },
+  {
+    "id": "deer",
+    "name": "鹿",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "针叶林",
+      "草原"
+    ],
+    "rarity": 0.15,
+    "tags": [
+      "animal",
+      "prey",
+      "large",
+      "flammable"
+    ],
+    "companion_with": [],
+    "drops": "鹿肉",
+    "tile_id": null
+  },
+  {
+    "id": "fox",
+    "name": "狐狸",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林"
+    ],
+    "rarity": 0.1,
+    "tags": [
+      "animal",
+      "predator",
+      "flammable"
+    ],
+    "companion_with": [
+      "rabbit"
+    ],
+    "drops": "狐狸皮",
+    "tile_id": null
+  },
+  {
+    "id": "wolf",
+    "name": "狼",
+    "category": "animal",
+    "biomes": [
+      "针叶林",
+      "苔原",
+      "温带森林"
+    ],
+    "rarity": 0.08,
+    "tags": [
+      "animal",
+      "predator",
+      "pack",
+      "dangerous"
+    ],
+    "companion_with": [
+      "deer"
+    ],
+    "drops": "狼皮",
+    "tile_id": null
+  },
+  {
+    "id": "bear",
+    "name": "熊",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "针叶林",
+      "苔原"
+    ],
+    "rarity": 0.04,
+    "tags": [
+      "animal",
+      "predator",
+      "large",
+      "dangerous"
+    ],
+    "companion_with": [],
+    "drops": "熊皮",
+    "tile_id": null
+  },
+  {
+    "id": "boar",
+    "name": "野猪",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "雨林"
+    ],
+    "rarity": 0.12,
+    "tags": [
+      "animal",
+      "aggressive",
+      "large",
+      "flammable"
+    ],
+    "companion_with": [],
+    "drops": "猪肉",
+    "tile_id": null
+  },
+  {
+    "id": "eagle",
+    "name": "鹰",
+    "category": "animal",
+    "biomes": [
+      "草原",
+      "沙漠",
+      "苔原"
+    ],
+    "rarity": 0.06,
+    "tags": [
+      "animal",
+      "predator",
+      "flying"
+    ],
+    "companion_with": [
+      "rabbit"
+    ],
+    "drops": "鹰羽",
+    "tile_id": null
+  },
+  {
+    "id": "snake",
+    "name": "蛇",
+    "category": "animal",
+    "biomes": [
+      "沙漠",
+      "雨林",
+      "草原"
+    ],
+    "rarity": 0.1,
+    "tags": [
+      "animal",
+      "predator",
+      "venomous"
+    ],
+    "companion_with": [
+      "rabbit"
+    ],
+    "drops": "蛇皮",
+    "tile_id": null
+  },
+  {
+    "id": "monkey",
+    "name": "猴",
+    "category": "animal",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 0.2,
+    "tags": [
+      "animal",
+      "neutral",
+      "intelligent"
+    ],
+    "companion_with": [
+      "banyan",
+      "bamboo"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "penguin",
+    "name": "企鹅",
+    "category": "animal",
+    "biomes": [
+      "冰原"
+    ],
+    "rarity": 0.15,
+    "tags": [
+      "animal",
+      "neutral",
+      "aquatic"
+    ],
+    "companion_with": [],
+    "drops": null,
+    "tile_id": null
   }
 ]

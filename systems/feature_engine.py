@@ -141,6 +141,24 @@ def herb_feature(x, y, seed, biome, current_tile):
     return None
 
 
+def animal_spawn_feature(x, y, seed, biome, current_tile):
+    """动物生成点：生态层决定物种，不改变地形。动物由 AI 系统在生成点附近实体化。"""
+    if current_tile not in (TILE_AIR,):
+        return None
+    # 动物密度由 Biome 生态参数控制（暂用 herb_density 作为代理，未来独立配置）
+    cfg = _load_biome_params(biome)
+    animal_density = cfg.get("herb_density", 0.1) * 0.5
+    if animal_density <= 0:
+        return None
+    if _hash_uniform(x, y, seed + 88888) > animal_density * 0.05:
+        return None
+    from systems.ecology import get_flora_species
+    species = get_flora_species(x, y, seed, category="animal")
+    if species is not None:
+        return TILE_AIR  # 动物不改变地形，仅标记生成点
+    return None
+
+
 # Feature 链：按优先级排列（水 > 沙 > 石 > 树 > 药草）
 FEATURE_CHAIN = [
     water_feature,
@@ -148,6 +166,7 @@ FEATURE_CHAIN = [
     stone_deposit_feature,
     tree_feature,
     herb_feature,
+    animal_spawn_feature,
 ]
 
 def natural_generator(x: int, y: int, seed: int = 12345) -> int:
