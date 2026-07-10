@@ -23,21 +23,24 @@ def chebyshev(x1, y1, x2, y2):
     return max(abs(x1 - x2), abs(y1 - y2))
 
 
-def _pick_monster_type(monster_data, depth=0):
-    names = list(monster_data.keys())
+def _pick_monster_type(monster_data, biome=None, faction=None):
+    """按生物群系 + 阵营过滤后加权随机选择怪物类型。
+    biome=None 时不按群系过滤；faction=None 时不按阵营过滤（向后兼容旧调用方式）。"""
+    names = []
+    weights = []
+    for n, t in monster_data.items():
+        if faction is not None and t.get("faction", "hostile") != faction:
+            continue
+        biomes = t.get("biomes")
+        if biome is not None and biomes is not None and biome not in biomes:
+            continue
+        w = t.get("spawn_weight", 1)
+        if w <= 0:
+            continue
+        names.append(n)
+        weights.append(w)
     if not names:
         return None
-    weights = []
-    for n in names:
-        w = monster_data[n].get("spawn_weight", 1)
-        depth_range = monster_data[n].get("depth_range", None)
-        if depth_range:
-            d_min, d_max = depth_range
-            if not (d_min <= depth <= d_max):
-                w = 0
-        weights.append(w)
-    if sum(weights) == 0:
-        return random.choice(names)
     return random.choices(names, weights=weights, k=1)[0]
 
 def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
@@ -46,21 +49,23 @@ def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
     if spawn_counter["count"] > 0:
         return None
     spawn_counter["count"] = random.randint(interval_min, interval_max)
-    mtype = _pick_monster_type(monster_data, depth=py)
-    if mtype is None:
-        return None
     monster_index = {(m["x"], m["y"]) for m in monsters}
+    from tile_props import TILE_AIR
+    from systems.climate import get_biome
     for _ in range(15):
         sx = px + random.randint(-20, 20)
         sy = py + random.randint(-15, 15)
         if chebyshev(sx, sy, px, py) < min_dist:
             continue
-        from tile_props import TILE_AIR
         if world.get_tile(sx, sy)["tile"] != TILE_AIR:
             continue
         if (sx, sy) in monster_index:
             continue
         if sx == px and sy == py:
+            continue
+        biome = get_biome(sx, sy, world.seed)
+        mtype = _pick_monster_type(monster_data, biome=biome, faction="hostile")
+        if mtype is None:
             continue
         return make_monster(mtype, sx, sy, monster_data)
     return None
@@ -138,15 +143,9 @@ def generate_loot_for(depth, monster_name=None):
 # M22: 中立生物 AI
 # ═══════════════════════════════════════════════
 
-def _pick_neutral_type(depth=0):
-    """根据深度选择中立生物类型"""
-    import random
-    if -5 <= depth <= 15:
-        return random.choices(["兔子", "鹿", "狐狸"], weights=[5, 2, 1])[0]
-    elif depth <= 30:
-        return "狐狸" if random.random() < 0.3 else None
-    else:
-        return None
+def _pick_neutral_type(monster_data, biome=None):
+    """按生物群系选择中立生物类型（薄封装，复用统一的按群系+阵营选择逻辑）。"""
+    return _pick_monster_type(monster_data, biome=biome, faction="neutral")
 
 # ── AI 函数兼容转发（延迟导入，避免循环依赖）──
 def _get_ai_func(name):

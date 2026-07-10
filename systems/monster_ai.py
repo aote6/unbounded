@@ -66,12 +66,10 @@ def try_spawn_monster(game):
 
 
 def _try_spawn_neutral(game):
-    """每回合有概率在玩家远处生成中立生物"""
+    """每回合有概率在玩家远处生成中立生物，类型按该位置所属的生物群系决定。"""
     import random as _random
+    from systems.climate import get_biome
     if _random.random() > 0.25:  # 25% 概率
-        return
-    neutral_type = monsters_mod._pick_neutral_type(game.player_y)
-    if not neutral_type:
         return
     for _ in range(20):
         sx = game.player_x + _random.randint(-15, 15)
@@ -81,6 +79,10 @@ def _try_spawn_neutral(game):
         if game.world.get_tile(sx, sy)["tile"] != 0:  # TILE_AIR
             continue
         if (sx, sy) in game._monster_index:
+            continue
+        biome = get_biome(sx, sy, game.world.seed)
+        neutral_type = monsters_mod._pick_neutral_type(game.monster_data, biome)
+        if not neutral_type:
             continue
         nm = monsters_mod.make_monster(neutral_type, sx, sy, game.monster_data)
         if hasattr(game, 'buff_manager'):
@@ -382,12 +384,3 @@ def _attack_other_monster(attacker, target, game=None):
         kill_monster(game, target, cause="predator")
 
 
-def _pick_neutral_type(depth=0):
-    """根据深度选择中立生物类型"""
-    import random
-    if -5 <= depth <= 15:
-        return random.choices(["兔子", "鹿", "狐狸"], weights=[5, 2, 1])[0]
-    elif depth <= 30:
-        return "狐狸" if random.random() < 0.3 else None
-    else:
-        return None

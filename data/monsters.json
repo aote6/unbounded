@@ -36,7 +36,14 @@
       "split_on_death",
       "flammable"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林",
+      "雨林",
+      "苔原"
+    ]
   },
   "巨型史莱姆": {
     "char": "M",
@@ -80,7 +87,14 @@
       "split_on_death",
       "flammable"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林",
+      "雨林",
+      "苔原"
+    ]
   },
   "洞穴蝙蝠": {
     "char": "B",
@@ -120,7 +134,12 @@
       "erratic",
       "flammable"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "温带森林",
+      "雨林",
+      "针叶林"
+    ]
   },
   "岩石傀儡": {
     "char": "G",
@@ -161,7 +180,12 @@
       "heavy",
       "fire_resist"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "沙漠",
+      "苔原",
+      "冰原"
+    ]
   },
   "暗影史莱姆": {
     "char": "S",
@@ -199,7 +223,12 @@
       "slime",
       "incorporeal"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "苔原",
+      "冰原",
+      "针叶林"
+    ]
   },
   "地穴蜘蛛": {
     "char": "S",
@@ -239,7 +268,12 @@
       "erratic",
       "flammable"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "雨林",
+      "针叶林",
+      "温带森林"
+    ]
   },
   "熔岩傀儡": {
     "char": "G",
@@ -280,7 +314,10 @@
       "obsidian",
       "heat_source"
     ],
-    "faction": "hostile"
+    "faction": "hostile",
+    "biomes": [
+      "沙漠"
+    ]
   },
   "兔子": {
     "char": "r",
@@ -293,7 +330,7 @@
     "hit_chance": 0.1,
     "vision": 8,
     "flee_at_hp_ratio": 0.8,
-    "spawn_weight": 0,
+    "spawn_weight": 5,
     "scores": {
       "flee": 10,
       "wander": 3
@@ -313,6 +350,11 @@
     "depth_range": [
       -5,
       15
+    ],
+    "biomes": [
+      "草原",
+      "温带森林",
+      "针叶林"
     ]
   },
   "鹿": {
@@ -326,7 +368,7 @@
     "hit_chance": 0.2,
     "vision": 10,
     "flee_at_hp_ratio": 0.7,
-    "spawn_weight": 0,
+    "spawn_weight": 2,
     "scores": {
       "flee": 12,
       "wander": 2
@@ -348,6 +390,11 @@
     "depth_range": [
       -5,
       15
+    ],
+    "biomes": [
+      "温带森林",
+      "针叶林",
+      "草原"
     ]
   },
   "狐狸": {
@@ -361,7 +408,7 @@
     "hit_chance": 0.4,
     "vision": 8,
     "flee_at_hp_ratio": 0.5,
-    "spawn_weight": 0,
+    "spawn_weight": 1,
     "scores": {
       "chase": 6,
       "flee": 8,
@@ -383,6 +430,11 @@
     "depth_range": [
       -5,
       30
+    ],
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林"
     ]
   }
 }
