@@ -159,6 +159,17 @@ def animal_spawn_feature(x, y, seed, biome, current_tile):
     return None
 
 
+def settlement_feature(x, y, seed, biome, current_tile):
+    """文明聚落标记：不改变地形，仅在生成点标记聚落存在。"""
+    if current_tile not in (TILE_AIR,):
+        return None
+    from systems.civilization import get_settlement_at
+    s = get_settlement_at(x, y, seed)
+    if s is not None and x == s["x"] and y == s["y"]:
+        return TILE_AIR  # 聚落中心不改变地形
+    return None
+
+
 # Feature 链：按优先级排列（水 > 沙 > 石 > 树 > 药草）
 FEATURE_CHAIN = [
     water_feature,
@@ -167,6 +178,7 @@ FEATURE_CHAIN = [
     tree_feature,
     herb_feature,
     animal_spawn_feature,
+    settlement_feature,
 ]
 
 def natural_generator(x: int, y: int, seed: int = 12345) -> int:
