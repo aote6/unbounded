@@ -5,7 +5,6 @@
 from systems.noise_engine import (
     perlin_2d,
     generate_tile,
-    clear_perlin_cache)
 import json
 from pathlib import Path
 
@@ -295,7 +294,6 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
     # 最终保底：返回原点并强制设为空气
     world.set_tile(0, 0, TILE_AIR)
     world.set_tile(0, 1, TILE_DIRT)
-    return 0, 0
 
     """在每层挖出横向洞穴通道，确保有行走空间"""
     import random
@@ -313,155 +311,14 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
             y = rng.randint(depth_band[0], depth_band[1])
             length = rng.randint(100, 250)
             height = rng.randint(3, 5)
-
+            
             for step in range(length):
                 # 挖出横向通道
                 for dy in range(-height // 2, height // 2 + 1):
                     try:
-                        tile = world.get_tile(x, y + dy)["tile"]
-                        if tile in (
-                                TILE_STONE,
-                                TILE_DIRT,
-                                TILE_COAL,
-                                TILE_COPPER,
-                                TILE_IRON,
-                                TILE_SILVER,
-                                TILE_GOLD,
-                                TILE_LIMESTONE,
-                                TILE_MARBLE,
-                                TILE_GRANITE,
-                                TILE_CLAY,
-                                TILE_SAND):
-                            world.set_tile(x, y + dy, TILE_AIR)
-                    except BaseException:
+                        # 确保不越界且只挖掘岩石地带
+                        world.set_tile(x + step, y + dy, TILE_AIR)
+                    except:
                         pass
 
-                # 随机游走，偏向水平
-                x += rng.choice([-1, 0, 1, 1, 1])
-                y += rng.choice([-1, 0, 0, 0, 0, 1])
-
-
-def _clear_spawn_area(world):
-    """只清出生点附近一小块平地，确保新角色不会卡在障碍物里。
-    （旧版 _carve_caves 隧道雕刻逻辑已废弃：新地形生成本身大面积可通行，
-    不再需要在实心地形里凿隧道，避免重复大范围性能开销。）"""
-    for x in range(-10, 10):
-        for y in range(-2, 3):
-            world.set_tile(x, y, TILE_AIR)
-    world.set_tile(0, 1, TILE_DIRT)
-
-
-def _scatter_trees(world):
-    """在地表随机撒树，确保有足够的树可砍"""
-    import random
-    rng = random.Random(world.seed + 8888)
-
-    planted = 0
-    for _ in range(200):
-        x = rng.randint(-60, 60)
-        y = rng.randint(-3, 1)
-        tile = world.get_tile(x, y)["tile"]
-        # 在泥土或空气上种树（但不能种在水上）
-        if tile == TILE_DIRT:
-            world.set_tile(x, y, TILE_TREE)
-            planted += 1
-            if planted >= 50:
-                break
-    # 如果还不够，在空气上也种一些
-    for _ in range(200):
-        x = rng.randint(-60, 60)
-        y = rng.randint(-3, 1)
-        tile = world.get_tile(x, y)["tile"]
-        if tile == TILE_AIR:
-            world.set_tile(x, y, TILE_TREE)
-            planted += 1
-            if planted >= 60:
-                break
-
-
-def _place_special_locations(world):
-    """在地图里埋藏特殊地貌，给玩家探索的惊喜"""
-    import random
-    rng = random.Random(world.seed + 4444)
-
-    locations = [
-        ("废弃矿洞", TILE_STONE, 5, {"铁矿石": 15, "石头": 30}),
-        ("蜘蛛巢穴", TILE_DIRT, 3, {"蜘蛛丝": 20}),
-        ("水晶洞穴", TILE_STONE, 4, {"钻石原石": 5, "玻璃": 10}),
-        ("地下湖", TILE_AIR, 6, {"沙子": 20}),
-        ("远古遗迹", TILE_GRANITE, 5, {"金矿石": 8, "大理石": 15}),
-        ("蘑菇洞", TILE_DIRT, 3, {"黏土": 25}),
-        ("硫磺温泉", TILE_STONE, 3, {"硫磺": 15}),
-    ]
-
-    placed = []
-    for name, base_tile, size, loot in locations:
-        for _ in range(30):
-            x = rng.randint(-150, 150)
-            y = rng.randint(-60, -8)
-            # 确保不重叠
-            too_close = any(abs(x - px) < 15 and abs(y - py)
-                            < 15 for px, py, _ in placed)
-            if not too_close:
-                # 挖出一个空间
-                for dx in range(-size, size + 1):
-                    for dy in range(-size, size + 1):
-                        world.set_tile(x + dx, y + dy, TILE_AIR)
-                # 放标志物
-                world.set_tile(x, y, TILE_TORCH)
-                placed.append((x, y, name))
-                break
-
-    return placed
-
-
-def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
-    """返回 World 对象。decorate=False 用于读档，跳过洞穴/树木/特殊地貌生成，
-    避免覆盖玩家已建造的内容（这是之前读档丢失bug的根源）。"""
-    clear_perlin_cache()
-    w = World(seed=seed + layer * 10000)
-    if decorate:
-        _clear_spawn_area(w)
-        w.special_locations = _place_special_locations(w)
-    else:
-        w.special_locations = []
-    return w
-
-
-# ═══════════════════════════════════════
-# 模块导出
-# ═══════════════════════════════════════
-
-__all__ = [
-    'CHUNK_SIZE',
-    'SAVE_DIR',
-    'TILE_AIR',
-    'TILE_DIRT',
-    'TILE_STONE',
-    'TILE_COAL',
-    'TILE_COPPER',
-    'TILE_IRON',
-    'TILE_SILVER',
-    'TILE_GOLD',
-    'TILE_DIAMOND',
-    'TILE_SULFUR',
-    'TILE_SALT',
-    'TILE_CLAY',
-    'TILE_SAND',
-    'TILE_LIMESTONE',
-    'TILE_MARBLE',
-    'TILE_GRANITE',
-    'TILE_OBSIDIAN',
-    'TILE_STAIRS_DOWN',
-    'TILE_STAIRS_UP',
-    'TILE_WATER',
-    'TILE_TREE',
-    'TILE_TORCH',
-    'TILE_DROPS',
-    'World',
-    'Chunk',
-    'generate_tile',
-    'find_spawn',
-    'perlin_2d',
-    'generate_world',
-]
+    return 0, 0

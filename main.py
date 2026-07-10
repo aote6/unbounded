@@ -141,8 +141,6 @@ class Game:
 
     def new_game(self, inherit_world=False):
         return sys_new_game(self, inherit_world)
-        register_status()
-        load_rules()
 
     # ═══════════════════════════════════
     # 向后兼容 property — PlayerState
@@ -445,6 +443,8 @@ def main(stdscr):
     from core.state_machine import Engine
 
     setup_curses(stdscr)
+    register_status()
+    load_rules()
     game = Game()
     game.engine = Engine(stdscr)
     game.engine.run(MainMenuState(game))
