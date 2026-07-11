@@ -13,9 +13,6 @@ from systems.gameplay.legacy_system import apply_legacy_perks
 from systems.entity.buff_system import create_buff_manager
 from systems.core.event_bus import EventBus, EventType
 from systems.world.room_system import check_room_formation
-from data_mappings import load_recipes
-import items as items_mod
-import monsters as monsters_mod
 
 logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent.parent

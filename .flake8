@@ -1,0 +1,17 @@
+[flake8]
+max-line-length = 120
+extend-ignore = E221,E272,E231,E302,E303,E305,W293,W391
+exclude =
+    .git,
+    __pycache__,
+    unbounded_backup_before_migrate,
+    migrate_clean.py,
+    migrate_systems.py,
+    apply_*.py,
+    _color_swatch.py,
+    _fix_*.py,
+    _patch_*.py,
+    _test_*.py,
+    codex.py.color_bak,
+    ui/game_renderer.py.phosphor_bak,
+    ui/phosphor_colors.py

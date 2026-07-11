@@ -5,12 +5,8 @@ from inventory import ItemCategory
 # 怪物空间索引的写操作，跟 monster_index.py 曾是两份逐字符相同的重复代码。
 # monster_index.py 同时持有读操作（monster_at/monster_has_position），
 # 读写应在同一处维护，这里改为直接导入。
-from systems.entity.monster_index import (
-    build_monster_index,
-    monster_moved,
-    add_monster,
-    remove_monster,
-)
+# 怪物索引函数由 combat_system/monster_ai 等调用方直接从
+# systems.entity.monster_index 导入，这里不再中转。
 
 
 # ═══════════════════════════════════
@@ -66,8 +62,11 @@ def get_equipment_instance(game, name):
 
 
 def count_equipment(game, name):
-    return sum(1 for _, item in game.inventory.all_items() if item.item_type ==
-               ItemCategory.EQUIPMENT and item.instance and item.instance.name == name)
+    return sum(
+        1 for _, item in game.inventory.all_items()
+        if item.item_type == ItemCategory.EQUIPMENT
+        and item.instance and item.instance.name == name
+    )
 
 
 def get_item_attr(game, item_name, field_name):

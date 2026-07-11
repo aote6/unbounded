@@ -3,7 +3,6 @@ from item_generator import generate_loot
 from pathlib import Path
 import json
 import random
-
 BASE_DIR = Path(__file__).parent
 MONSTERS_FILE = BASE_DIR / "data" / "monsters.json"
 
@@ -140,4 +139,3 @@ def generate_loot_for(depth, monster_name=None):
 def _pick_neutral_type(monster_data, biome=None):
     """按生物群系选择中立生物类型（薄封装，复用统一的按群系+阵营选择逻辑）。"""
     return _pick_monster_type(monster_data, biome=biome, faction="neutral")
-

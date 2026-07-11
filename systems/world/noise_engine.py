@@ -20,15 +20,11 @@ def _hash_uniform(x: int, y: int, seed: int) -> float:
 
 
 def _smooth_noise(x: int, y: int, seed: int) -> float:
-    corners = (_hash_uniform(x - 1,
-                             y - 1,
-                             seed) + _hash_uniform(x + 1,
-                                                   y - 1,
-                                                   seed) + _hash_uniform(x - 1,
-                                                                         y + 1,
-                                                                         seed) + _hash_uniform(x + 1,
-                                                                                               y + 1,
-                                                                                               seed)) / 16
+    c1 = _hash_uniform(x - 1, y - 1, seed)
+    c2 = _hash_uniform(x + 1, y - 1, seed)
+    c3 = _hash_uniform(x - 1, y + 1, seed)
+    c4 = _hash_uniform(x + 1, y + 1, seed)
+    corners = (c1 + c2 + c3 + c4) / 16
     sides = (_hash_uniform(x - 1, y, seed) + _hash_uniform(x + 1, y, seed) +
              _hash_uniform(x, y - 1, seed) + _hash_uniform(x, y + 1, seed)) / 8
     center = _hash_uniform(x, y, seed) / 4

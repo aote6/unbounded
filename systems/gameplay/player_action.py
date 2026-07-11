@@ -1,3 +1,4 @@
+
 """玩家动作系统：挖掘、放置——从 Game 类提取。"""
 from systems.gameplay.goal_system import check_special_location
 from tile_props import TILE_AIR, get_tile_props, get_dig_turns
@@ -5,7 +6,6 @@ from world_gen import TILE_TREE
 from systems.gameplay.inventory_actions import add_equipment_instance
 from systems.core.event_bus import EventBus, EventType, GameEvent
 import items as items_mod
-
 
 def dig_adjacent(game, dx, dy):
     """挖掘玩家相邻方块。"""
@@ -43,7 +43,6 @@ def dig_adjacent(game, dx, dy):
         dig_any_tile(game, nx, ny)
     else:
         game.message = "这个方块无法挖掘。"
-
 
 def _has_item_to_place(game):
     """检查背包里是否还有要放置的物品，没有则退出建造模式。"""

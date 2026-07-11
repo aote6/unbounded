@@ -1,7 +1,7 @@
+
 """房间检测系统：从 Game 类提取。"""
 from world_gen import TILE_AIR
 from tile_props import get_tile_props
-
 
 def _flood_fill_room(game, start_x, start_y):
     """从起点做 flood fill，返回 (tiles, is_enclosed)；超出步数上限返回 None。"""
@@ -40,7 +40,6 @@ def _flood_fill_room(game, start_x, start_y):
         return None
 
     return tiles, is_enclosed
-
 
 def _scan_room_boundary(game, tiles):
     """扫描房间格子的四邻，判断是否存在门/墙。"""

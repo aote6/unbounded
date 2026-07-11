@@ -1,6 +1,5 @@
 """主菜单状态：存档检测 + 新游戏/继续/继承世界"""
 import curses
-from codex import COLOR
 from core.state_machine import State
 from systems.core.save_system import check_save_status, clear_all_saves
 from systems.core.save_manager import new_game, load_game
