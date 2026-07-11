@@ -3,11 +3,8 @@ from world_gen import TILE_AIR
 from tile_props import get_tile_props
 
 
-def detect_room(game, start_x, start_y):
-    """Flood fill 检测封闭房间。"""
-    if game.world.get_tile(start_x, start_y)["tile"] != TILE_AIR:
-        return None
-
+def _flood_fill_room(game, start_x, start_y):
+    """从起点做 flood fill，返回 (tiles, is_enclosed)；超出步数上限返回 None。"""
     visited = set()
     stack = [(start_x, start_y)]
     tiles = []
@@ -42,9 +39,11 @@ def detect_room(game, start_x, start_y):
     if steps >= max_steps:
         return None
 
-    if not is_enclosed or len(tiles) < 4:
-        return None
+    return tiles, is_enclosed
 
+
+def _scan_room_boundary(game, tiles):
+    """扫描房间格子的四邻，判断是否存在门/墙。"""
     has_door = False
     has_wall = False
     for x, y in tiles:
@@ -55,6 +54,23 @@ def detect_room(game, start_x, start_y):
                 has_door = True
             if "wall" in adj_props.get("tags", []):
                 has_wall = True
+    return has_door, has_wall
+
+
+def detect_room(game, start_x, start_y):
+    """Flood fill 检测封闭房间。"""
+    if game.world.get_tile(start_x, start_y)["tile"] != TILE_AIR:
+        return None
+
+    fill_result = _flood_fill_room(game, start_x, start_y)
+    if fill_result is None:
+        return None
+    tiles, is_enclosed = fill_result
+
+    if not is_enclosed or len(tiles) < 4:
+        return None
+
+    has_door, has_wall = _scan_room_boundary(game, tiles)
 
     return {
         "tiles": tiles,
@@ -63,6 +79,7 @@ def detect_room(game, start_x, start_y):
         "has_door": has_door,
         "has_wall": has_wall,
     }
+
 
 
 def check_room_formation(game):
