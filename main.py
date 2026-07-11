@@ -133,6 +133,7 @@ class Game:
         self.engine: Any = None
 
         self._load_static_data()
+
     def save_game(self):
         return sys_save_game(self)
 

@@ -415,7 +415,8 @@ def _place_special_locations(world):
 
 
 def generate_world(seed: int = 12345, layer: int = 0, decorate: bool = True):
-    if seed is None: seed = 12345
+    if seed is None:
+        seed = 12345
     """返回 World 对象。decorate=False 用于读档，跳过洞穴/树木/特殊地貌生成，
     避免覆盖玩家已建造的内容（这是之前读档丢失bug的根源）。"""
     clear_perlin_cache()
