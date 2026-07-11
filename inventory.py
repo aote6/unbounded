@@ -74,7 +74,6 @@ class Inventory:
             del self._items[item_id]
         return True
 
-
     def count(self, item_id: str) -> int:
         """获取物品数量。"""
         item = self._items.get(item_id)
