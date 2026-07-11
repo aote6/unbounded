@@ -16,7 +16,7 @@ class FakeWorld:
 def test_kill_monster_basic():
     g = Game()
     g.world = FakeWorld()
-    from systems.gameplay.inventory_actions import add_monster
+    from systems.entity.monster_index import add_monster
     from systems.combat.combat_system import kill_monster
 
     m = {"name": "史莱姆", "x": 3, "y": 3, "hp": 10, "max_hp": 10, "char": "S",

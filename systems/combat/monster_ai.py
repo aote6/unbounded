@@ -8,7 +8,7 @@ M21: tick_status_effects 改为委托 BuffManager.tick_all()，
 import random
 import monsters as monsters_mod
 from tile_props import get_tile_props
-from systems.gameplay.inventory_actions import add_monster, monster_moved
+from systems.entity.monster_index import add_monster, monster_moved
 from systems.combat.combat_system import kill_monster
 
 # ── 工具函数（从 monsters.py 迁移，避免循环导入）──

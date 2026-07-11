@@ -1,0 +1,32 @@
+{
+  "player": {
+    "version": 2,
+    "player_x": 0,
+    "player_y": 0,
+    "player_z": 0,
+    "player_hp": 500,
+    "player_max_hp": 500,
+    "turn": 0,
+    "equipment": {},
+    "inventory": {},
+    "skills": {
+      "digging": 0,
+      "combat": 0,
+      "defense": 0
+    },
+    "respawn_x": 0,
+    "respawn_y": 0,
+    "bed_x": null,
+    "bed_y": null
+  },
+  "world": {
+    "monsters": [],
+    "corpses": {},
+    "chests": {},
+    "spawn_counter": {
+      "count": 20
+    },
+    "seed": 51329,
+    "found_specials": []
+  }
+}

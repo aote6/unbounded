@@ -48,7 +48,7 @@ def make_game():
 
 def test_spawn_100_monsters():
     g = make_game()
-    from systems.gameplay.inventory_actions import add_monster
+    from systems.entity.monster_index import add_monster
     for i in range(100):
         m = {"name": f"怪{i}", "x": i % 20, "y": i // 20,
              "hp": 10, "max_hp": 10, "char": "S", "exp": 5, "drops": []}
@@ -61,7 +61,7 @@ def test_spawn_100_monsters():
 def test_advance_1000_turns():
     g = make_game()
     from systems.gameplay.turn_system import advance_turn
-    from systems.gameplay.inventory_actions import add_monster
+    from systems.entity.monster_index import add_monster
     m = {"name": "S", "x": 5, "y": 5, "hp": 10, "max_hp": 10,
          "char": "S", "exp": 5, "drops": [], "speed": 1}
     add_monster(g, m)
@@ -82,7 +82,7 @@ def test_inventory_overflow():
 
 def test_save_load_100_monsters():
     g = make_game()
-    from systems.gameplay.inventory_actions import add_monster
+    from systems.entity.monster_index import add_monster
     from systems.core.save_system import build_save_data, apply_load_data
     for i in range(100):
         m = {"name": f"怪{i}", "x": i % 20, "y": i // 20,

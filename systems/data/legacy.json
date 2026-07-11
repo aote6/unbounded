@@ -1,11 +1,60 @@
 {
   "version": 1,
-  "total_deaths": 0,
-  "legacy_points": 0,
+  "total_deaths": 4,
+  "legacy_points": 4,
   "unlocked_recipes": [],
   "unlocked_perks": [],
   "highest_depth": 0,
   "total_monsters_killed": 0,
   "total_blocks_placed": 0,
-  "previous_lives": []
+  "previous_lives": [
+    {
+      "death_turn": 543,
+      "death_x": 0,
+      "death_y": 0,
+      "death_z": 0,
+      "skills": {
+        "digging": 0,
+        "combat": 0,
+        "defense": 467
+      },
+      "monsters_killed_this_life": 0
+    },
+    {
+      "death_turn": 475,
+      "death_x": 0,
+      "death_y": 0,
+      "death_z": 0,
+      "skills": {
+        "digging": 0,
+        "combat": 0,
+        "defense": 497
+      },
+      "monsters_killed_this_life": 0
+    },
+    {
+      "death_turn": 414,
+      "death_x": 0,
+      "death_y": 0,
+      "death_z": 0,
+      "skills": {
+        "digging": 0,
+        "combat": 0,
+        "defense": 487
+      },
+      "monsters_killed_this_life": 0
+    },
+    {
+      "death_turn": 359,
+      "death_x": 0,
+      "death_y": 0,
+      "death_z": 0,
+      "skills": {
+        "digging": 0,
+        "combat": 0,
+        "defense": 498
+      },
+      "monsters_killed_this_life": 0
+    }
+  ]
 }

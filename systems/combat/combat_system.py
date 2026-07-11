@@ -2,8 +2,8 @@
 import monsters as monsters_mod
 from systems.core.event_bus import EventBus, EventType, GameEvent
 from systems.gameplay.inventory_actions import (
-    add_material, add_equipment_instance, remove_monster,
-    add_monster, get_equipment_instance)
+    add_material, add_equipment_instance, get_equipment_instance)
+from systems.entity.monster_index import add_monster, remove_monster
 from tile_props import TILE_AIR
 CORPSE_DECAY_TURNS = 100  # 尸体 decay 回合数
 

@@ -1,5 +1,5 @@
 """存档系统：构建/恢复 + 存档管理 API"""
-from systems.gameplay.inventory_actions import add_monster
+from systems.entity.monster_index import add_monster
 from pathlib import Path
 from equipment import EquipmentInstance
 from inventory import Inventory

@@ -103,7 +103,7 @@ def random_craft(game):
 def test_500_turns_simulation():
     g = make_game()
     from systems.gameplay.turn_system import advance_turn
-    from systems.gameplay.inventory_actions import add_monster
+    from systems.entity.monster_index import add_monster
     from systems.gameplay.player_action import try_move_or_dig, do_place
 
     # 预生成 10 只怪物

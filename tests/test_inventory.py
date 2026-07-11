@@ -39,7 +39,7 @@ class TestInventoryActions:
 
     def test_add_and_remove_monster(self):
         g = self.game
-        from systems.gameplay.inventory_actions import add_monster, remove_monster
+        from systems.entity.monster_index import add_monster, remove_monster
         m = {
             "name": "史莱姆",
             "x": 5,
@@ -56,7 +56,7 @@ class TestInventoryActions:
 
     def test_monster_moved(self):
         g = self.game
-        from systems.gameplay.inventory_actions import add_monster, monster_moved
+        from systems.entity.monster_index import add_monster, monster_moved
         m = {"name": "蝙蝠", "x": 0, "y": 0, "hp": 5, "max_hp": 5, "char": "B"}
         add_monster(g, m)
         monster_moved(g, m, 0, 0)

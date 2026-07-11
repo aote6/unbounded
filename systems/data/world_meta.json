@@ -1,0 +1,10 @@
+{
+  "monsters": [],
+  "corpses": {},
+  "chests": {},
+  "spawn_counter": {
+    "count": 20
+  },
+  "seed": 51329,
+  "found_specials": []
+}
