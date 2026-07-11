@@ -2,13 +2,18 @@
 每个 Chunk 管理自身生命周期，支持脏标记与差分持久化。"""
 
 # 噪声函数已迁移至 systems/noise_engine.py
-from systems.noise_engine import (
+from systems.world.noise_engine import (
     perlin_2d,
     generate_tile,
     clear_perlin_cache)
 import json
+import logging
+import random
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
+
+# CHUNK_SIZE 与 config.WORLD_CHUNK_SIZE 保持同步
 CHUNK_SIZE = 16
 SAVE_DIR = Path(__file__).parent / "data" / "chunks"
 
@@ -91,7 +96,7 @@ class Chunk:
         """生成每个格子的物种信息（树木 + 药材）。确定性，仅对已存在的地形填充。"""
         start_x = self.cx * CHUNK_SIZE
         start_y = self.cy * CHUNK_SIZE
-        from systems.ecology import get_flora_species
+        from systems.world.ecology import get_flora_species
         species_grid = []
         herbs_grid = []
         for dy in range(CHUNK_SIZE):
@@ -133,7 +138,7 @@ class Chunk:
         """写入本地坐标的 tile ID，自动同步物种信息，标记脏数据。"""
         self.tiles[local_y][local_x] = tile_id
         if tile_id == TILE_TREE:
-            from systems.ecology import get_flora_species
+            from systems.world.ecology import get_flora_species
             wx = self.cx * CHUNK_SIZE + local_x
             wy = self.cy * CHUNK_SIZE + local_y
             sp = get_flora_species(wx, wy, self._seed, category="tree")
@@ -142,7 +147,7 @@ class Chunk:
             self._species[local_y][local_x] = None
         # 药材同步：AIR 格子可能有药材
         if tile_id == 0:
-            from systems.ecology import get_flora_species
+            from systems.world.ecology import get_flora_species
             wx = self.cx * CHUNK_SIZE + local_x
             wy = self.cy * CHUNK_SIZE + local_y
             herb = get_flora_species(wx, wy, self._seed, category="herb")
@@ -184,11 +189,30 @@ class Chunk:
             return
         SAVE_DIR.mkdir(parents=True, exist_ok=True)
         filepath = SAVE_DIR / f"chunk_{self.cx}_{self.cy}.json"
-        try:
-            with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(delta, f, ensure_ascii=False)
-        except Exception as e:
-            print(f"[Chunk] 保存失败 {self.cx},{self.cy}: {e}")
+        import time as _time
+        saved = False
+        last_error = None
+        for attempt in range(3):
+            try:
+                with open(filepath, "w", encoding="utf-8") as f:
+                    json.dump(delta, f, ensure_ascii=False)
+                saved = True
+                break
+            except Exception as e:
+                last_error = e
+                if attempt < 2:
+                    _time.sleep(0.1 * (2 ** attempt))
+        if not saved:
+            logger.error(
+                f"Chunk 保存失败 ({self.cx},{self.cy})，重试3次均失败: {last_error}",
+                exc_info=True,
+            )
+            # 写入失败队列，下次启动时尝试恢复
+            try:
+                with open("SAVE_FAILED.txt", "a", encoding="utf-8") as _sf:
+                    _sf.write(f"chunk_{self.cx}_{self.cy}.json\n")
+            except Exception:
+                pass
 
     def load_from_disk(self):
         """尝试从磁盘加载该 chunk 的差异数据。返回 True 表示有存档数据。"""
@@ -201,7 +225,7 @@ class Chunk:
             self.apply_delta(delta)
             return True
         except Exception as e:
-            print(f"[Chunk] 加载失败 {self.cx},{self.cy}: {e}")
+            logger.error(f"Chunk 加载失败 ({self.cx},{self.cy}): {e}", exc_info=True)
             return False
 
 
@@ -292,52 +316,16 @@ def find_spawn(world: World, start_x: int = 0) -> tuple:
                         TILE_AIR, TILE_WATER, TILE_TREE):
                     # 树木已在 generate_tile 阶段由生态层统一生成，不需要额外撒树
                     return x, y
-    # 最终保底：返回原点并强制设为空气
-    world.set_tile(0, 0, TILE_AIR)
-    world.set_tile(0, 1, TILE_DIRT)
-
-    """在每层挖出横向洞穴通道，确保有行走空间"""
-    import random
-    rng = random.Random(world.seed + 9999)
-
-    # 额外：在出生点附近清理一片空地
-    for x in range(-10, 10):
-        for y in range(-2, 3):
-            world.set_tile(x, y, TILE_AIR)
-    world.set_tile(0, 1, TILE_DIRT)  # 确保脚下有东西
-
-    for depth_band in [(-15, -3), (-35, -15), (-55, -35)]:
-        for _ in range(rng.randint(3, 5)):
-            x = rng.randint(-200, 200)
-            y = rng.randint(depth_band[0], depth_band[1])
-            length = rng.randint(100, 250)
-            height = rng.randint(3, 5)
-
-            for step in range(length):
-                # 挖出横向通道
-                for dy in range(-height // 2, height // 2 + 1):
-                    try:
-                        tile = world.get_tile(x, y + dy)["tile"]
-                        if tile in (
-                                TILE_STONE,
-                                TILE_DIRT,
-                                TILE_COAL,
-                                TILE_COPPER,
-                                TILE_IRON,
-                                TILE_SILVER,
-                                TILE_GOLD,
-                                TILE_LIMESTONE,
-                                TILE_MARBLE,
-                                TILE_GRANITE,
-                                TILE_CLAY,
-                                TILE_SAND):
-                            world.set_tile(x, y + dy, TILE_AIR)
-                    except BaseException:
-                        pass
-
-                # 随机游走，偏向水平
-                x += rng.choice([-1, 0, 1, 1, 1])
-                y += rng.choice([-1, 0, 0, 0, 0, 1])
+    # 最终保底：80格范围内全是水域等极端情况才会走到这里。
+    # 原代码这里设完保底 tile 后没有 return，继续跑一段重复清地逻辑
+    # 加一段旧版废弃隧道挖掘代码，跑完落到函数末尾隐式返回 None ——
+    # 调用方 `sx, sy = find_spawn(...)` 解包 None 直接崩溃。
+    logger.warning(
+        f"find_spawn: 在 start_x={start_x} 附近 80 格范围内未找到合适出生点，"
+        f"使用保底原点 (0, 0)"
+    )
+    _clear_spawn_area(world)
+    return 0, 0
 
 
 def _clear_spawn_area(world):
@@ -350,37 +338,8 @@ def _clear_spawn_area(world):
     world.set_tile(0, 1, TILE_DIRT)
 
 
-def _scatter_trees(world):
-    """在地表随机撒树，确保有足够的树可砍"""
-    import random
-    rng = random.Random(world.seed + 8888)
-
-    planted = 0
-    for _ in range(200):
-        x = rng.randint(-60, 60)
-        y = rng.randint(-3, 1)
-        tile = world.get_tile(x, y)["tile"]
-        # 在泥土或空气上种树（但不能种在水上）
-        if tile == TILE_DIRT:
-            world.set_tile(x, y, TILE_TREE)
-            planted += 1
-            if planted >= 50:
-                break
-    # 如果还不够，在空气上也种一些
-    for _ in range(200):
-        x = rng.randint(-60, 60)
-        y = rng.randint(-3, 1)
-        tile = world.get_tile(x, y)["tile"]
-        if tile == TILE_AIR:
-            world.set_tile(x, y, TILE_TREE)
-            planted += 1
-            if planted >= 60:
-                break
-
-
 def _place_special_locations(world):
     """在地图里埋藏特殊地貌，给玩家探索的惊喜"""
-    import random
     rng = random.Random(world.seed + 4444)
 
     locations = [

@@ -2,7 +2,7 @@
 from config import KEY_CLOSE, KEY_CLOSE_UPPER
 import curses
 from core.state_machine import State
-from systems.legacy_system import get_perks_shop, purchase_perk, get_legacy_points
+from systems.gameplay.legacy_system import get_perks_shop, purchase_perk, get_legacy_points
 
 
 class LegacyState(State):

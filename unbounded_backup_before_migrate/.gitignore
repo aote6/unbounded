@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+
+# 崩溃日志
+crash_*.log
+
+# 备份
+*.bak*
+*/*.bak*
+
+# 运行时存档
+data/player.json
+data/world_meta.json
+data/save.json
+
+# 运行时数据
+data/chunks/
+data/legacy.json
+data/birth.json
+unbounded_debug.log
+*.bak
+_*.py

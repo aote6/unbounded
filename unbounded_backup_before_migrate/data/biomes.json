@@ -1,0 +1,107 @@
+[
+  {
+    "id": "ice",
+    "name": "冰原",
+    "temp_range": [-1.0, 0.0],
+    "humidity_range": [-1.0, 1.0],
+    "terrain": {
+      "water_thresh": -0.55,
+      "sand_thresh": null,
+      "tree_density": 0.0
+    },
+    "ecology": {
+      "tree_cluster": 0,
+      "herb_density": 0.0
+    }
+  },
+  {
+    "id": "tundra",
+    "name": "苔原",
+    "temp_range": [0.0, 0.3],
+    "humidity_range": [-1.0, 0.3],
+    "terrain": {
+      "water_thresh": -0.45,
+      "sand_thresh": null,
+      "tree_density": 0.08
+    },
+    "ecology": {
+      "tree_cluster": 3,
+      "herb_density": 0.1
+    }
+  },
+  {
+    "id": "taiga",
+    "name": "针叶林",
+    "temp_range": [0.0, 0.3],
+    "humidity_range": [0.3, 1.0],
+    "terrain": {
+      "water_thresh": -0.35,
+      "sand_thresh": -0.28,
+      "tree_density": 0.55
+    },
+    "ecology": {
+      "tree_cluster": 30,
+      "herb_density": 0.2
+    }
+  },
+  {
+    "id": "grassland",
+    "name": "草原",
+    "temp_range": [0.3, 0.7],
+    "humidity_range": [-1.0, 0.3],
+    "terrain": {
+      "water_thresh": -0.40,
+      "sand_thresh": null,
+      "tree_density": 0.15
+    },
+    "ecology": {
+      "tree_cluster": 3,
+      "herb_density": 0.3
+    }
+  },
+  {
+    "id": "temperate_forest",
+    "name": "温带森林",
+    "temp_range": [0.3, 0.7],
+    "humidity_range": [0.3, 1.0],
+    "terrain": {
+      "water_thresh": -0.35,
+      "sand_thresh": -0.28,
+      "tree_density": 0.45
+    },
+    "ecology": {
+      "tree_cluster": 12,
+      "herb_density": 0.5
+    }
+  },
+  {
+    "id": "desert",
+    "name": "沙漠",
+    "temp_range": [0.7, 1.0],
+    "humidity_range": [-1.0, 0.3],
+    "terrain": {
+      "water_thresh": -0.60,
+      "sand_thresh": -0.05,
+      "tree_density": 0.05
+    },
+    "ecology": {
+      "tree_cluster": 2,
+      "herb_density": 0.05
+    }
+  },
+  {
+    "id": "rainforest",
+    "name": "雨林",
+    "temp_range": [0.7, 1.0],
+    "humidity_range": [0.3, 1.0],
+    "terrain": {
+      "water_thresh": -0.25,
+      "sand_thresh": -0.32,
+      "tree_density": 0.65
+    },
+    "ecology": {
+      "tree_cluster": 20,
+      "herb_density": 0.8
+    }
+  }
+]

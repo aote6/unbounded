@@ -26,12 +26,12 @@ from pathlib import Path
 from world_gen import generate_world, find_spawn, SAVE_DIR
 from config import WORLD_SEED, PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN
 from inventory import Inventory, clear_inventory_instance
-from systems.scent_map import clear_global_scent_map
-from systems.save_system import build_save_data, apply_load_data, _apply_world_data
-from systems.legacy_system import apply_legacy_perks
-from systems.buff_system import create_buff_manager
-from systems.event_bus import EventBus, EventType
-from systems.room_system import check_room_formation
+from systems.world.scent_map import clear_global_scent_map
+from systems.core.save_system import build_save_data, apply_load_data, _apply_world_data
+from systems.gameplay.legacy_system import apply_legacy_perks
+from systems.entity.buff_system import create_buff_manager
+from systems.core.event_bus import EventBus, EventType
+from systems.world.room_system import check_room_formation
 from data_mappings import load_recipes
 import items as items_mod
 import monsters as monsters_mod
@@ -47,12 +47,12 @@ from pathlib import Path
 from world_gen import generate_world, find_spawn, SAVE_DIR
 from config import WORLD_SEED, PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN
 from inventory import Inventory, clear_inventory_instance
-from systems.scent_map import clear_global_scent_map
-from systems.save_system import build_save_data, apply_load_data, _apply_world_data
-from systems.legacy_system import apply_legacy_perks
-from systems.buff_system import create_buff_manager
-from systems.event_bus import EventBus, EventType
-from systems.room_system import check_room_formation
+from systems.world.scent_map import clear_global_scent_map
+from systems.core.save_system import build_save_data, apply_load_data, _apply_world_data
+from systems.gameplay.legacy_system import apply_legacy_perks
+from systems.entity.buff_system import create_buff_manager
+from systems.core.event_bus import EventBus, EventType
+from systems.world.room_system import check_room_formation
 from data_mappings import load_recipes
 import items as items_mod
 import monsters as monsters_mod
@@ -137,13 +137,13 @@ def _write_json_atomic(path: Path, data):
 # ══════════════════ world_gen.py ══════════════════
 world_gen_replacements = [
     (
-'''from systems.noise_engine import (
+'''from systems.world.noise_engine import (
     perlin_2d,
     generate_tile,
     clear_perlin_cache)
 import json
 from pathlib import Path''',
-'''from systems.noise_engine import (
+'''from systems.world.noise_engine import (
     perlin_2d,
     generate_tile,
     clear_perlin_cache)
@@ -281,7 +281,7 @@ from inventory import ItemCategory
 # 怪物空间索引的写操作，跟 monster_index.py 曾是两份逐字符相同的重复代码。
 # monster_index.py 同时持有读操作（monster_at/monster_has_position），
 # 读写应在同一处维护，这里改为直接导入。
-from systems.monster_index import (
+from systems.entity.monster_index import (
     build_monster_index,
     monster_moved,
     add_monster,

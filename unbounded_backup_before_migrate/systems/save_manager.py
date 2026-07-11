@@ -1,6 +1,8 @@
 """存档管理器：新游戏、保存、加载。"""
 import shutil
 import json
+import os
+import logging
 from pathlib import Path
 from world_gen import generate_world, find_spawn, SAVE_DIR
 from config import WORLD_SEED, PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN
@@ -15,8 +17,23 @@ from data_mappings import load_recipes
 import items as items_mod
 import monsters as monsters_mod
 
+logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent.parent
 SAVE_FILE = BASE_DIR / "data" / "save.json"
+
+
+def _write_json_atomic(path: Path, data):
+    """原子写入 + 自动备份：先写 .tmp 再 os.replace，写入前旧文件轮换成 .bak。"""
+    tmp_path = path.with_name(path.name + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    if path.exists():
+        bak_path = path.with_name(path.name + ".bak")
+        try:
+            os.replace(path, bak_path)
+        except OSError as e:
+            logger.warning(f"旧存档备份失败（不影响本次写入）: {path}: {e}")
+    os.replace(tmp_path, path)
 
 
 def new_game(game, inherit_world=False):
@@ -69,9 +86,8 @@ def new_game(game, inherit_world=False):
     game.last_place_item_name = None
     game.dig_progress = None
     game.look_mode = False
-    game.recipes = load_recipes()
-    game.items = items_mod.load_items()
-    game.monster_data = monsters_mod.load_monsters()
+    # recipes/items/monster_data 不在这里重新加载 —— Game.__init__ 时
+    # 已经通过 StaticDataRegistry 单例加载过，静态配置不会因新游戏而变化。
     game.monsters = []
     game._monster_index = {}
     game.spawn_counter = {"count": SPAWN_INITIAL_COUNTDOWN}
@@ -98,15 +114,13 @@ def save_game(game):
 
     try:
         SAVE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(player_path, "w", encoding="utf-8") as f:
-            json.dump(player_data, f, ensure_ascii=False, indent=2)
-        with open(world_path, "w", encoding="utf-8") as f:
-            json.dump(world_data, f, ensure_ascii=False, indent=2)
-        with open(SAVE_FILE, "w", encoding="utf-8") as f:
-            json.dump(save_data, f, ensure_ascii=False, indent=2)
+        _write_json_atomic(player_path, player_data)
+        _write_json_atomic(world_path, world_data)
+        _write_json_atomic(SAVE_FILE, save_data)
         game.message = "游戏已保存。"
     except Exception as e:
-        game.message = f"存档失败: {e}"
+        logger.error(f"存档写入失败: {e}", exc_info=True)
+        game.message = f"⚠ 存档失败: {e}（旧存档应仍完好，见 unbounded_debug.log）"
 
 
 def load_game(game):
@@ -122,6 +136,7 @@ def load_game(game):
                 world_data = json.load(f)
             data = {"player": player_data, "world": world_data}
         except Exception as e:
+            logger.error(f"读档失败(player/world_meta): {e}", exc_info=True)
             game.message = f"读档失败: {e}"
             return False
     elif SAVE_FILE.exists():
@@ -129,6 +144,7 @@ def load_game(game):
             with open(SAVE_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
         except Exception as e:
+            logger.error(f"读档失败(save.json): {e}", exc_info=True)
             game.message = f"读档失败: {e}"
             return False
     else:

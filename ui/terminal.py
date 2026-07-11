@@ -55,7 +55,7 @@ def tile_attr(game, tile):
     name = props["name"]
     if name == "树木":
         return curses.color_pair(6) | curses.A_BOLD
-    from systems.time_system import get_time_of_day
+    from systems.gameplay.time_system import get_time_of_day
     _, ambient = get_time_of_day(game.turn)
     if ambient <= 2:
         return curses.color_pair(4)

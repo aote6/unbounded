@@ -2,7 +2,7 @@ from inventory import ItemCategory
 from equipment import EquipmentInstance
 from core.state_machine import State
 import random
-from systems.inventory_actions import add_equipment_instance
+from systems.gameplay.inventory_actions import add_equipment_instance
 """CraftingState - 合成界面状态"""
 
 import curses

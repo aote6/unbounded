@@ -19,16 +19,16 @@ def patch_file(path, replacements):
 
 main_replacements = [
     (
-'''from systems.status_system import register as register_status
-from systems.buff_system import create_buff_manager
-from systems.tag_system import load_rules
+'''from systems.entity.status_system import register as register_status
+from systems.entity.buff_system import create_buff_manager
+from systems.entity.tag_system import load_rules
 from config import PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN, VIEW_WIDTH, VIEW_HEIGHT
 
 BASE_DIR = Path(__file__).parent
 logger = logging.getLogger(__name__)''',
-'''from systems.status_system import register as register_status
-from systems.buff_system import create_buff_manager
-from systems.tag_system import load_rules
+'''from systems.entity.status_system import register as register_status
+from systems.entity.buff_system import create_buff_manager
+from systems.entity.tag_system import load_rules
 from systems import skill_system
 from config import PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN, VIEW_WIDTH, VIEW_HEIGHT
 
@@ -86,7 +86,7 @@ _static_cache = {}''',
             self.monster_data = load_monsters()
         except Exception as e:
             logger.error(f"加载怪物失败: {e}")
-        from systems.entity_validator import validate_all
+        from systems.entity.entity_validator import validate_all
         try:
             validate_all()
         except Exception as e:
@@ -96,23 +96,23 @@ _static_cache = {}''',
     ),
     (
 '''    def _combat_damage_bonus(self):
-        from systems.skill_system import combat_damage_bonus
+        from systems.gameplay.skill_system import combat_damage_bonus
         return combat_damage_bonus(self)
 
     def _player_defense(self):
-        from systems.skill_system import defense_bonus
+        from systems.gameplay.skill_system import defense_bonus
         return defense_bonus(self)
 
     def _best_equipped_tool_bonus(self, tool_type):
-        from systems.skill_system import best_equipped_tool_bonus
+        from systems.gameplay.skill_system import best_equipped_tool_bonus
         return best_equipped_tool_bonus(self, tool_type)
 
     def _digging_speed_bonus(self):
-        from systems.skill_system import digging_speed_bonus
+        from systems.gameplay.skill_system import digging_speed_bonus
         return digging_speed_bonus(self)
 
     def _gain_skill(self, name, amount=1):
-        from systems.skill_system import gain_skill
+        from systems.gameplay.skill_system import gain_skill
         gain_skill(self, name, amount)''',
 '''    def _combat_damage_bonus(self):
         return skill_system.combat_damage_bonus(self)
@@ -165,7 +165,7 @@ _static_cache = {}''',
         _static_cache['items'] = self.items
         _static_cache['monster_data'] = self.monster_data
 
-        from systems.entity_validator import validate_all
+        from systems.entity.entity_validator import validate_all
         try:
             validate_all()
         except Exception as e:

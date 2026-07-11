@@ -1,9 +1,9 @@
-from systems.inventory_actions import add_equipment_instance
+from systems.gameplay.inventory_actions import add_equipment_instance
 """ChestState - 箱子交互界面状态"""
 
 import curses
 from core.state_machine import State
-from systems.interaction import get_nearby_chest
+from systems.gameplay.interaction import get_nearby_chest
 
 
 class ChestState(State):

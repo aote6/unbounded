@@ -2,7 +2,7 @@
 
 import curses
 from core.state_machine import State
-from systems.inventory_actions import get_equipment_instance
+from systems.gameplay.inventory_actions import get_equipment_instance
 
 
 SLOTS = [

@@ -16,8 +16,8 @@ class FakeWorld:
 def test_kill_monster_basic():
     g = Game()
     g.world = FakeWorld()
-    from systems.inventory_actions import add_monster
-    from systems.combat_system import kill_monster
+    from systems.gameplay.inventory_actions import add_monster
+    from systems.combat.combat_system import kill_monster
 
     m = {"name": "史莱姆", "x": 3, "y": 3, "hp": 10, "max_hp": 10, "char": "S",
          "exp": 5, "drops": [], "corpse_tile": None}
@@ -31,7 +31,7 @@ def test_kill_monster_basic():
 
 def test_collect_attack_effects_empty():
     g = Game()
-    from systems.combat_system import collect_attack_effects
+    from systems.combat.combat_system import collect_attack_effects
     effects = collect_attack_effects(g)
     assert effects == []
 

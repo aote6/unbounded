@@ -1,7 +1,10 @@
 """轻量事件总线：发布-订阅模式，解耦游戏逻辑。"""
+import logging
 from dataclasses import dataclass, field
 from typing import Callable
 from enum import Enum, auto
+
+logger = logging.getLogger(__name__)
 
 
 class EventType(Enum):
@@ -39,6 +42,9 @@ class EventBus:
     def emit(self, event: GameEvent, game):
         """广播事件给所有注册的处理器。"""
         handlers = self._handlers.get(event.type, [])
+        if not handlers:
+            logger.debug(f"事件 {event.type.name} 无订阅者，已丢弃: {event.data}")
+            return
         for handler in handlers:
             handler(event, game)
             if event.handled:

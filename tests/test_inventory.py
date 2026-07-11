@@ -13,18 +13,18 @@ class TestInventoryActions:
     def test_add_and_count_material(self):
         g = self.game
         g.inventory.add("石头", 10)
-        from systems.inventory_actions import count_material
+        from systems.gameplay.inventory_actions import count_material
         assert count_material(g, "石头") == 10
 
     def test_remove_material(self):
         g = self.game
-        from systems.inventory_actions import remove_material, count_material
+        from systems.gameplay.inventory_actions import remove_material, count_material
         remove_material(g, "石头", 3)
         assert count_material(g, "石头") == 7
 
     def test_add_equipment_instance(self):
         g = self.game
-        from systems.inventory_actions import add_equipment_instance, get_equipment_instance
+        from systems.gameplay.inventory_actions import add_equipment_instance, get_equipment_instance
         from equipment import EquipmentInstance
         inst = EquipmentInstance(name="测试剑", slot="main_hand", attack_bonus=5)
         add_equipment_instance(g, "测试剑", inst)
@@ -34,12 +34,12 @@ class TestInventoryActions:
 
     def test_count_equipment(self):
         g = self.game
-        from systems.inventory_actions import count_equipment
+        from systems.gameplay.inventory_actions import count_equipment
         assert count_equipment(g, "测试剑") == 1
 
     def test_add_and_remove_monster(self):
         g = self.game
-        from systems.inventory_actions import add_monster, remove_monster
+        from systems.gameplay.inventory_actions import add_monster, remove_monster
         m = {
             "name": "史莱姆",
             "x": 5,
@@ -56,7 +56,7 @@ class TestInventoryActions:
 
     def test_monster_moved(self):
         g = self.game
-        from systems.inventory_actions import add_monster, monster_moved
+        from systems.gameplay.inventory_actions import add_monster, monster_moved
         m = {"name": "蝙蝠", "x": 0, "y": 0, "hp": 5, "max_hp": 5, "char": "B"}
         add_monster(g, m)
         monster_moved(g, m, 0, 0)

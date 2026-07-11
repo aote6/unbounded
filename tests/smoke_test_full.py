@@ -46,7 +46,7 @@ def main():
 
     def test_craft_equipment():
         from item_generator import get_generator
-        from systems.inventory_actions import add_equipment_instance, get_equipment_instance
+        from systems.gameplay.inventory_actions import add_equipment_instance, get_equipment_instance
         from equipment import EquipmentInstance
 
         gen = get_generator()
@@ -90,7 +90,7 @@ def main():
 
     # ── 用例4：技能升级判定 ──
     def test_skill_levelup():
-        from systems.skill_system import gain_skill, SKILL_LEVEL_THRESHOLD
+        from systems.gameplay.skill_system import gain_skill, SKILL_LEVEL_THRESHOLD
         game.skills["digging"] = 0
         game.skill_levels["digging"] = 1
         for _ in range(SKILL_LEVEL_THRESHOLD):
@@ -137,7 +137,7 @@ def main():
 
     # ── 用例6：数据一致性校验器可独立运行 ──
     def test_entity_validator():
-        from systems.entity_validator import validate_all
+        from systems.entity.entity_validator import validate_all
         validate_all()
 
     check("数据一致性校验(entity_validator)", test_entity_validator)

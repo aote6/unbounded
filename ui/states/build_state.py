@@ -6,7 +6,7 @@ from config import (
     DIRECTIONS,
     KEY_REPEAT,
 )
-from systems.player_action import do_place
+from systems.gameplay.player_action import do_place
 import items as items_mod
 
 

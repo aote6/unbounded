@@ -1,0 +1,89 @@
+{
+  "锋利的": {
+    "rarity": "common",
+    "damage_bonus": 2,
+    "durability_penalty": -10,
+    "desc": "攻击力+2，耐久-10",
+    "tags": []
+  },
+  "沉重的": {
+    "rarity": "common",
+    "damage_bonus": 3,
+    "speed_penalty": 1,
+    "weight_bonus": 5,
+    "desc": "攻击力+3，挖掘速度-1"
+  },
+  "坚固的": {
+    "rarity": "common",
+    "durability_bonus": 20,
+    "desc": "耐久+20"
+  },
+  "精准的": {
+    "rarity": "common",
+    "hit_bonus": 10,
+    "desc": "命中率+10%"
+  },
+  "轻巧的": {
+    "rarity": "common",
+    "speed_bonus": 1,
+    "weight_penalty": -3,
+    "desc": "挖掘速度+1，重量-3"
+  },
+  "沉重的-": {
+    "rarity": "common",
+    "damage_penalty": -2,
+    "weight_bonus": 3,
+    "desc": "攻击力-2，重量+3（负面）"
+  },
+  "脆弱的": {
+    "rarity": "common",
+    "durability_penalty": -25,
+    "desc": "耐久-25（负面）"
+  },
+  "钝的": {
+    "rarity": "common",
+    "damage_penalty": -3,
+    "hit_penalty": -5,
+    "desc": "攻击力-3，命中-5%（负面）"
+  },
+  "笨重的": {
+    "rarity": "common",
+    "speed_penalty": 2,
+    "desc": "挖掘速度-2（负面）"
+  },
+  "累赘的": {
+    "rarity": "common",
+    "defense_penalty": -2,
+    "desc": "防御-2（负面）"
+  },
+  "燃烧的": {
+    "rarity": "rare",
+    "on_attack": [
+      "fire"
+    ],
+    "desc": "攻击时点燃目标"
+  },
+  "吸血的": {
+    "rarity": "rare",
+    "lifesteal": 1,
+    "desc": "每次命中回复1点HP"
+  },
+  "快速的": {
+    "rarity": "rare",
+    "speed_bonus": 2,
+    "desc": "挖掘速度+2"
+  },
+  "巨人的": {
+    "rarity": "rare",
+    "damage_bonus": 5,
+    "weight_bonus": 8,
+    "speed_penalty": 1,
+    "desc": "攻击力+5，重量+8，速度-1"
+  },
+  "不朽的": {
+    "rarity": "legendary",
+    "durability_bonus": 100,
+    "damage_bonus": 3,
+    "desc": "耐久+100，攻击力+3"
+  }
+}

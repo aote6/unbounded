@@ -1,5 +1,5 @@
-from systems.save_manager import save_game as sys_save_game, load_game as sys_load_game
-from systems.save_manager import new_game as sys_new_game
+from systems.core.save_manager import save_game as sys_save_game, load_game as sys_load_game
+from systems.core.save_manager import new_game as sys_new_game
 """ main.py —— 纯入口与顶级状态聚合。
     业务逻辑已完全迁移至 systems/ 和 ui/states/。
     底层数据隔离为 PlayerState/WorldState/UIState，
@@ -16,13 +16,29 @@ from typing import Dict, List, Set, Optional, Any, Tuple
 from inventory import Inventory
 from items import load_items
 from monsters import load_monsters
-from systems.status_system import register as register_status
-from systems.buff_system import create_buff_manager
-from systems.tag_system import load_rules
+from systems.entity.status_system import register as register_status
+from systems.entity.buff_system import create_buff_manager
+from systems.entity.tag_system import load_rules
+from systems.gameplay import skill_system
 from config import PLAYER_INITIAL_HP, SPAWN_INITIAL_COUNTDOWN, VIEW_WIDTH, VIEW_HEIGHT
 
 BASE_DIR = Path(__file__).parent
 logger = logging.getLogger(__name__)
+
+
+def _setup_logging():
+    from logging.handlers import RotatingFileHandler
+    log_path = BASE_DIR / "unbounded_debug.log"
+    handler = RotatingFileHandler(
+        str(log_path), maxBytes=5 * 1024 * 1024, backupCount=3,
+        encoding="utf-8",
+    )
+    handler.setFormatter(logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    ))
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(handler)
 
 
 # ═══════════════════════════════════
@@ -109,8 +125,52 @@ class LegacyState:
 # ═══════════════════════════════════
 
 
-# ── 模块级静态数据缓存（避免重复加载 JSON）──
-_static_cache = {}
+class StaticDataRegistry:
+    _instance = None
+
+    def __init__(self):
+        self.recipes: dict = {}
+        self.items: dict = {}
+        self.monster_data: dict = {}
+        self._loaded = False
+
+    @classmethod
+    def instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def reset(cls):
+        cls._instance = None
+
+    def load(self):
+        if self._loaded:
+            return
+        recipe_path = BASE_DIR / "data" / "recipes.json"
+        if recipe_path.exists():
+            try:
+                with open(recipe_path, "r", encoding="utf-8") as f:
+                    self.recipes = json.load(f)
+            except json.JSONDecodeError as e:
+                logger.error(f"recipes.json 格式错误: {e}")
+        else:
+            logger.warning(f"缺少配方文件: {recipe_path}")
+        try:
+            self.items = load_items()
+        except Exception as e:
+            logger.error(f"加载物品失败: {e}")
+        try:
+            self.monster_data = load_monsters()
+        except Exception as e:
+            logger.error(f"加载怪物失败: {e}")
+        from systems.entity.entity_validator import validate_all
+        try:
+            validate_all()
+        except Exception as e:
+            logger.error(f"数据一致性校验失败: {e}")
+            raise
+        self._loaded = True
 
 
 class Game:
@@ -197,24 +257,19 @@ class Game:
         self): return lambda attr: self.player.equipment_bonus(attr)
 
     def _combat_damage_bonus(self):
-        from systems.skill_system import combat_damage_bonus
-        return combat_damage_bonus(self)
+        return skill_system.combat_damage_bonus(self)
 
     def _player_defense(self):
-        from systems.skill_system import defense_bonus
-        return defense_bonus(self)
+        return skill_system.defense_bonus(self)
 
     def _best_equipped_tool_bonus(self, tool_type):
-        from systems.skill_system import best_equipped_tool_bonus
-        return best_equipped_tool_bonus(self, tool_type)
+        return skill_system.best_equipped_tool_bonus(self, tool_type)
 
     def _digging_speed_bonus(self):
-        from systems.skill_system import digging_speed_bonus
-        return digging_speed_bonus(self)
+        return skill_system.digging_speed_bonus(self)
 
     def _gain_skill(self, name, amount=1):
-        from systems.skill_system import gain_skill
-        gain_skill(self, name, amount)
+        skill_system.gain_skill(self, name, amount)
 
     # ═══════════════════════════════════
     # 向后兼容 property — WorldState
@@ -379,46 +434,11 @@ class Game:
     # ═══════════════════════════════════
 
     def _load_static_data(self):
-        """加载静态资源，明确报错而非静默失败"""
-
-        # 如果已缓存，直接复用（加速重启）
-        if _static_cache:
-            self.recipes = _static_cache['recipes']
-            self.items = _static_cache['items']
-            self.monster_data = _static_cache['monster_data']
-            return
-
-        recipe_path = BASE_DIR / "data" / "recipes.json"
-        if recipe_path.exists():
-            try:
-                with open(recipe_path, "r", encoding="utf-8") as f:
-                    self.recipes = json.load(f)
-            except json.JSONDecodeError as e:
-                logger.error(f"recipes.json 格式错误: {e}")
-        else:
-            logger.warning(f"缺少配方文件: {recipe_path}")
-
-        try:
-            self.items = load_items()
-        except Exception as e:
-            logger.error(f"加载物品失败: {e}")
-
-        try:
-            self.monster_data = load_monsters()
-        except Exception as e:
-            logger.error(f"加载怪物失败: {e}")
-
-        # 存入缓存
-        _static_cache['recipes'] = self.recipes
-        _static_cache['items'] = self.items
-        _static_cache['monster_data'] = self.monster_data
-
-        from systems.entity_validator import validate_all
-        try:
-            validate_all()
-        except Exception as e:
-            logger.error(f"数据一致性校验失败: {e}")
-            raise
+        registry = StaticDataRegistry.instance()
+        registry.load()
+        self.recipes = registry.recipes
+        self.items = registry.items
+        self.monster_data = registry.monster_data
 
     # ═══════════════════════════════════
     # 视口
@@ -442,6 +462,7 @@ def main(stdscr):
     from ui.states.main_menu_state import MainMenuState
     from core.state_machine import Engine
 
+    _setup_logging()
     setup_curses(stdscr)
     register_status()
     load_rules()

@@ -2,6 +2,16 @@
 from equipment import EquipmentInstance
 from inventory import ItemCategory
 
+# 怪物空间索引的写操作，跟 monster_index.py 曾是两份逐字符相同的重复代码。
+# monster_index.py 同时持有读操作（monster_at/monster_has_position），
+# 读写应在同一处维护，这里改为直接导入。
+from systems.monster_index import (
+    build_monster_index,
+    monster_moved,
+    add_monster,
+    remove_monster,
+)
+
 
 # ═══════════════════════════════════
 # 材料操作
@@ -69,28 +79,5 @@ def get_item_attr(game, item_name, field_name):
 
 
 # ═══════════════════════════════════
-# 怪物空间索引
+# 怪物空间索引：已从文件顶部导入 systems.monster_index，不再重复定义。
 # ═══════════════════════════════════
-
-def build_monster_index(game):
-    """全量重建空间索引（仅在读档/新游戏时调用）。"""
-    game._monster_index = {(m["x"], m["y"]): m for m in game.monsters}
-
-
-def monster_moved(game, monster, old_x, old_y):
-    """怪物移动后更新索引。"""
-    game._monster_index.pop((old_x, old_y), None)
-    game._monster_index[(monster["x"], monster["y"])] = monster
-
-
-def add_monster(game, monster):
-    """添加怪物并更新索引。"""
-    game.monsters.append(monster)
-    game._monster_index[(monster["x"], monster["y"])] = monster
-
-
-def remove_monster(game, monster):
-    """移除怪物并更新索引。"""
-    if monster in game.monsters:
-        game.monsters.remove(monster)
-    game._monster_index.pop((monster["x"], monster["y"]), None)

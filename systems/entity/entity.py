@@ -107,6 +107,11 @@ class Monster(dict):
     def __getattr__(self, key):
         if hasattr(self._entity, key):
             return getattr(self._entity, key)
+        # 修复读写不对称：__setattr__ 对 _entity 没有的 key 会写进 dict，
+        # 但这里原来查不到 _entity 就直接报错，导致 monster.xxx=v 能写、
+        # monster.xxx 却读不出来（只能用 monster['xxx']）。
+        if key in self:
+            return self[key]
         raise AttributeError(key)
 
     def __setattr__(self, key, value):

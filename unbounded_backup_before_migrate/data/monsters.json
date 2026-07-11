@@ -1,0 +1,440 @@
+{
+  "史莱姆": {
+    "char": "M",
+    "hp": 8,
+    "attack_power": [
+      1,
+      3
+    ],
+    "hit_chance": 0.7,
+    "vision": 6,
+    "flee_at_hp_ratio": 0.5,
+    "spawn_weight": 4,
+    "scores": {
+      "attack": 15,
+      "chase": 10,
+      "flee": 12,
+      "wander": 1
+    },
+    "drop": {
+      "史莱姆凝胶": 80,
+      "木材": 20
+    },
+    "corpse_tile": "史莱姆尸体",
+    "properties": {
+      "material": "flesh",
+      "body_type": "slime",
+      "natural_armor": 0
+    },
+    "depth_range": [
+      -50,
+      10
+    ],
+    "tags": [
+      "flesh",
+      "slime",
+      "split_on_death",
+      "flammable"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林",
+      "雨林",
+      "苔原"
+    ]
+  },
+  "巨型史莱姆": {
+    "char": "M",
+    "hp": 25,
+    "attack_power": [
+      3,
+      6
+    ],
+    "hit_chance": 0.8,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.2,
+    "spawn_weight": 1,
+    "scores": {
+      "attack": 20,
+      "chase": 15,
+      "flee": 5,
+      "wander": 1
+    },
+    "drop": {
+      "史莱姆凝胶": 100,
+      "石头": 30
+    },
+    "corpse_tile": "巨型史莱姆尸体",
+    "split_into": {
+      "name": "史莱姆",
+      "count": 2
+    },
+    "special_behavior": "split_on_death",
+    "properties": {
+      "material": "flesh",
+      "body_type": "slime",
+      "natural_armor": 2
+    },
+    "depth_range": [
+      -40,
+      10
+    ],
+    "tags": [
+      "flesh",
+      "slime",
+      "split_on_death",
+      "flammable"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林",
+      "雨林",
+      "苔原"
+    ]
+  },
+  "洞穴蝙蝠": {
+    "char": "B",
+    "hp": 5,
+    "attack_power": [
+      2,
+      4
+    ],
+    "hit_chance": 0.6,
+    "vision": 10,
+    "flee_at_hp_ratio": 0.3,
+    "spawn_weight": 3,
+    "scores": {
+      "attack": 12,
+      "chase": 14,
+      "flee": 8,
+      "wander": 3
+    },
+    "drop": {
+      "蝙蝠翅膀": 70,
+      "石头": 30
+    },
+    "corpse_tile": "蝙蝠尸体",
+    "special_behavior": "erratic_movement",
+    "properties": {
+      "material": "flesh",
+      "body_type": "winged",
+      "natural_armor": 0
+    },
+    "depth_range": [
+      -60,
+      20
+    ],
+    "tags": [
+      "flesh",
+      "winged",
+      "erratic",
+      "flammable"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "温带森林",
+      "雨林",
+      "针叶林"
+    ]
+  },
+  "岩石傀儡": {
+    "char": "G",
+    "hp": 40,
+    "attack_power": [
+      4,
+      8
+    ],
+    "hit_chance": 0.5,
+    "vision": 5,
+    "flee_at_hp_ratio": 0.0,
+    "spawn_weight": 3,
+    "scores": {
+      "attack": 18,
+      "chase": 6,
+      "flee": 0,
+      "wander": 1
+    },
+    "drop": {
+      "石头": 100,
+      "花岗岩": 50,
+      "铁矿石": 10
+    },
+    "corpse_tile": "岩石傀儡残骸",
+    "special_behavior": "never_flee",
+    "properties": {
+      "material": "stone",
+      "body_type": "golem",
+      "natural_armor": 5
+    },
+    "depth_range": [
+      -100,
+      -10
+    ],
+    "tags": [
+      "stone",
+      "golem",
+      "heavy",
+      "fire_resist"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "沙漠",
+      "苔原",
+      "冰原"
+    ]
+  },
+  "暗影史莱姆": {
+    "char": "S",
+    "hp": 15,
+    "attack_power": [
+      3,
+      5
+    ],
+    "hit_chance": 0.75,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.3,
+    "spawn_weight": 3,
+    "depth_range": [
+      -100,
+      -20
+    ],
+    "scores": {
+      "attack": 16,
+      "chase": 12,
+      "flee": 8,
+      "wander": 2
+    },
+    "drop": {
+      "史莱姆凝胶": 100,
+      "黑曜石": 20
+    },
+    "corpse_tile": "史莱姆尸体",
+    "properties": {
+      "material": "shadow",
+      "body_type": "slime",
+      "natural_armor": 1
+    },
+    "tags": [
+      "shadow",
+      "slime",
+      "incorporeal"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "苔原",
+      "冰原",
+      "针叶林"
+    ]
+  },
+  "地穴蜘蛛": {
+    "char": "S",
+    "hp": 20,
+    "attack_power": [
+      4,
+      7
+    ],
+    "hit_chance": 0.8,
+    "vision": 12,
+    "flee_at_hp_ratio": 0.2,
+    "spawn_weight": 2,
+    "depth_range": [
+      -100,
+      -15
+    ],
+    "scores": {
+      "attack": 18,
+      "chase": 15,
+      "flee": 6,
+      "wander": 1
+    },
+    "drop": {
+      "蜘蛛丝": 90,
+      "骨头": 40
+    },
+    "corpse_tile": "蝙蝠尸体",
+    "special_behavior": "erratic_movement",
+    "properties": {
+      "material": "chitin",
+      "body_type": "arachnid",
+      "natural_armor": 2
+    },
+    "tags": [
+      "chitin",
+      "arachnid",
+      "erratic",
+      "flammable"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "雨林",
+      "针叶林",
+      "温带森林"
+    ]
+  },
+  "熔岩傀儡": {
+    "char": "G",
+    "hp": 60,
+    "attack_power": [
+      6,
+      12
+    ],
+    "hit_chance": 0.6,
+    "vision": 4,
+    "flee_at_hp_ratio": 0.0,
+    "spawn_weight": 2,
+    "depth_range": [
+      -200,
+      -30
+    ],
+    "scores": {
+      "attack": 22,
+      "chase": 8,
+      "flee": 0,
+      "wander": 1
+    },
+    "drop": {
+      "黑曜石": 80,
+      "铁矿石": 50,
+      "金矿石": 20
+    },
+    "corpse_tile": "岩石傀儡残骸",
+    "special_behavior": "never_flee",
+    "properties": {
+      "material": "obsidian",
+      "body_type": "golem",
+      "natural_armor": 8
+    },
+    "tags": [
+      "fire",
+      "golem",
+      "obsidian",
+      "heat_source"
+    ],
+    "faction": "hostile",
+    "biomes": [
+      "沙漠"
+    ]
+  },
+  "兔子": {
+    "char": "r",
+    "hp": 5,
+    "max_hp": 5,
+    "attack_power": [
+      1,
+      1
+    ],
+    "hit_chance": 0.1,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.8,
+    "spawn_weight": 5,
+    "scores": {
+      "flee": 10,
+      "wander": 3
+    },
+    "faction": "neutral",
+    "tags": [
+      "animal",
+      "prey",
+      "flammable"
+    ],
+    "drop": {
+      "生肉": 80
+    },
+    "corpse_tile": "兔子尸体",
+    "properties": {},
+    "special_behavior": "always_flee",
+    "depth_range": [
+      -5,
+      15
+    ],
+    "biomes": [
+      "草原",
+      "温带森林",
+      "针叶林"
+    ]
+  },
+  "鹿": {
+    "char": "R",
+    "hp": 20,
+    "max_hp": 20,
+    "attack_power": [
+      2,
+      4
+    ],
+    "hit_chance": 0.2,
+    "vision": 10,
+    "flee_at_hp_ratio": 0.7,
+    "spawn_weight": 2,
+    "scores": {
+      "flee": 12,
+      "wander": 2
+    },
+    "faction": "neutral",
+    "tags": [
+      "animal",
+      "prey",
+      "large",
+      "flammable"
+    ],
+    "drop": {
+      "生肉": 80,
+      "皮革": 40
+    },
+    "corpse_tile": "鹿尸体",
+    "properties": {},
+    "special_behavior": "always_flee",
+    "depth_range": [
+      -5,
+      15
+    ],
+    "biomes": [
+      "温带森林",
+      "针叶林",
+      "草原"
+    ]
+  },
+  "狐狸": {
+    "char": "f",
+    "hp": 8,
+    "max_hp": 8,
+    "attack_power": [
+      3,
+      5
+    ],
+    "hit_chance": 0.4,
+    "vision": 8,
+    "flee_at_hp_ratio": 0.5,
+    "spawn_weight": 1,
+    "scores": {
+      "chase": 6,
+      "flee": 8,
+      "wander": 4
+    },
+    "faction": "neutral",
+    "tags": [
+      "animal",
+      "predator",
+      "flammable"
+    ],
+    "drop": {
+      "生肉": 80,
+      "狐狸皮": 40
+    },
+    "corpse_tile": "狐狸尸体",
+    "properties": {},
+    "special_behavior": "hunt_prey",
+    "depth_range": [
+      -5,
+      30
+    ],
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林"
+    ]
+  }
+}

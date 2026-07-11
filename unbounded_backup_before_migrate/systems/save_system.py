@@ -42,6 +42,7 @@ def build_save_data(game):
         "chests": _serialize_chests(game.chests),
         "spawn_counter": game.spawn_counter,
         "seed": game.world.seed if hasattr(game.world, 'seed') else None,
+        "found_specials": [list(p) for p in getattr(game, '_found_specials', set())],
     }
     return player_data, world_data
 
@@ -161,6 +162,11 @@ def _apply_world_data(game, data):
                 }
     game.spawn_counter = data.get("spawn_counter", {"count": 5})
     game.modified_tiles = {}
+    _found_raw = data.get("found_specials", [])
+    game._found_specials = {
+        tuple(item) if isinstance(item, list) and len(item) == 2 else item
+        for item in _found_raw
+    }
 
 
 # ═══════════════════════════════════

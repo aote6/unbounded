@@ -1,6 +1,6 @@
 """冒烟测试：不依赖 curses，验证核心系统不崩溃。"""
-from systems.monster_index import build_monster_index
-from systems.monster_ai import tick_monsters
+from systems.entity.monster_index import build_monster_index
+from systems.combat.monster_ai import tick_monsters
 import main
 import sys
 from pathlib import Path

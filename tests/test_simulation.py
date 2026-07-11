@@ -63,7 +63,7 @@ def random_craft(game):
     for m, c in r.get("ingredients", {}).items():
         game.inventory.add(m, max(c * 10, 100))
     # 模拟合成（不走 UI，直接调 crafting_state 的逻辑）
-    from systems.inventory_actions import add_equipment_instance
+    from systems.gameplay.inventory_actions import add_equipment_instance
     result = r.get("result", {})
     rt = result.get("type", "")
     if rt == "material":
@@ -102,9 +102,9 @@ def random_craft(game):
 
 def test_500_turns_simulation():
     g = make_game()
-    from systems.turn_system import advance_turn
-    from systems.inventory_actions import add_monster
-    from systems.player_action import try_move_or_dig, do_place
+    from systems.gameplay.turn_system import advance_turn
+    from systems.gameplay.inventory_actions import add_monster
+    from systems.gameplay.player_action import try_move_or_dig, do_place
 
     # 预生成 10 只怪物
     for i in range(10):

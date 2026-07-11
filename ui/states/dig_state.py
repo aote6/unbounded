@@ -3,7 +3,7 @@ from core.state_machine import State
 from config import DIRECTIONS
 from ui.game_renderer import draw
 
-from systems.turn_system import advance_turn
+from systems.gameplay.turn_system import advance_turn
 
 
 class DigState(State):
@@ -22,7 +22,7 @@ class DigState(State):
 
         if key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
-            from systems.player_action import dig_adjacent
+            from systems.gameplay.player_action import dig_adjacent
             dig_adjacent(game, dx, dy)
             advance_turn(game)
             game.engine.pop_state()

@@ -54,7 +54,7 @@ def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
     spawn_counter["count"] = random.randint(interval_min, interval_max)
     monster_index = {(m["x"], m["y"]) for m in monsters}
     from tile_props import TILE_AIR
-    from systems.climate import get_biome
+    from systems.world.climate import get_biome
     for _ in range(15):
         sx = px + random.randint(-20, 20)
         sy = py + random.randint(-15, 15)
@@ -77,7 +77,7 @@ def try_spawn(world, px, py, monsters, spawn_counter, monster_data,
 
 def make_monster(name, x, y, monster_data):
     """创建怪物。返回兼容字典访问和属性访问的 Monster 对象。"""
-    from systems.entity import monster_to_entity
+    from systems.entity.entity import monster_to_entity
     return monster_to_entity(name, x, y, monster_data)
 
 
@@ -105,7 +105,8 @@ def generate_loot_for(depth, monster_name=None):
     import random
     # 如果有怪物特定掉落表
     if monster_name:
-        monster_data = load_monsters()
+        from main import StaticDataRegistry
+        monster_data = StaticDataRegistry.instance().monster_data or load_monsters()
         monster = monster_data.get(monster_name, {})
         drop_table = monster.get("drop", {})
         if drop_table:
@@ -140,47 +141,3 @@ def _pick_neutral_type(monster_data, biome=None):
     """按生物群系选择中立生物类型（薄封装，复用统一的按群系+阵营选择逻辑）。"""
     return _pick_monster_type(monster_data, biome=biome, faction="neutral")
 
-# ── AI 函数兼容转发（延迟导入，避免循环依赖）──
-
-
-def _get_ai_func(name):
-    from systems import monster_ai
-    return getattr(monster_ai, name)
-
-
-def _has_line_of_sight(
-    *args, **kw): return _get_ai_func("_has_line_of_sight")(*args, **kw)
-
-
-def ai_act(*args, **kw): return _get_ai_func("ai_act")(*args, **kw)
-
-
-def _ai_special_behavior(
-    *args, **kw): return _get_ai_func("_ai_special_behavior")(*args, **kw)
-
-
-def _behavior_never_flee(
-    *args, **kw): return _get_ai_func("_behavior_never_flee")(*args, **kw)
-
-
-def _behavior_erratic(
-    *args, **kw): return _get_ai_func("_behavior_erratic")(*args, **kw)
-def _erratic_teleport(
-    *args, **kw): return _get_ai_func("_erratic_teleport")(*args, **kw)
-
-
-def _do_attack(*args, **kw): return _get_ai_func("_do_attack")(*args, **kw)
-def _step_toward(*args, **kw): return _get_ai_func("_step_toward")(*args, **kw)
-def _is_passable(*args, **kw): return _get_ai_func("_is_passable")(*args, **kw)
-def _move_toward(*args, **kw): return _get_ai_func("_move_toward")(*args, **kw)
-def _move_away(*args, **kw): return _get_ai_func("_move_away")(*args, **kw)
-def _move_random(*args, **kw): return _get_ai_func("_move_random")(*args, **kw)
-def _ai_neutral(*args, **kw): return _get_ai_func("_ai_neutral")(*args, **kw)
-
-
-def _behavior_always_flee(
-    *args, **kw): return _get_ai_func("_behavior_always_flee")(*args, **kw)
-
-
-def _ai_hunt_prey(
-    *args, **kw): return _get_ai_func("_ai_hunt_prey")(*args, **kw)

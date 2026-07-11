@@ -3,8 +3,11 @@
 M23: 双缓冲优化 — 地图绘制从逐格 addstr 改为行内合并连续同色字符。
 """
 import curses
+import logging
 from config import VIEW_HEIGHT, DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START
-from codex import get_char, get_color
+from codex import get_char, get_color, COLOR
+
+logger = logging.getLogger(__name__)
 
 
 SLOT_NAMES = {
@@ -50,7 +53,7 @@ def _compute_cell(game, wx, wy):
         ch = m["char"]
         attr = curses.color_pair(198) | curses.A_BOLD  # 亮红
     elif wx == game.player_x and wy == game.player_y:
-        ch, attr = "@", curses.color_pair(11) | curses.A_BOLD  # 亮绿
+        ch, attr = "@", curses.color_pair(53) | curses.A_BOLD  # 琥珀黄
     elif (game.place_mode or game.look_mode) and wx == game.cursor_x and wy == game.cursor_y:
         ch, attr = "+", curses.color_pair(228) | curses.A_BOLD  # 亮黄
     else:
@@ -81,11 +84,16 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
     if current_chars:
         segments.append((current_attr, ''.join(current_chars)))
     x = 0
+    max_y, max_x = stdscr.getmaxyx()
     for attr, text in segments:
         try:
             stdscr.addstr(row, x, text, attr)
         except curses.error:
-            pass
+            if not (row >= max_y - 1 and x + len(text) >= max_x):
+                logger.warning(
+                    f"地图渲染越界: row={row}, x={x}, text_len={len(text)}, "
+                    f"screen=({max_y},{max_x})"
+                )
         x += len(text)
 
 
@@ -94,15 +102,23 @@ def draw(game):
     stdscr.erase()
     ox, oy = game.get_viewport_origin()
     time_name, ambient = _get_time_of_day(game.turn)
-    from systems.weather_system import get_weather_at
+    from systems.world.weather_system import get_weather_at
     weather = get_weather_at(
         game.player_x,
         game.player_y,
         game.world.seed,
         game.turn)
 
-    # 确保实体颜色对已注册（256色需要 init_pair）
-    for pair_id, fg in [(198, 197), (11, 10), (228, 227)]:
+    # 确保实体颜色对已注册（256色需要 init_pair，统一从 codex.COLOR 读取，避免双源不同步）
+    for pair_id, fg in [
+        (198, COLOR["monster_red"]),
+        (11, COLOR["player_green"]),
+        (228, COLOR["cursor_amber"]),
+        (50, COLOR["hud_green"]),
+        (51, COLOR["hud_warning"]),
+        (52, COLOR["cursor_amber"]),
+        (53, COLOR["gold"]),
+    ]:
         _init_color_pair(pair_id, fg)
 
     for row in range(VIEW_HEIGHT):
@@ -122,7 +138,7 @@ def draw(game):
     hp_str = f"HP: {game.player_hp}/{game.player_max_hp}"
     if def_bonus > 0:
         hp_str += f" 防:{def_bonus}"
-    from systems.age_system import get_age, get_age_bonus
+    from systems.gameplay.age_system import get_age, get_age_bonus
     age = get_age()
     bonus = get_age_bonus()
     sk_str = f"年龄:{age}岁 闪避:{bonus['evasion']}%"
@@ -144,15 +160,18 @@ def draw(game):
     equip_str = " | ".join(equips) if equips else "无"
     s3 = f"材料: {mats} | 装备: {equip_str}"
     try:
-        stdscr.addstr(VIEW_HEIGHT + 1, 0, s1, curses.A_BOLD)
-        stdscr.addstr(VIEW_HEIGHT + 2, 0, s2)
-        stdscr.addstr(VIEW_HEIGHT + 3, 0, s3)
-        stdscr.addstr(VIEW_HEIGHT + 4, 0, game.message)
+        low_hp = game.player_hp < game.player_max_hp * 0.3
+        hud_attr = (curses.color_pair(51) if low_hp else curses.color_pair(50)) | curses.A_BOLD
+        stdscr.addstr(VIEW_HEIGHT + 1, 0, s1, hud_attr)
+        stdscr.addstr(VIEW_HEIGHT + 2, 0, s2, curses.color_pair(50))
+        stdscr.addstr(VIEW_HEIGHT + 3, 0, s3, curses.color_pair(50))
+        stdscr.addstr(VIEW_HEIGHT + 4, 0, game.message, curses.color_pair(50))
         stdscr.addstr(
-            VIEW_HEIGHT +
-            6,
-            0,
-            "移动 | c 合成 | e 装备 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | < > 换层 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出")
-    except curses.error:
-        pass
+            VIEW_HEIGHT + 6, 0,
+            "移动 | c 合成 | e 装备 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | < > 换层 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出",
+            curses.color_pair(52))
+    except curses.error as e:
+        screen_h, _ = stdscr.getmaxyx()
+        if screen_h > VIEW_HEIGHT + 6:
+            logger.warning(f"HUD 渲染异常（屏幕高度足够却报错）: {e}, screen_h={screen_h}")
     stdscr.refresh()

@@ -1,0 +1,775 @@
+[
+  {
+    "id": "oak",
+    "name": "橡树",
+    "category": "tree",
+    "biomes": [
+      "温带森林"
+    ],
+    "rarity": 5,
+    "companion_with": [
+      "maple"
+    ],
+    "tags": [
+      "hardwood",
+      "deciduous",
+      "temperate"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "maple",
+    "name": "枫树",
+    "category": "tree",
+    "biomes": [
+      "温带森林"
+    ],
+    "rarity": 3,
+    "companion_with": [
+      "oak"
+    ],
+    "tags": [
+      "hardwood",
+      "deciduous",
+      "temperate"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "birch",
+    "name": "白桦",
+    "category": "tree",
+    "biomes": [
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 2,
+    "companion_with": [],
+    "tags": [
+      "softwood",
+      "deciduous",
+      "temperate",
+      "boreal"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "pine",
+    "name": "松树",
+    "category": "tree",
+    "biomes": [
+      "针叶林"
+    ],
+    "rarity": 6,
+    "companion_with": [
+      "fir",
+      "spruce"
+    ],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "boreal"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "fir",
+    "name": "冷杉",
+    "category": "tree",
+    "biomes": [
+      "针叶林"
+    ],
+    "rarity": 4,
+    "companion_with": [
+      "pine",
+      "spruce"
+    ],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "boreal"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "spruce",
+    "name": "云杉",
+    "category": "tree",
+    "biomes": [
+      "针叶林"
+    ],
+    "rarity": 3,
+    "companion_with": [
+      "pine",
+      "fir"
+    ],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "boreal"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "willow",
+    "name": "柳树",
+    "category": "tree",
+    "biomes": [
+      "草原",
+      "温带森林"
+    ],
+    "rarity": 3,
+    "companion_with": [
+      "poplar"
+    ],
+    "tags": [
+      "softwood",
+      "deciduous",
+      "riparian"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "poplar",
+    "name": "杨树",
+    "category": "tree",
+    "biomes": [
+      "草原"
+    ],
+    "rarity": 5,
+    "companion_with": [
+      "willow"
+    ],
+    "tags": [
+      "softwood",
+      "deciduous",
+      "temperate"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "banyan",
+    "name": "榕树",
+    "category": "tree",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 4,
+    "companion_with": [
+      "bamboo"
+    ],
+    "tags": [
+      "hardwood",
+      "evergreen",
+      "tropical"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "coconut_palm",
+    "name": "椰子树",
+    "category": "tree",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 3,
+    "companion_with": [],
+    "tags": [
+      "palm",
+      "evergreen",
+      "tropical",
+      "coastal"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "bamboo",
+    "name": "竹子",
+    "category": "tree",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 5,
+    "companion_with": [
+      "banyan"
+    ],
+    "tags": [
+      "grass",
+      "evergreen",
+      "tropical"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "cactus",
+    "name": "仙人掌",
+    "category": "tree",
+    "biomes": [
+      "沙漠"
+    ],
+    "rarity": 5,
+    "companion_with": [],
+    "tags": [
+      "succulent",
+      "evergreen",
+      "desert"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "dwarf_pine",
+    "name": "矮松",
+    "category": "tree",
+    "biomes": [
+      "苔原"
+    ],
+    "rarity": 3,
+    "companion_with": [],
+    "tags": [
+      "softwood",
+      "evergreen",
+      "tundra"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "ginseng",
+    "name": "人参",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 1,
+    "companion_with": [],
+    "tags": [
+      "rare",
+      "medicinal",
+      "root"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "licorice",
+    "name": "甘草",
+    "category": "herb",
+    "biomes": [
+      "草原"
+    ],
+    "rarity": 3,
+    "companion_with": [],
+    "tags": [
+      "common",
+      "medicinal",
+      "root"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "aloe",
+    "name": "芦荟",
+    "category": "herb",
+    "biomes": [
+      "沙漠"
+    ],
+    "rarity": 2,
+    "companion_with": [],
+    "tags": [
+      "succulent",
+      "medicinal",
+      "desert"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "mint",
+    "name": "薄荷",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林"
+    ],
+    "rarity": 4,
+    "companion_with": [],
+    "tags": [
+      "common",
+      "medicinal",
+      "aromatic"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "lotus",
+    "name": "莲花",
+    "category": "herb",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 2,
+    "companion_with": [],
+    "tags": [
+      "rare",
+      "medicinal",
+      "aquatic"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "snow_lotus",
+    "name": "雪莲",
+    "category": "herb",
+    "biomes": [
+      "冰原",
+      "苔原"
+    ],
+    "rarity": 1,
+    "companion_with": [],
+    "tags": [
+      "rare",
+      "medicinal",
+      "alpine"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "mushroom_lingzhi",
+    "name": "灵芝",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "雨林"
+    ],
+    "rarity": 1,
+    "companion_with": [
+      "oak",
+      "maple"
+    ],
+    "tags": [
+      "rare",
+      "medicinal",
+      "fungus"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "mushroom_red",
+    "name": "红菇",
+    "category": "herb",
+    "biomes": [
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 3,
+    "companion_with": [
+      "pine",
+      "fir"
+    ],
+    "tags": [
+      "common",
+      "medicinal",
+      "fungus"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "ginger",
+    "name": "姜",
+    "category": "herb",
+    "biomes": [
+      "雨林",
+      "草原"
+    ],
+    "rarity": 3,
+    "companion_with": [],
+    "tags": [
+      "common",
+      "medicinal",
+      "root"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "cactus_flower",
+    "name": "仙人掌花",
+    "category": "herb",
+    "biomes": [
+      "沙漠"
+    ],
+    "rarity": 2,
+    "companion_with": [
+      "cactus"
+    ],
+    "tags": [
+      "rare",
+      "medicinal",
+      "desert"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "diamond",
+    "name": "钻石原石",
+    "tile_id": 8,
+    "rarity": 0.15,
+    "min_depth": 0,
+    "tags": [
+      "gem",
+      "rare",
+      "deep"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "钻石原石"
+  },
+  {
+    "id": "obsidian",
+    "name": "黑曜石",
+    "tile_id": 16,
+    "rarity": 0.2,
+    "min_depth": 0,
+    "tags": [
+      "volcanic",
+      "sharp"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "黑曜石"
+  },
+  {
+    "id": "gold",
+    "name": "金矿石",
+    "tile_id": 7,
+    "rarity": 0.25,
+    "min_depth": 0,
+    "tags": [
+      "metal",
+      "precious"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "金矿石"
+  },
+  {
+    "id": "silver",
+    "name": "银矿石",
+    "tile_id": 6,
+    "rarity": 0.3,
+    "min_depth": 0,
+    "tags": [
+      "metal",
+      "precious"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "银矿石"
+  },
+  {
+    "id": "iron",
+    "name": "铁矿石",
+    "tile_id": 5,
+    "rarity": 0.35,
+    "min_depth": 0,
+    "tags": [
+      "metal",
+      "common"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "铁矿石"
+  },
+  {
+    "id": "copper",
+    "name": "铜矿石",
+    "tile_id": 4,
+    "rarity": 0.4,
+    "min_depth": 0,
+    "tags": [
+      "metal",
+      "common"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "铜矿石"
+  },
+  {
+    "id": "coal",
+    "name": "煤矿",
+    "tile_id": 3,
+    "rarity": 0.45,
+    "min_depth": 0,
+    "tags": [
+      "fuel",
+      "common"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "煤矿"
+  },
+  {
+    "id": "sulfur",
+    "name": "硫磺",
+    "tile_id": 9,
+    "rarity": 0.5,
+    "min_depth": 0,
+    "tags": [
+      "mineral",
+      "volcanic"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "硫磺"
+  },
+  {
+    "id": "salt",
+    "name": "盐矿石",
+    "tile_id": 10,
+    "rarity": 0.55,
+    "min_depth": 0,
+    "tags": [
+      "mineral",
+      "evaporite"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "盐矿石"
+  },
+  {
+    "id": "clay",
+    "name": "黏土",
+    "tile_id": 11,
+    "rarity": 0.6,
+    "min_depth": 0,
+    "tags": [
+      "sediment",
+      "common"
+    ],
+    "biomes": [],
+    "companion_with": [],
+    "drops": "黏土"
+  },
+  {
+    "id": "rabbit",
+    "name": "兔子",
+    "category": "animal",
+    "biomes": [
+      "草原",
+      "温带森林",
+      "针叶林"
+    ],
+    "rarity": 0.3,
+    "tags": [
+      "animal",
+      "prey",
+      "flammable"
+    ],
+    "companion_with": [],
+    "drops": "兔肉",
+    "tile_id": null
+  },
+  {
+    "id": "deer",
+    "name": "鹿",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "针叶林",
+      "草原"
+    ],
+    "rarity": 0.15,
+    "tags": [
+      "animal",
+      "prey",
+      "large",
+      "flammable"
+    ],
+    "companion_with": [],
+    "drops": "鹿肉",
+    "tile_id": null
+  },
+  {
+    "id": "fox",
+    "name": "狐狸",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "针叶林"
+    ],
+    "rarity": 0.1,
+    "tags": [
+      "animal",
+      "predator",
+      "flammable"
+    ],
+    "companion_with": [
+      "rabbit"
+    ],
+    "drops": "狐狸皮",
+    "tile_id": null
+  },
+  {
+    "id": "wolf",
+    "name": "狼",
+    "category": "animal",
+    "biomes": [
+      "针叶林",
+      "苔原",
+      "温带森林"
+    ],
+    "rarity": 0.08,
+    "tags": [
+      "animal",
+      "predator",
+      "pack",
+      "dangerous"
+    ],
+    "companion_with": [
+      "deer"
+    ],
+    "drops": "狼皮",
+    "tile_id": null
+  },
+  {
+    "id": "bear",
+    "name": "熊",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "针叶林",
+      "苔原"
+    ],
+    "rarity": 0.04,
+    "tags": [
+      "animal",
+      "predator",
+      "large",
+      "dangerous"
+    ],
+    "companion_with": [],
+    "drops": "熊皮",
+    "tile_id": null
+  },
+  {
+    "id": "boar",
+    "name": "野猪",
+    "category": "animal",
+    "biomes": [
+      "温带森林",
+      "草原",
+      "雨林"
+    ],
+    "rarity": 0.12,
+    "tags": [
+      "animal",
+      "aggressive",
+      "large",
+      "flammable"
+    ],
+    "companion_with": [],
+    "drops": "猪肉",
+    "tile_id": null
+  },
+  {
+    "id": "eagle",
+    "name": "鹰",
+    "category": "animal",
+    "biomes": [
+      "草原",
+      "沙漠",
+      "苔原"
+    ],
+    "rarity": 0.06,
+    "tags": [
+      "animal",
+      "predator",
+      "flying"
+    ],
+    "companion_with": [
+      "rabbit"
+    ],
+    "drops": "鹰羽",
+    "tile_id": null
+  },
+  {
+    "id": "snake",
+    "name": "蛇",
+    "category": "animal",
+    "biomes": [
+      "沙漠",
+      "雨林",
+      "草原"
+    ],
+    "rarity": 0.1,
+    "tags": [
+      "animal",
+      "predator",
+      "venomous"
+    ],
+    "companion_with": [
+      "rabbit"
+    ],
+    "drops": "蛇皮",
+    "tile_id": null
+  },
+  {
+    "id": "monkey",
+    "name": "猴",
+    "category": "animal",
+    "biomes": [
+      "雨林"
+    ],
+    "rarity": 0.2,
+    "tags": [
+      "animal",
+      "neutral",
+      "intelligent"
+    ],
+    "companion_with": [
+      "banyan",
+      "bamboo"
+    ],
+    "drops": null,
+    "tile_id": null
+  },
+  {
+    "id": "penguin",
+    "name": "企鹅",
+    "category": "animal",
+    "biomes": [
+      "冰原"
+    ],
+    "rarity": 0.15,
+    "tags": [
+      "animal",
+      "neutral",
+      "aquatic"
+    ],
+    "companion_with": [],
+    "drops": null,
+    "tile_id": null
+  }
+]

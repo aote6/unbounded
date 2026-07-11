@@ -1,5 +1,5 @@
 """ config.py 全局配置——按功能分组。所有旧常量名通过 Config 实例兼容。"""
-import systems.keybind as _kb
+import systems.core.keybind as _kb
 import curses
 from dataclasses import dataclass
 
@@ -15,6 +15,8 @@ class _World:
     SEED: int = 51329
     LAYERS: int = 5
     LAYER_DEPTH_OFFSET: int = 50
+    CHUNK_SIZE: int = 16
+    KEEP_RADIUS: int = 3
 
 
 @dataclass
