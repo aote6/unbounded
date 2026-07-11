@@ -45,38 +45,44 @@ def dig_adjacent(game, dx, dy):
         game.message = "这个方块无法挖掘。"
 
 
-def do_place(game):
-    """在光标位置放置方块。"""
+def _has_item_to_place(game):
+    """检查背包里是否还有要放置的物品，没有则退出建造模式。"""
     if game.place_item_name and game.inventory.count(
             game.place_item_name) <= 0:
         game.message = f"背包里已经没有 {game.place_item_name} 了。"
         game.place_mode = None
         game.place_item_name = None
-        return
+        return False
+    return True
 
-    bx, by = game.cursor_x, game.cursor_y
+
+def _cursor_is_valid_for_placement(game, bx, by):
+    """检查光标位置是否可以放置（无怪物、是空地）。"""
     if game._monster_at(bx, by):
         game.message = "有怪物挡住了建造位置。"
-        return
+        return False
     if game.world.get_tile(bx, by)["tile"] != TILE_AIR:
         game.message = "这里不是空地，无法放置。"
-        return
+        return False
+    return True
 
-    if bx == game.player_x and by == game.player_y:
-        push_order = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-        pushed = False
-        for pdx, pdy in push_order:
-            px, py = game.player_x + pdx, game.player_y + pdy
-            if (game.world.get_tile(px, py)["tile"] == TILE_AIR
-                    and not game._monster_at(px, py)
-                    and not game._monster_has_position(px, py)):
-                game.player_x, game.player_y = px, py
-                pushed = True
-                break
-        if not pushed:
-            game.message = "玩家没有空间后退，无法在脚下放置。"
-            return
 
+def _push_player_away(game):
+    """玩家要在脚下放置时，尝试把玩家推到相邻空地。"""
+    push_order = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    for pdx, pdy in push_order:
+        px, py = game.player_x + pdx, game.player_y + pdy
+        if (game.world.get_tile(px, py)["tile"] == TILE_AIR
+                and not game._monster_at(px, py)
+                and not game._monster_has_position(px, py)):
+            game.player_x, game.player_y = px, py
+            return True
+    game.message = "玩家没有空间后退，无法在脚下放置。"
+    return False
+
+
+def _place_tile_and_emit(game, bx, by):
+    """实际写入方块、记录修改、发出 TILE_CHANGED 事件。"""
     old_tile = game.world.get_tile(bx, by)["tile"]
     game.world.set_tile(bx, by, game.place_mode)
     game.modified_tiles[(bx, by)] = game.place_mode
@@ -84,21 +90,44 @@ def do_place(game):
         GameEvent(
             EventType.TILE_CHANGED, {
                 "x": bx, "y": by, "old": old_tile, "new": game.place_mode}), game)
-
     game._blocks_placed_this_life += 1
+
+
+def _consume_place_item(game):
+    """放置后扣减背包物品，若耗尽则退出建造模式。"""
+    game.inventory.remove(game.place_item_name, 1)
+    if game.inventory.count(game.place_item_name) <= 0:
+        game.message = f"放置了 {game.place_mode}（背包中已无更多，退出建造模式）"
+        game.place_mode = None
+        game.place_item_name = None
+        return False
+    return True
+
+
+def do_place(game):
+    """在光标位置放置方块。"""
+    if not _has_item_to_place(game):
+        return
+
+    bx, by = game.cursor_x, game.cursor_y
+    if not _cursor_is_valid_for_placement(game, bx, by):
+        return
+
+    if bx == game.player_x and by == game.player_y:
+        if not _push_player_away(game):
+            return
+
+    _place_tile_and_emit(game, bx, by)
 
     if game.place_mode == "木箱":
         game.chests[(bx, by)] = {"materials": {}, "equipment_instances": []}
 
     if game.place_item_name:
-        game.inventory.remove(game.place_item_name, 1)
-        if game.inventory.count(game.place_item_name) <= 0:
-            game.message = f"放置了 {game.place_mode}（背包中已无更多，退出建造模式）"
-            game.place_mode = None
-            game.place_item_name = None
+        if not _consume_place_item(game):
             return
 
     game.message = f"放置了 {game.place_mode}（建造模式中，c 退出）"
+
 
 
 def dig_any_tile(game, x, y):
