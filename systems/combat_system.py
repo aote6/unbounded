@@ -1,7 +1,9 @@
 """战斗系统：接管击杀怪物、掉落、分裂等逻辑"""
 import monsters as monsters_mod
 from systems.event_bus import EventBus, EventType, GameEvent
-from systems.inventory_actions import add_material, add_equipment_instance, remove_monster, add_monster, get_equipment_instance
+from systems.inventory_actions import (
+    add_material, add_equipment_instance, remove_monster,
+    add_monster, get_equipment_instance)
 from tile_props import TILE_AIR
 CORPSE_DECAY_TURNS = 100  # 尸体 decay 回合数
 

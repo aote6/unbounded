@@ -101,6 +101,6 @@ def check_player_near_settlement(game) -> dict | None:
 
 
 def clear_civ_cache():
-    global _CIV_CACHE, _GEN_CACHE
+    global _CIV_CACHE
     _CIV_CACHE = None
     _GEN_CACHE.clear()

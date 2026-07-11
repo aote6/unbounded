@@ -71,7 +71,6 @@ class BuffManager:
         self._buffs[eid] = [b for b in self._buffs[eid] if b.name != name]
         self._buffs[eid].append(buff)
 
-
     def get_buffs(self, entity) -> list[Buff]:
         """获取实体的所有 Buff。"""
         return self._buffs.get(id(entity), [])
