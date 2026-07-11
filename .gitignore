@@ -18,3 +18,6 @@ data/save.json
 data/chunks/
 data/legacy.json
 data/birth.json
+unbounded_debug.log
+*.bak
+_*.py
