@@ -1,7 +1,7 @@
 """回合推进系统：接管原 Game.advance_turn 的所有逻辑"""
 from systems.scent_map import rebuild_scent_map
 from systems.monster_ai import tick_monsters, try_spawn_monster, tick_corpses
-from systems.tile_interaction import tick_tile_interactions
+from systems.tile_interaction import tick_tile_interactions, tick_burning_tiles
 from systems.legacy_system import check_death, show_death_screen
 from systems.save_manager import new_game
 from systems.goal_system import check_goals
@@ -21,6 +21,7 @@ def advance_turn(game):
     tick_monsters(game)
     try_spawn_monster(game)
     tick_tile_interactions(game)
+    tick_burning_tiles(game)
 
     if game.world:
         game.world.keep_radius(game.player_x, game.player_y, 3)

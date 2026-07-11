@@ -11,6 +11,16 @@
       "effect": "apply_burning",
       "duration": 3,
       "damage_per_turn": 2
+    },
+    {
+      "name": "捕食追猎",
+      "source_tags": [
+        "predator"
+      ],
+      "target_tags": [
+        "prey"
+      ],
+      "effect": "hunt"
     }
   ]
 }

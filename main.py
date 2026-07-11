@@ -70,7 +70,7 @@ class WorldState:
     corpses: Dict[Tuple[int, int], Any] = field(default_factory=dict)
     modified_tiles: Dict[Tuple[int, int], Any] = field(default_factory=dict)
     chests: Dict[Tuple[int, int], Any] = field(default_factory=dict)
-    burning_tiles: Set[Tuple[int, int]] = field(default_factory=set)
+    burning_tiles: Dict[Tuple[int, int], int] = field(default_factory=dict)
     found_specials: Set[Tuple[int, int]] = field(default_factory=set)
 
 

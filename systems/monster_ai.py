@@ -409,12 +409,14 @@ def _ai_hunt_prey(monster, world, px, py, monster_index, game=None):
     mx, my = monster["x"], monster["y"]
     vis = monster.get("vision", 8)
 
+    from systems.tag_system import check_interaction
     target = None
     target_dist = None
     for (ox, oy), other in monster_index.items():
         if other is monster:
             continue
-        if "prey" not in other.get("tags", []):
+        rules = check_interaction(monster.get("tags", []), other.get("tags", []))
+        if not any(r.get("effect") == "hunt" for r in rules):
             continue
         d = chebyshev(mx, my, ox, oy)
         if d <= vis and (target_dist is None or d < target_dist):
