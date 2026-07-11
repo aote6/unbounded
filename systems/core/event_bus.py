@@ -34,12 +34,14 @@ class EventBus:
         return cls._instance
 
     def subscribe(self, event_type: EventType, handler: Callable):
+    """注册事件处理器。handler接收(GameEvent, game)"""
         """注册事件处理器。handler 接收 (GameEvent, game) 两个参数。"""
         if event_type not in self._handlers:
             self._handlers[event_type] = []
         self._handlers[event_type].append(handler)
 
     def emit(self, event: GameEvent, game):
+    """广播事件给所有订阅者。无订阅者时debug日志记录"""
         """广播事件给所有注册的处理器。"""
         handlers = self._handlers.get(event.type, [])
         if not handlers:

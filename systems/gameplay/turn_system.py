@@ -10,6 +10,7 @@ from systems.world.civilization import check_player_near_settlement
 
 def advance_turn(game):
     """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
+    """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     game.turn += 1
 
     # 只在附近有怪物时才重建气味场，避免无怪物区域每步全量计算

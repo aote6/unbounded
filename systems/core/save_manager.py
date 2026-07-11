@@ -34,6 +34,7 @@ def _write_json_atomic(path: Path, data):
 
 
 def new_game(game, inherit_world=False):
+    """开始新游戏，可选继承世界。重置所有玩家状态，清空旧存档"""
     """开始新游戏，可选继承世界。"""
     clear_inventory_instance()
     clear_global_scent_map()
@@ -99,6 +100,7 @@ def new_game(game, inherit_world=False):
 
 
 def save_game(game):
+    """保存游戏：落盘所有脏chunk，原子写入player.json + world_meta.json"""
     """保存游戏状态。M25: player.json + world_meta.json + save.json 兼容。"""
     # 把所有还在内存里、尚未被 keep_radius 自然卸载的脏 chunk 一并落盘，
     # 否则挖矿/建造等地形修改如果没走出半径就存档退出，会在下次读档时丢失。
@@ -121,6 +123,7 @@ def save_game(game):
 
 
 def load_game(game):
+    """读档：优先player.json，回退save.json。返回True/False"""
     """读取存档。M25: 优先 player.json + world_meta.json。"""
     player_path = BASE_DIR / "data" / "player.json"
     world_path = BASE_DIR / "data" / "world_meta.json"
