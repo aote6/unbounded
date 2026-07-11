@@ -380,7 +380,6 @@ class Game:
 
     def _load_static_data(self):
         """加载静态资源，明确报错而非静默失败"""
-        global _static_cache
 
         # 如果已缓存，直接复用（加速重启）
         if _static_cache:

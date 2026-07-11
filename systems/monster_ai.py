@@ -144,20 +144,6 @@ def tick_corpses(game):
         del game.corpses[pos]
 
 
-def tick_status_effects(game):
-    """每回合处理怪物身上的状态效果。
-
-    M21: 委托给 BuffManager.tick_all()，保留此函数供旧调用方兼容。
-    新代码应直接在 advance_turn 中调用 game.buff_manager.tick_all(game)。
-    """
-    if hasattr(game, 'buff_manager'):
-        game.buff_manager.tick_all(game)
-    else:
-        # 极端回退：如果 buff_manager 不存在（不应发生），
-        # 不做任何处理，避免重复扣血逻辑。
-        pass
-
-
 def _tick_monster_vs_neutral(game):
     """每回合: 敌对怪物攻击相邻的中立生物"""
     for m in game.monsters:

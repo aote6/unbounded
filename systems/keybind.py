@@ -73,7 +73,6 @@ def load_keybinds():
 
 
 def get_key(name):
-    global _loaded
     if not _loaded:
         load_keybinds()
     return _keymap.get(name, ord(name[0]) if len(name) == 1 else -1)

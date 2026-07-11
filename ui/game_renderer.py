@@ -65,7 +65,6 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
     current_attr = None
     current_chars = []
     wy = oy + row
-    view_w = stdscr.getmaxyx()[1]
     vw = stdscr.getmaxyx()[1]
     for col in range(vw):
         wx = ox + col
@@ -94,7 +93,6 @@ def draw(game):
     stdscr = game.engine.stdscr
     stdscr.erase()
     ox, oy = game.get_viewport_origin()
-    view_w = stdscr.getmaxyx()[1]
     time_name, ambient = _get_time_of_day(game.turn)
     from systems.weather_system import get_weather_at
     weather = get_weather_at(

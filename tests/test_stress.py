@@ -35,7 +35,6 @@ class FakeEngine:
 
     def push_state(self, s): pass
     def pop_state(self): pass
-    def _running(self): pass
     _running = True
 
 

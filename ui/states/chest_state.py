@@ -12,7 +12,6 @@ class ChestState(State):
     def __init__(self, game):
         self.game = game
         self.win = None
-        self.chest_pos = None
         self.chest = None
         self.viewing_chest = True
         self.selected = 0
@@ -28,7 +27,6 @@ class ChestState(State):
             game.message = "附近没有箱子。站到箱子旁边按 o 打开。"
             game.engine.pop_state()
             return
-        self.chest_pos = pos
         self.chest = game.chests[pos]
         game.message = "箱子：,切换 | Enter取/存 | +全部转移 | o关闭"
         self._refresh_lists()

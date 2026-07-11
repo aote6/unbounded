@@ -110,7 +110,6 @@ def generate_loot_for(depth, monster_name=None):
         drop_table = monster.get("drop", {})
         if drop_table:
             # 按权重随机选掉落
-            items_list = list(drop_table.items())
             # 格式可能是 {"物品名": 权重} 或 {"物品名": 数量}
             # 先检查是否全是数字权重
             if all(isinstance(v, (int, float)) for v in drop_table.values()):

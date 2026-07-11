@@ -71,9 +71,6 @@ class BuffManager:
         self._buffs[eid] = [b for b in self._buffs[eid] if b.name != name]
         self._buffs[eid].append(buff)
 
-    def has(self, entity, name: str) -> bool:
-        """检查实体是否有指定 Buff。"""
-        return any(b.name == name for b in self._buffs.get(id(entity), []))
 
     def get_buffs(self, entity) -> list[Buff]:
         """获取实体的所有 Buff。"""
