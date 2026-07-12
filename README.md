@@ -7,7 +7,7 @@
 >
 > 📖 [项目宪法](docs/00_PROJECT_PHILOSOPHY.md) | 🌍 [世界模型](docs/01_WORLD_MODEL.md) | 🏗 [架构](docs/02_ARCHITECTURE.md)
 
-终端俯视角沙盒。无尽世界，遵循统一规律运行。
+从一把土到一颗螺丝，到一把锤子，到一台机床，到一个工厂，到一座城市，到一颗星球。需要的是时间和知识。
 
 ## Gameplay 演示
 
