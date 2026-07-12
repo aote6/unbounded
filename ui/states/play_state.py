@@ -4,7 +4,7 @@ from core.state_machine import State
 from config import (
     DIRECTIONS,
     KEY_QUIT, KEY_QUIT_UPPER, KEY_CHEST, KEY_CHEST_UPPER,
-    KEY_CRAFT, KEY_CRAFT_UPPER, KEY_EQUIP, KEY_BUILD, KEY_INVENTORY,
+    KEY_CRAFT, KEY_CRAFT_UPPER, KEY_EQUIP, KEY_BUILD, KEY_INVENTORY, KEY_SPRINT,
     KEY_RELOAD, KEY_RELOAD_UPPER, KEY_SAVE,
     KEY_SAVE_UPPER, KEY_LOAD, KEY_LOAD_UPPER, KEY_LOOK,
     KEY_DIG,
@@ -44,6 +44,8 @@ class PlayState(State):
             game.message = "键位已重新加载。"
 
         acted = False
+        if key != KEY_SPRINT and key not in DIRECTIONS:
+            self._sprint_pending = False
 
         if key in (KEY_CHEST, KEY_CHEST_UPPER):
             return ChestState(game)
@@ -66,24 +68,22 @@ class PlayState(State):
             return LookState(game)
         elif key == KEY_DIG:
             return DigState(game)
+        elif key == KEY_SPRINT:
+            self._sprint_pending = True
+            game.message = "疾走模式：请按方向键选择方向。"
+            return None
         elif key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
-            now = time.monotonic()
-            last_dir = getattr(self, "_last_dir", None)
-            last_time = getattr(self, "_last_dir_time", 0)
-            if last_dir == (dx, dy) and (now - last_time) < 0.7:
+            if getattr(self, "_sprint_pending", False):
+                self._sprint_pending = False
                 steps = sprint_move(game, dx, dy)
                 if steps > 0:
                     game.message = f"疾走了 {steps} 步。"
                     for _ in range(steps):
                         advance_turn(game)
-                self._last_dir = None
-                self._last_dir_time = 0
                 return None
             else:
                 try_move_or_dig(game, dx, dy)
-                self._last_dir = (dx, dy)
-                self._last_dir_time = now
             acted = True
 
         if acted:

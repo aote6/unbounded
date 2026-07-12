@@ -168,7 +168,7 @@ def draw(game):
         stdscr.addstr(VIEW_HEIGHT + 4, 0, game.message, curses.color_pair(50))
         stdscr.addstr(
             VIEW_HEIGHT + 6, 0,
-            "移动 | c 合成 | e 装备 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | < > 换层 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出",
+            "移动 | c 合成 | e 装备 | i 背包 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | f 疾走 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出",
             curses.color_pair(52))
     except curses.error as e:
         screen_h, _ = stdscr.getmaxyx()

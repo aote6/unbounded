@@ -80,10 +80,22 @@ def make_monster(name, x, y, monster_data):
     return monster_to_entity(name, x, y, monster_data)
 
 
+MAX_SPLIT_DEPTH = 3  # 分裂链最大代数，防止"A分裂出A"导致无限增殖
+
+
 def get_split_spawns(monster, monster_data):
+    """获取怪物死亡时的分裂产物。带递归深度保护：
+    分裂链达到 MAX_SPLIT_DEPTH 代后强制停止，不再产生新的分裂体，
+    无论 split_into 配置是否会导致自我复制。
+    """
     split_info = monster.get("split_into")
     if not split_info:
         return []
+
+    current_depth = monster.get("split_depth", 0)
+    if current_depth >= MAX_SPLIT_DEPTH:
+        return []
+
     child_name = split_info.get("name")
     count = split_info.get("count", 2)
     if child_name not in monster_data:
@@ -94,7 +106,9 @@ def get_split_spawns(monster, monster_data):
             dx = random.randint(-1, 1)
             dy = random.randint(-1, 1)
             nx, ny = monster["x"] + dx, monster["y"] + dy
-            spawns.append(make_monster(child_name, nx, ny, monster_data))
+            child = make_monster(child_name, nx, ny, monster_data)
+            child["split_depth"] = current_depth + 1
+            spawns.append(child)
             break
     return spawns
 
