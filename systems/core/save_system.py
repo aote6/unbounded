@@ -15,11 +15,25 @@ CURRENT_SAVE_VERSION = 2
 
 
 def _get_load_recipes():
+    """Lazily import and return the recipe-loading function.
+
+    Returns:
+        Callable: The `load_recipes` function from `data_mappings`.
+    """
     from data_mappings import load_recipes
     return load_recipes
 
 
 def build_save_data(game):
+    """Build serializable player and world data dicts from the current game state.
+
+    Args:
+        game: The current game state object.
+
+    Returns:
+        tuple: A (player_data, world_data) pair of dicts ready for JSON
+        serialization.
+    """
     player_data = {
         "version": CURRENT_SAVE_VERSION,
         "player_x": game.player_x,
@@ -75,6 +89,15 @@ def _deserialize_equipment(data):
 
 
 def _serialize_monster(m):
+    """Serialize a monster into a minimal JSON-compatible dict.
+
+    Args:
+        m: The monster dict/entity to serialize.
+
+    Returns:
+        dict: A dict containing the monster's name, HP, position,
+        faction, and tags.
+    """
     return {
         "name": m["name"], "hp": m["hp"], "max_hp": m["max_hp"],
         "x": m["x"], "y": m["y"], "faction": m.get("faction", "hostile"),
@@ -83,6 +106,15 @@ def _serialize_monster(m):
 
 
 def _serialize_chests(chests):
+    """Serialize the chests mapping into a JSON-compatible dict.
+
+    Args:
+        chests: Mapping of (x, y) position tuples to chest data dicts.
+
+    Returns:
+        dict: A dict keyed by "x,y" strings, each mapping to a dict
+        with the chest's materials and serialized equipment instances.
+    """
     result = {}
     for (cx, cy), data in chests.items():
         key = f"{cx},{cy}"
@@ -97,6 +129,16 @@ def _serialize_chests(chests):
 
 
 def apply_load_data(game, data):
+    """Apply loaded save data to the current game state.
+
+    Handles both the newer {"player": ..., "world": ...} format and the
+    legacy flat format, and reports a version-upgrade message if the
+    loaded save predates the current save version.
+
+    Args:
+        game: The current game state object to populate.
+        data: The loaded save data dict.
+    """
     save_version = data.get(
         "player",
         {}).get(
@@ -116,6 +158,12 @@ def apply_load_data(game, data):
 
 
 def _apply_player_data(game, data):
+    """Apply loaded player-related fields onto the game state.
+
+    Args:
+        game: The current game state object to populate.
+        data: The loaded player data dict.
+    """
     game.player_x = data.get("player_x", 0)
     game.player_y = data.get("player_y", 0)
     game.player_z = data.get("player_z", 0)
@@ -133,6 +181,15 @@ def _apply_player_data(game, data):
 
 
 def _apply_world_data(game, data):
+    """Apply loaded world-related fields onto the game state.
+
+    Restores monsters, corpses, chests, spawn counter, and discovered
+    special locations from the loaded data.
+
+    Args:
+        game: The current game state object to populate.
+        data: The loaded world data dict.
+    """
     game.monsters = []
     game._monster_index = {}
     for md in data.get("monsters", []):

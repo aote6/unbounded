@@ -96,6 +96,11 @@ def load_legacy():
 
 
 def save_legacy(data):
+    """Persist legacy data to disk as JSON.
+
+    Args:
+        data: The legacy data dict to write to the legacy save file.
+    """
     with open(LEGACY_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -178,6 +183,11 @@ def apply_legacy_perks(game):
 
 
 def get_legacy_points():
+    """Get the player's current total legacy points.
+
+    Returns:
+        int: The accumulated legacy points, or 0 if no legacy data exists.
+    """
     return load_legacy().get("legacy_points", 0)
 
 
