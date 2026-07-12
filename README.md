@@ -11,7 +11,7 @@
 
 ## Gameplay 演示
 
-![Unbounded Gameplay](unbounded_gameplay.mp4)
+![Unbounded Gameplay](unbounded_gameplay.gif)
 
 ## 快速开始
 
