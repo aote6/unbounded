@@ -4,17 +4,19 @@ from core.state_machine import State
 from config import (
     DIRECTIONS,
     KEY_QUIT, KEY_QUIT_UPPER, KEY_CHEST, KEY_CHEST_UPPER,
-    KEY_CRAFT, KEY_CRAFT_UPPER, KEY_EQUIP, KEY_BUILD,
+    KEY_CRAFT, KEY_CRAFT_UPPER, KEY_EQUIP, KEY_BUILD, KEY_INVENTORY,
     KEY_RELOAD, KEY_RELOAD_UPPER, KEY_SAVE,
     KEY_SAVE_UPPER, KEY_LOAD, KEY_LOAD_UPPER, KEY_LOOK,
     KEY_DIG,
 )
 from ui.game_renderer import draw
 from systems.gameplay.turn_system import advance_turn
-from systems.gameplay.player_action import try_move_or_dig
+from systems.gameplay.player_action import try_move_or_dig, sprint_move
+import time
 from systems.core.save_manager import save_game, load_game
 from ui.states.crafting_state import CraftingState
 from ui.states.equipment_state import EquipmentState
+from ui.states.inventory_state import InventoryState
 from ui.states.build_state import BuildState
 from ui.states.chest_state import ChestState
 from config import _init_keybinds
@@ -49,6 +51,8 @@ class PlayState(State):
             return CraftingState(game)
         elif key == KEY_EQUIP:
             return EquipmentState(game)
+        elif key == KEY_INVENTORY:
+            return InventoryState(game)
         elif key == KEY_BUILD:
             return BuildState(game)
         elif key in (KEY_RELOAD, KEY_RELOAD_UPPER):
@@ -64,7 +68,22 @@ class PlayState(State):
             return DigState(game)
         elif key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
-            try_move_or_dig(game, dx, dy)
+            now = time.monotonic()
+            last_dir = getattr(self, "_last_dir", None)
+            last_time = getattr(self, "_last_dir_time", 0)
+            if last_dir == (dx, dy) and (now - last_time) < 0.7:
+                steps = sprint_move(game, dx, dy)
+                if steps > 0:
+                    game.message = f"疾走了 {steps} 步。"
+                    for _ in range(steps):
+                        advance_turn(game)
+                self._last_dir = None
+                self._last_dir_time = 0
+                return None
+            else:
+                try_move_or_dig(game, dx, dy)
+                self._last_dir = (dx, dy)
+                self._last_dir_time = now
             acted = True
 
         if acted:

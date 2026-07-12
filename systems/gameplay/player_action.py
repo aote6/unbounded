@@ -222,3 +222,30 @@ def _maybe_cancel_dig(game, x, y):
     if game.dig_progress and (
             game.dig_progress["x"] != x or game.dig_progress["y"] != y):
         game.dig_progress = None
+
+
+def sprint_move(game, dx, dy, max_steps=5):
+    """连续朝一个方向移动，直到撞墙/遇怪/踏上特殊地块/达到步数上限。
+    纯逻辑函数，不关心是键盘连按触发还是以后触屏点选触发。
+    返回实际走的步数。
+    """
+    steps = 0
+    while steps < max_steps:
+        nx, ny = game.player_x + dx, game.player_y + dy
+
+        if game._monster_at(nx, ny) or game._monster_has_position(nx, ny):
+            break
+
+        tile = game.world.get_tile(nx, ny)["tile"]
+        props = get_tile_props(tile)
+        if not props["passable"]:
+            break
+        if tile == TILE_TREE:
+            break
+
+        _maybe_cancel_dig(game, nx, ny)
+        game.player_x, game.player_y = nx, ny
+        check_special_location(game)
+        steps += 1
+
+    return steps

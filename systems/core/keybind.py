@@ -9,7 +9,7 @@ KEYBINDS_FILE = BASE_DIR / "data" / "keybinds.json"
 DEFAULTS = {
     "quit": "q", "quit_upper": "Q",
     "craft": "c", "craft_upper": "C",
-    "equip": "e", "build": "b",
+    "equip": "e", "build": "b", "inventory": "i",
     "chest": "o", "chest_upper": "O",
     "look": "x", "dig": "d", "repeat": ".",
     "reload": "r", "reload_upper": "R",

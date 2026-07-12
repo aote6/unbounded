@@ -22,3 +22,8 @@ unbounded_debug.log
 *.bak
 _*.py
 unbounded_backup_before_migrate/
+systems/data/player.json
+systems/data/save.json
+systems/data/world_meta.json
+dependency_graph.png
+dependency_graph.svg

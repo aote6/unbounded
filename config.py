@@ -84,6 +84,7 @@ KEY_QUIT_UPPER = ord('Q')
 KEY_CRAFT = ord('c')
 KEY_CRAFT_UPPER = ord('C')
 KEY_EQUIP = ord('e')
+KEY_INVENTORY = ord('i')
 KEY_BUILD = ord('b')
 KEY_REPEAT = ord('.')
 KEY_RELOAD = ord('r')
@@ -126,6 +127,7 @@ def _init_keybinds():
         "KEY_CRAFT": kb.get("craft", KEY_CRAFT),
         "KEY_CRAFT_UPPER": kb.get("craft_upper", KEY_CRAFT_UPPER),
         "KEY_EQUIP": kb.get("equip", KEY_EQUIP),
+        "KEY_INVENTORY": kb.get("inventory", KEY_INVENTORY),
         "KEY_BUILD": kb.get("build", KEY_BUILD),
         "KEY_REPEAT": kb.get("repeat", KEY_REPEAT),
         "KEY_RELOAD": kb.get("reload", KEY_RELOAD),
