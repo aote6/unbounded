@@ -9,6 +9,10 @@
 
 终端俯视角沙盒。无尽世界，遵循统一规律运行。
 
+## Gameplay 演示
+
+![Unbounded Gameplay](unbounded_gameplay.mp4)
+
 ## 快速开始
 
 python3 main.py
