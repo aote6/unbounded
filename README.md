@@ -9,6 +9,9 @@
 
 从一把土到一颗螺丝，到一把锤子，到一台机床，到一个工厂，到一座城市，到一颗星球。需要的是时间和知识。
 
+> From a handful of dirt to a screw, to a hammer, to a machine tool, to a factory, to a city, to a planet. All it takes is time and knowledge.
+
+
 ## Gameplay 演示
 
 ![Unbounded Gameplay](unbounded_gameplay.gif)
