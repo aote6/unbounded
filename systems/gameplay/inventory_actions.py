@@ -14,14 +14,17 @@ from inventory import ItemCategory
 # ═══════════════════════════════════
 
 def count_material(game, name):
+    """Return the count of a material in the player inventory."""
     return game.inventory.count(name)
 
 
 def add_material(game, name, count):
+    """Add a material to the player inventory."""
     game.inventory.add(name, count)
 
 
 def remove_material(game, name, count):
+    """Remove a material from the player inventory."""
     game.inventory.remove(name, count)
 
 
@@ -55,6 +58,7 @@ def add_equipment_instance(game, name, instance_data=None):
 
 
 def get_equipment_instance(game, name):
+    """Get an equipment instance by name from the inventory."""
     for _, item in game.inventory.all_items():
         if item.item_type == ItemCategory.EQUIPMENT and item.instance and item.instance.name == name:
             return item.instance
@@ -62,6 +66,7 @@ def get_equipment_instance(game, name):
 
 
 def count_equipment(game, name):
+    """Count equipment items by name in the inventory."""
     return sum(
         1 for _, item in game.inventory.all_items()
         if item.item_type == ItemCategory.EQUIPMENT

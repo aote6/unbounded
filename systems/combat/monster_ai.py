@@ -15,6 +15,7 @@ from systems.combat.combat_system import kill_monster
 
 
 def chebyshev(x1, y1, x2, y2):
+    """Compute Chebyshev distance between two points."""
     return max(abs(x1 - x2), abs(y1 - y2))
 
 
@@ -164,6 +165,7 @@ def _tick_monster_vs_neutral(game):
 
 
 def _has_line_of_sight(world, x1, y1, x2, y2):
+    """Bresenham line-of-sight check between two points."""
     dx, dy = abs(x2 - x1), abs(y2 - y1)
     sx = 1 if x2 > x1 else -1
     sy = 1 if y2 > y1 else -1
@@ -189,6 +191,7 @@ def _has_line_of_sight(world, x1, y1, x2, y2):
 
 
 def ai_act(monster, world, px, py, turn, monster_index, game=None):
+    """Decide and execute a monster action: attack/chase/flee/wander."""
     dist = chebyshev(monster["x"], monster["y"], px, py)
     if dist > config.MONSTER_SLEEP_DISTANCE:
         if turn % config.MONSTER_SLEEP_TICKS != 0:
@@ -239,6 +242,7 @@ def ai_act(monster, world, px, py, turn, monster_index, game=None):
 
 
 def _ai_special_behavior(monster, world, px, py, monster_index, game=None):
+    """Dispatch to a monster special behavior handler."""
     special = monster.get("special_behavior")
     if special is None:
         return None
@@ -254,6 +258,7 @@ def _ai_special_behavior(monster, world, px, py, monster_index, game=None):
 
 
 def _behavior_never_flee(monster, world, px, py, monster_index):
+    """Attack or advance, never retreat."""
     mx, my = monster["x"], monster["y"]
     dist = chebyshev(mx, my, px, py)
     vis = monster.get("vision", 5)
@@ -270,6 +275,7 @@ def _behavior_never_flee(monster, world, px, py, monster_index):
 
 
 def _behavior_erratic(monster, world, px, py, monster_index):
+    """Attack with random teleport, move erratically."""
     mx, my = monster["x"], monster["y"]
     dist = chebyshev(mx, my, px, py)
     vis = monster.get("vision", 10)
@@ -290,6 +296,7 @@ def _behavior_erratic(monster, world, px, py, monster_index):
 
 
 def _erratic_teleport(monster, world, mx, my, monster_index):
+    """Attempt to teleport a short random distance."""
     for _ in range(10):
         dx = random.randint(-4, 4)
         dy = random.randint(-4, 4)
@@ -303,12 +310,14 @@ def _erratic_teleport(monster, world, mx, my, monster_index):
 
 
 def _do_attack(monster, px, py):
+    """Resolve a monster attack roll, return damage or 0."""
     atk = monster.get("attack_power", (1, 3))
     dmg = random.randint(atk[0], atk[1])
     return dmg if random.random() < monster.get("hit_chance", 0.7) else 0
 
 
 def _step_toward(mx, my, tx, ty):
+    """Compute a single step direction toward a target."""
     dx = (tx - mx) // max(1, abs(tx - mx)) if tx != mx else 0
     dy = (ty - my) // max(1, abs(ty - my)) if ty != my else 0
     return dx, dy
@@ -327,6 +336,7 @@ def _is_passable(world, x, y, monster_index, px, py):
 
 
 def _move_toward(monster, tx, ty, world, monster_index, px, py):
+    """Move one step toward target using scent map or greedy algorithm."""
     # 优先使用气味地图寻路（解决卡墙角问题）
     try:
         from systems.world.scent_map import scent_best_direction
@@ -354,6 +364,7 @@ def _move_toward(monster, tx, ty, world, monster_index, px, py):
 
 
 def _move_away(monster, tx, ty, world, monster_index, px, py):
+    """Move one step away from a target."""
     dx, dy = _step_toward(monster["x"], monster["y"], tx, ty)
     nx, ny = monster["x"] - dx, monster["y"] - dy
     if _is_passable(world, nx, ny, monster_index, px, py):
@@ -363,6 +374,7 @@ def _move_away(monster, tx, ty, world, monster_index, px, py):
 
 
 def _move_random(monster, world, monster_index, px, py):
+    """Move one step in a random passable direction."""
     dirs = [(0, -1), (0, 1), (-1, 0), (1, 0),
             (-1, -1), (1, -1), (-1, 1), (1, 1)]
     random.shuffle(dirs)

@@ -42,6 +42,7 @@ _loaded = False
 
 
 def _ensure_file():
+    """Ensure the keybinds JSON file exists, creating it with defaults if not."""
     if not KEYBINDS_FILE.exists():
         KEYBINDS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(KEYBINDS_FILE, "w", encoding="utf-8") as f:
@@ -49,6 +50,7 @@ def _ensure_file():
 
 
 def _parse_key(value):
+    """Parse a key configuration value into its corresponding integer code."""
     if isinstance(value, int):
         return value
     if value in CURSES_NAMES:
@@ -59,6 +61,7 @@ def _parse_key(value):
 
 
 def load_keybinds():
+    """Load keybinds from the configuration file and populate the keymap cache."""
     global _keymap, _loaded
     _ensure_file()
     try:
@@ -73,12 +76,14 @@ def load_keybinds():
 
 
 def get_key(name):
+    """Get the integer key code associated with a given action name."""
     if not _loaded:
         load_keybinds()
     return _keymap.get(name, ord(name[0]) if len(name) == 1 else -1)
 
 
 def reload_keybinds():
+    """Reset the loaded status and re-load keybinds from the file."""
     global _loaded
     _loaded = False
     return load_keybinds()
