@@ -1,5 +1,6 @@
 """性能基准测试"""
-import time, sys
+import time
+import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

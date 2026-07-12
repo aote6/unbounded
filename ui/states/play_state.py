@@ -12,7 +12,6 @@ from config import (
 from ui.game_renderer import draw
 from systems.gameplay.turn_system import advance_turn
 from systems.gameplay.player_action import try_move_or_dig, sprint_move
-import time
 from systems.core.save_manager import save_game, load_game
 from ui.states.crafting_state import CraftingState
 from ui.states.equipment_state import EquipmentState
