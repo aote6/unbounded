@@ -16,7 +16,6 @@ _BIOME_CONFIG = None
 
 
 def _load_biome_config():
-    """Load biome configuration from biomes.json with caching."""
     global _BIOME_CONFIG
     if _BIOME_CONFIG is not None:
         return _BIOME_CONFIG
@@ -46,7 +45,6 @@ _DEFAULT_CELL_SIZE = 10  # 回退值，实际由 Biome 配置决定
 
 
 def load_natural():
-    """Load natural species data from natural.json with caching."""
     global _NATURAL_CACHE
     if _NATURAL_CACHE is not None:
         return _NATURAL_CACHE
@@ -62,7 +60,6 @@ def load_natural():
 
 
 def clear_natural_cache():
-    """Clear the natural species cache."""
     global _NATURAL_CACHE, _BIOME_CONFIG
     _NATURAL_CACHE = None
     _BIOME_CONFIG = None
@@ -70,10 +67,6 @@ def clear_natural_cache():
 
 
 def _pick_species_for_cell(
-        cell_x: int, cell_y: int, biome: str, seed: int, category: str = "tree"):
-    """Deterministically pick a primary species for a grid cell."""
-    """Deterministically pick a primary species and companion pool for a grid cell."""
-    # original line below was split, fixing
         cell_x: int,
         cell_y: int,
         biome: str,
@@ -111,9 +104,6 @@ def _pick_species_for_cell(
 
 
 def get_flora_species(
-        x: int, y: int, seed: int = 12345, category: str = "tree"):
-    """Query flora species at a world coordinate."""
-    """Query the flora species at a given world coordinate."""
         x: int,
         y: int,
         seed: int = 12345,

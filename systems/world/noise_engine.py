@@ -48,7 +48,6 @@ def _interpolated_noise(x: float, y: float, seed: int) -> float:
 def perlin_2d(x: float, y: float, seed: int = 0,
               octaves: int = 4, persistence: float = 0.5,
               lacunarity: float = 2.0) -> float:
-    """Generate multi-octave Perlin noise at a coordinate."""
     """Generate multi-octave Perlin noise at a given coordinate."""
     value = 0.0
     amplitude = 1.0

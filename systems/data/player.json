@@ -1,15 +1,21 @@
 {
   "version": 2,
-  "player_x": 0,
-  "player_y": 0,
+  "player_x": 15,
+  "player_y": 2,
   "player_z": 0,
   "player_hp": 500,
   "player_max_hp": 500,
-  "turn": 0,
+  "turn": 32,
   "equipment": {},
-  "inventory": {},
+  "inventory": {
+    "石头": {
+      "item_id": "石头",
+      "item_type": "material",
+      "count": 7
+    }
+  },
   "skills": {
-    "digging": 0,
+    "digging": 7,
     "combat": 0,
     "defense": 0
   },

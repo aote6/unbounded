@@ -20,7 +20,6 @@ _GOALS_CACHE = None
 
 
 def _load_goals():
-    """Load goal definitions from goals.json."""
     global _GOALS_CACHE
     if _GOALS_CACHE is not None:
         return _GOALS_CACHE
@@ -55,7 +54,6 @@ def check_goals(game):
 
 
 def _find_goal(goals, goal_id):
-    """Find a goal by its ID in the goals list."""
     for g in goals:
         if g["id"] == goal_id:
             return g

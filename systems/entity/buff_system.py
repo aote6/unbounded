@@ -34,8 +34,7 @@ class Buff:
         """返回本回合造成的伤害。"""
         return self.damage_per_turn
 
-        def expired(self) -> bool:
-        """Check if this buff instance has expired."""
+    def expired(self) -> bool:
         return self.duration <= 0
 
 
@@ -48,8 +47,7 @@ class BuffManager:
         manager.tick_all(game)  # 每回合调用
     """
 
-        def __init__(self):
-        """Initialize the buff manager."""
+    def __init__(self):
         # {id(entity): [Buff, ...]}
         self._buffs: dict[int, list[Buff]] = {}
         # 玩家 eid 缓存
@@ -57,8 +55,7 @@ class BuffManager:
 
     # ── 公共 API ──
 
-        def add(self, entity, name: str, duration: int, damage_per_turn=0, source=""):
-        """Add a buff to an entity."""
+    def add(self, entity, name: str, duration: int,
             damage_per_turn: int = 0, source: str = "unknown"):
         """给实体添加一个 Buff。同名 Buff 会刷新叠加（非堆叠）。
 
