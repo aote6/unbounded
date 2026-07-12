@@ -1,15 +1,4 @@
-"""Entity 统一基类 — 所有游戏实体的抽象。
-
-Player / NPC / Monster / Animal 共享：
-- 位置 (x, y)
-- 生命值 (hp, max_hp)
-- 属性字典 (stats) — 可扩展
-- 行为列表 (behaviors) — Goal → Behavior → Action
-- 标签 (tags)
-
-差异在数据，不在类定义。
-"""
-
+"""Entity 统一基类 — 所有游戏实体的抽象。"""
 from dataclasses import dataclass, field
 from typing import Dict, List, Any
 
@@ -17,12 +6,12 @@ from typing import Dict, List, Any
 @dataclass
 class Entity:
     """统一实体基类。"""
-    entity_id: str                    # 唯一标识
-    name: str                         # 显示名称
-    category: str                     # player | monster | npc | animal
+    entity_id: str
+    name: str
+    category: str
     x: int = 0
     y: int = 0
-    char: str = "?"                   # 渲染字符
+    char: str = "?"
     hp: int = 10
     max_hp: int = 10
     stats: Dict[str, Any] = field(default_factory=dict)
@@ -31,10 +20,12 @@ class Entity:
 
     @property
     def is_alive(self) -> bool:
+        """Whether the entity's HP is greater than zero."""
         return self.hp > 0
 
     @property
     def pos(self) -> tuple:
+        """The entity's current (x, y) position."""
         return (self.x, self.y)
 
     def take_damage(self, amount: int) -> int:
@@ -84,15 +75,17 @@ class Entity:
         )
 
 
-# ═══════════════════════════════════
-# 工厂函数：从 monsters.json 创建 Entity
-# ═══════════════════════════════════
-
 class Monster(dict):
-    """兼容旧代码的怪物对象：既是字典（支持 monster["x"]）又是 Entity（支持 monster.x）。"""
+    """兼容旧代码的怪物对象：既是字典又是 Entity。"""
     __slots__ = ('_entity',)
 
     def __init__(self, entity: Entity, extra: dict = None):
+        """Initialize a Monster wrapper around an Entity.
+
+        Args:
+            entity: The underlying Entity instance to wrap.
+            extra: Optional dict of additional key-value pairs.
+        """
         self._entity = entity
         d = {
             "name": entity.name, "char": entity.char,
@@ -105,16 +98,15 @@ class Monster(dict):
         super().__init__(d)
 
     def __getattr__(self, key):
+        """Look up an attribute on the wrapped Entity, falling back to dict keys."""
         if hasattr(self._entity, key):
             return getattr(self._entity, key)
-        # 修复读写不对称：__setattr__ 对 _entity 没有的 key 会写进 dict，
-        # 但这里原来查不到 _entity 就直接报错，导致 monster.xxx=v 能写、
-        # monster.xxx 却读不出来（只能用 monster['xxx']）。
         if key in self:
             return self[key]
         raise AttributeError(key)
 
     def __setattr__(self, key, value):
+        """Set an attribute, syncing the value to the wrapped Entity when applicable."""
         if key in ('_entity',) or key in self.__slots__:
             super().__setattr__(key, value)
         elif hasattr(self._entity, key):
@@ -125,9 +117,11 @@ class Monster(dict):
             self[key] = value
 
     def __getitem__(self, key):
+        """Get a dict item by key."""
         return dict.__getitem__(self, key)
 
     def __setitem__(self, key, value):
+        """Set a dict item, syncing selected keys back to the wrapped Entity."""
         dict.__setitem__(self, key, value)
         if key == "x":
             self._entity.x = value
@@ -139,14 +133,11 @@ class Monster(dict):
             self._entity.max_hp = value
 
     def get(self, key, default=None):
+        """Get a dict value with a default fallback."""
         return super().get(key, default)
 
 
-def monster_to_entity(
-        name: str,
-        x: int,
-        y: int,
-        monster_data: dict) -> Monster:
+def monster_to_entity(name: str, x: int, y: int, monster_data: dict) -> Monster:
     """创建怪物：返回兼容字典+属性的 Monster 对象。"""
     t = monster_data.get(name, {})
     entity = Entity(

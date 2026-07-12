@@ -8,12 +8,12 @@ logger = logging.getLogger(__name__)
 
 
 class EventType(Enum):
-    TURN_START = auto()       # 回合开始
-    DAMAGE_DEALT = auto()      # 造成伤害（攻击者, 目标, 伤害值, 伤害类型）
-    MONSTER_KILLED = auto()    # 怪物死亡（怪物, 死因）
-    PLAYER_HEALED = auto()     # 玩家回血（回复量, 来源）
-    STATUS_APPLIED = auto()    # 状态施加（目标, 状态名, 持续回合）
-    TILE_CHANGED = auto()      # 地块变化（x, y, 旧tile, 新tile）
+    TURN_START = auto()
+    DAMAGE_DEALT = auto()
+    MONSTER_KILLED = auto()
+    PLAYER_HEALED = auto()
+    STATUS_APPLIED = auto()
+    TILE_CHANGED = auto()
 
 
 @dataclass
@@ -34,15 +34,13 @@ class EventBus:
         return cls._instance
 
     def subscribe(self, event_type: EventType, handler: Callable):
-    """注册事件处理器。handler接收(GameEvent, game)"""
-        """注册事件处理器。handler 接收 (GameEvent, game) 两个参数。"""
+        """注册事件处理器，handler 接收 (GameEvent, game)。"""
         if event_type not in self._handlers:
             self._handlers[event_type] = []
         self._handlers[event_type].append(handler)
 
     def emit(self, event: GameEvent, game):
-    """广播事件给所有订阅者。无订阅者时debug日志记录"""
-        """广播事件给所有注册的处理器。"""
+        """广播事件给所有注册的处理器。无订阅者时记录debug日志。"""
         handlers = self._handlers.get(event.type, [])
         if not handlers:
             logger.debug(f"事件 {event.type.name} 无订阅者，已丢弃: {event.data}")
@@ -50,7 +48,7 @@ class EventBus:
         for handler in handlers:
             handler(event, game)
             if event.handled:
-                break  # 如果事件被标记为已处理，停止传播
+                break
 
     def clear(self):
         """清除所有注册（用于新游戏）。"""

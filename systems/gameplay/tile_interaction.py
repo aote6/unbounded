@@ -9,6 +9,14 @@ BURNING_TILE = "火"
 
 
 def _get_tile_tags(tile):
+    """Get the tag list associated with a tile.
+
+    Args:
+        tile: The tile value to inspect.
+
+    Returns:
+        list: The tags associated with the tile, or an empty list.
+    """
     if tile == TILE_AIR:
         return []
     if isinstance(tile, int):
@@ -18,6 +26,11 @@ def _get_tile_tags(tile):
 
 
 def tick_tile_interactions(game):
+    """Check tag-based interaction rules between adjacent tiles each turn.
+
+    Args:
+        game: The current game state object.
+    """
     from systems.core.event_bus import EventBus, EventType, GameEvent
 
     checked = set()
@@ -48,9 +61,7 @@ def tick_tile_interactions(game):
                     effect = rule.get("effect", "")
                     if effect in ("ignite_tile", "apply_burning"):
                         to_ignite.append(
-                            (tx, ty, rule.get(
-                                "burn_duration", rule.get(
-                                    "duration", 5))))
+                            (tx, ty, rule.get("burn_duration", rule.get("duration", 5))))
                     elif effect == "extinguish":
                         target_tile = game.world.get_tile(tx, ty)["tile"]
                         if target_tile != TILE_AIR:
@@ -76,6 +87,11 @@ def tick_tile_interactions(game):
 
 
 def tick_burning_tiles(game):
+    """Decrement the remaining duration of all burning tiles.
+
+    Args:
+        game: The current game state object.
+    """
     if not hasattr(game, '_burning_tiles'):
         return
 
