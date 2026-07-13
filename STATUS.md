@@ -60,6 +60,13 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 
 ## 六、会话完成记录（滚动更新，最新在最上）
 
+2026-07-13 本次会话（第四轮，键位系统彻底清债）：
+1. 【根源修复】KEY_LOAD/L 大小写撞车：keybind.py::DEFAULTS 里 "load": "L" 本身写错大小写（对照save/save_upper的正确写法），且缺失load_upper字段，导致KEY_LOAD被json覆盖成大写L、KEY_LOAD_UPPER退回默认值也是大写L，读档键实际只有大写L能用，小写l完全无效
+2. 排查过程中发现更深层根源：小写l本身是hjkl移动键系统里的"右"（KEY_RIGHT），任何功能想用小写l都会天生冲突，不是配置写错，是设计层面的键位占用冲突
+3. 用户反馈从未使用过hjkl移动键、手感别扭，决定彻底移除（而非绕开冲突改用大小写区分）：删除 config.py 中 KEY_LEFT/RIGHT/UP/DOWN=ord('h'/'l'/'k'/'j') 四个自定义常量及DIRECTIONS字典里对应四行映射（保留curses.KEY_LEFT等四个真正方向键映射不变）；删除 config.py::_init_keybinds() 中 KEY_MOVE_*_ALT 四行运行时注入；删除 keybind.py::DEFAULTS 中 move_up_alt/move_down_alt/move_left_alt/move_right_alt 四个字段。play_state.py 等消费方无需改动，因为全项目审计确认所有子菜单方向键判断均直接用curses.KEY_UP等真实键值，从未直接判断hjkl字符
+4. 已实机验证：物理方向键正常移动，h/j/k/l 四个字母键按下无任何反应（不再触发移动），大写L正常触发读档
+5. 排查中的操作失误记录（自我纠错）：中途误判"删除 data/keybinds.json"能让新默认值生效，实际运行时读取的是 systems/data/keybinds.json（另一路径），导致第一次尝试的patch未生效并造成一次误导性的"小写l触发移动"现象。教训：涉及配置文件生效路径的修改，必须先用find确认真实生效文件的完整路径，不能想当然沿用之前处理过的同名文件路径
+
 2026-07-13 本次会话（第三轮，实机验证暴露的真实崩溃+功能性bug修复）：
 1. 【紧急修复】legacy_state.py 悬空引用已删除常量导致的必崩溃：第一轮会话清理死常量时删除了 config.py 里的 KEY_CLOSE/KEY_CLOSE_UPPER，但 ui/states/legacy_state.py 仍在 import 使用它们，且该State在角色死亡时必定被push——即当前版本只要触发一次死亡，进入遗产商店瞬间必然ImportError崩溃。修复：新增对齐规范的 KEY_LEGACY_SHOP_UPPER("P")，legacy_state.py 关闭逻辑改为 (KEY_LEGACY_SHOP, KEY_LEGACY_SHOP_UPPER, KEY_QUIT, KEY_QUIT_UPPER)，与其余菜单"开启键或q"规范统一，同步修正过时提示文案。已实机验证：死亡→遗产商店正常弹出/正常关闭，不再崩溃
 2. 【功能性修复】遗产商店"item"类型perk（石剑开局/石镐开局）完全无效：apply_legacy_perks() 原逻辑通过 items.json 按名字反查装备属性，但"石剑""石镐"这类装备实际由 item_generator 动态生成，从未存在于 items.json，导致反查拿到空字典，生成 slot=None/attack_bonus=0 的空壳装备，静默塞入背包但无法装备、不显示。修复：PERKS数据里 item_name 字段改为直接存 archetype/material（与配方名解耦，不再依赖反查recipes.json），apply_legacy_perks() 的 item 分支改为调用 item_generator 现场生成完整装备实例。已实机验证：死亡→购买perk→复活后背包/装备栏确认拿到真实可装备的武器
