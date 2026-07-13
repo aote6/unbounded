@@ -5,6 +5,7 @@ from inventory import Inventory
 from systems.core.event_bus import EventBus, EventType, GameEvent
 from systems.gameplay.inventory_actions import add_equipment_instance
 from inventory import ItemCategory
+from equipment import EquipmentInstance
 import json
 from pathlib import Path
 
@@ -18,14 +19,16 @@ PERKS = {
         "cost": 2,
         "desc": "新角色出生时携带一把石剑",
         "type": "item",
-        "item_name": "石剑",
+        "archetype": "剑",
+        "material": "石头",
     },
     "start_with_pickaxe": {
         "name": "石镐开局",
         "cost": 2,
         "desc": "新角色出生时携带一把石镐",
         "type": "item",
-        "item_name": "石镐",
+        "archetype": "镐",
+        "material": "石头",
     },
     "start_with_bread": {
         "name": "食物开局",
@@ -166,7 +169,28 @@ def apply_legacy_perks(game):
             continue
 
         if perk["type"] == "item":
-            add_equipment_instance(game, perk["item_name"])
+            from item_generator import get_generator
+            gen = get_generator()
+            item_dict = gen.generate(
+                archetype_name=perk["archetype"],
+                material_name=perk["material"],
+                affix_count=0,
+            )
+            inst = EquipmentInstance(
+                name=item_dict["name"],
+                slot=item_dict.get("slot"),
+                attack_bonus=item_dict.get("attack_bonus", 0),
+                defense_bonus=item_dict.get("defense_bonus", 0),
+                tool_bonus=item_dict.get("tool_bonus", 0),
+                damage_min=item_dict.get("damage_min", 0),
+                damage_max=item_dict.get("damage_max", 0),
+                hit_bonus=item_dict.get("hit_bonus", 0),
+                affixes=item_dict.get("affixes", []),
+                on_attack=item_dict.get("on_attack", []),
+                lifesteal=item_dict.get("lifesteal", 0),
+                speed_bonus=item_dict.get("speed_bonus", 0),
+            )
+            add_equipment_instance(game, inst.name, inst)
         elif perk["type"] == ItemCategory.MATERIAL:
             game.inventory.add(perk["item_name"], perk.get("count", 1))
         elif perk["type"] == "skill":

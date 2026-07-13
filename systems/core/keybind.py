@@ -16,11 +16,9 @@ DEFAULTS = {
     "save": "s", "save_upper": "S", "load": "L",
     "move_up": "KEY_UP", "move_down": "KEY_DOWN",
     "move_left": "KEY_LEFT", "move_right": "KEY_RIGHT",
-    "move_up_alt": "k", "move_down_alt": "j",
-    "move_left_alt": "h", "move_right_alt": "l",
     "confirm": "KEY_ENTER",
     "switch_tab": ",", "transfer_all": "+",
-    "legacy_shop": "p",
+    "legacy_shop": "p", "legacy_shop_upper": "P",
 }
 
 CURSES_NAMES = {

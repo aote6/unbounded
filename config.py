@@ -62,7 +62,7 @@ VIEW_HEIGHT = Config.view.HEIGHT
 WORLD_SEED = Config.world.SEED
 WORLD_LAYERS = Config.world.LAYERS
 LAYER_DEPTH_OFFSET = Config.world.LAYER_DEPTH_OFFSET
-PLAYER_INITIAL_HP = 500
+PLAYER_INITIAL_HP = 50
 PLAYER_BASE_DAMAGE_MIN = Config.player.BASE_DAMAGE_MIN
 PLAYER_BASE_DAMAGE_MAX = Config.player.BASE_DAMAGE_MAX
 PLAYER_BASE_HIT_CHANCE = Config.player.BASE_HIT_CHANCE
@@ -92,7 +92,7 @@ KEY_RELOAD = ord('r')
 KEY_RELOAD_UPPER = ord('R')
 KEY_SAVE = ord('s')
 KEY_SAVE_UPPER = ord('S')
-KEY_LOAD = ord('l')
+KEY_LOAD = ord('L')
 KEY_LOAD_UPPER = ord('L')
 KEY_LOOK = ord('x')
 KEY_DIG = ord('d')
@@ -102,17 +102,11 @@ KEY_NEW_GAME = ord('n')
 KEY_NEW_GAME_UPPER = ord('N')
 KEY_ENTER = ord('\n')
 KEY_ENTER_ALT = ord('\r')
-KEY_LEFT = ord('h')
-KEY_RIGHT = ord('l')
-KEY_UP = ord('k')
-KEY_DOWN = ord('j')
-
-# 方向映射
+# 方向映射（M28后：不再提供hjkl替代键，用户反馈"用着别扭"，
+# 且'l'与读档键冲突，已彻底移除，只保留真正的方向键）
 DIRECTIONS = {
     curses.KEY_LEFT: (-1, 0), curses.KEY_RIGHT: (1, 0),
     curses.KEY_UP: (0, -1), curses.KEY_DOWN: (0, 1),
-    KEY_LEFT: (-1, 0), KEY_RIGHT: (1, 0),
-    KEY_UP: (0, -1), KEY_DOWN: (0, 1),
 }
 
 # M28: 键位系统初始化覆盖
@@ -143,10 +137,7 @@ def _init_keybinds():
         "KEY_SWITCH_TAB": kb.get("switch_tab", ord(',')),
         "KEY_TRANSFER_ALL": kb.get("transfer_all", ord('+')),
         "KEY_LEGACY_SHOP": kb.get("legacy_shop", ord('p')),
-        "KEY_MOVE_UP_ALT": kb.get("move_up_alt", KEY_UP),
-        "KEY_MOVE_DOWN_ALT": kb.get("move_down_alt", KEY_DOWN),
-        "KEY_MOVE_LEFT_ALT": kb.get("move_left_alt", KEY_LEFT),
-        "KEY_MOVE_RIGHT_ALT": kb.get("move_right_alt", KEY_RIGHT),
+        "KEY_LEGACY_SHOP_UPPER": kb.get("legacy_shop_upper", ord('P')),
     })
 
 

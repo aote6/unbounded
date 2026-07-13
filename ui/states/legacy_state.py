@@ -1,5 +1,8 @@
 """遗产商店状态：死后选择增益"""
-from config import KEY_CLOSE, KEY_CLOSE_UPPER
+from config import (
+    KEY_LEGACY_SHOP, KEY_LEGACY_SHOP_UPPER,
+    KEY_QUIT, KEY_QUIT_UPPER,
+)
 import curses
 from core.state_machine import State
 from systems.gameplay.legacy_system import get_perks_shop, purchase_perk, get_legacy_points
@@ -32,7 +35,7 @@ class LegacyState(State):
         self.game.engine.stdscr.refresh()
 
     def handle_input(self, key):
-        if key in (KEY_CLOSE, KEY_CLOSE_UPPER):
+        if key in (KEY_LEGACY_SHOP, KEY_LEGACY_SHOP_UPPER, KEY_QUIT, KEY_QUIT_UPPER):
             self.game.engine.pop_state()
             return None
         elif key == curses.KEY_UP:
@@ -57,7 +60,7 @@ class LegacyState(State):
         self.win.erase()
         self.win.box()
         self.win.addstr(0, 2, " 遗产商店 ")
-        self.win.addstr(1, 2, "↑↓选择 Enter购买 c继续游戏")
+        self.win.addstr(1, 2, "↑↓选择 Enter购买 p/q 关闭")
 
         h, w = self.win.getmaxyx()
         for i, perk in enumerate(self.perks):

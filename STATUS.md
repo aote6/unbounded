@@ -60,6 +60,13 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 
 ## 六、会话完成记录（滚动更新，最新在最上）
 
+2026-07-13 本次会话（第三轮，实机验证暴露的真实崩溃+功能性bug修复）：
+1. 【紧急修复】legacy_state.py 悬空引用已删除常量导致的必崩溃：第一轮会话清理死常量时删除了 config.py 里的 KEY_CLOSE/KEY_CLOSE_UPPER，但 ui/states/legacy_state.py 仍在 import 使用它们，且该State在角色死亡时必定被push——即当前版本只要触发一次死亡，进入遗产商店瞬间必然ImportError崩溃。修复：新增对齐规范的 KEY_LEGACY_SHOP_UPPER("P")，legacy_state.py 关闭逻辑改为 (KEY_LEGACY_SHOP, KEY_LEGACY_SHOP_UPPER, KEY_QUIT, KEY_QUIT_UPPER)，与其余菜单"开启键或q"规范统一，同步修正过时提示文案。已实机验证：死亡→遗产商店正常弹出/正常关闭，不再崩溃
+2. 【功能性修复】遗产商店"item"类型perk（石剑开局/石镐开局）完全无效：apply_legacy_perks() 原逻辑通过 items.json 按名字反查装备属性，但"石剑""石镐"这类装备实际由 item_generator 动态生成，从未存在于 items.json，导致反查拿到空字典，生成 slot=None/attack_bonus=0 的空壳装备，静默塞入背包但无法装备、不显示。修复：PERKS数据里 item_name 字段改为直接存 archetype/material（与配方名解耦，不再依赖反查recipes.json），apply_legacy_perks() 的 item 分支改为调用 item_generator 现场生成完整装备实例。已实机验证：死亡→购买perk→复活后背包/装备栏确认拿到真实可装备的武器
+3. 【过程教训】补丁脚本执行时产生二次真实崩溃（NameError: EquipmentInstance未定义）：修复第2条时，用于"存在性检查后决定是否打补丁"的辅助脚本因预设的import匹配字符串与实际代码不符而跳过了本该执行的修改，但脚本本身没有assert报错、只打印了提示信息，这条提示被忽略后直接进入下一步，导致漏改。修复：核实legacy_system.py顶部实际import结构后手动补全。教训沉淀：以后补丁脚本里"未匹配到预期内容"的提示信息，必须停下来人工确认后再继续，不能因为脚本没有报错退出就默认判定为"已跳过、无影响"
+4. 全局结构审计范围内确认非紧急、暂不处理的项：unbounded_backup_before_migrate/ 及根目录 _*.py/*.bak 已全部被 .gitignore 排除（git ls-files 计数为0），非真实隐患，已清理（详见下方"第二轮"记录）；main.py::_Player.INITIAL_HP（dataclass字段）与 config.py::PLAYER_INITIAL_HP（模块级平铺常量）并存，前者从未被任何代码读取，是又一例"新旧框架迁移未完全收尾"的死字段，本轮验证死亡流程时误改前者当场发现，暂不处理，已记入第七节技术债
+5. crafting_state.py::_craft() PLACEABLE分支的脆弱隐患（详见下方历史记录第10条）本轮未处理，等待用户实机确认门窗放置是否存在问题后再排期
+
 2026-07-13 本次会话（第二轮，结构审计）：
 1. 全局结构审计（响应"隐藏在代码深处的结构问题"排查诉求）：
    - unbounded_backup_before_migrate/（1022K，与正式代码同名文件行数完全一致）+ 根目录下 _*.py/*.bak 一次性脚本：核实均已被 .gitignore 排除（git ls-files 计数为0），非真实隐患，非紧急清理项
@@ -128,6 +135,8 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 7. docstring风格不统一（Google英文/简短英文/中文混搭）+ 中文标点残留，有DeepSeek整理好的统一修复清单可直接执行，纯粹的清洁工作，优先级最低，可以顺手做不用专门排期
 
 其他：
+10. crafting_state.py::_craft() 的 PLACEABLE 分支存在脆弱隐患：result_def 里的 place_tile/consume_item/name 字段从未被实际读取，直接用"配方名"当物品名塞入背包，目前门窗类配方能正常工作纯属"配方名==物品名==tile名"三者巧合一致，并非真正按数据驱动。风险：以后新增配方若三个名字对不齐，会静默出现"合成出的东西放不进世界"或错位，且难以联想到根因是这里。修复思路：改用 result_def.get("name", name) 和 result_def.get("place_tile", name) 显式读取，不再假设配方key等于物品名。（本条系2026-07-13结构审计中排查合成门窗问题时发现，未修复，按用户要求优先级让位于技术债清理，等待用户实机确认门窗是否真的能放置成功后再决定是否处理）
+
 8. DESIGN.md/ROADMAP.md内容滞后于实际代码（如M21"中立生物+生态"早已上线但仍标"待完成"），建议找时间通读代码校准
 9. ~~词缀系统on_attack效果实际落地程度~~【2026-07-13已解决，详见第六节】：核实发现DAMAGE_DEALT事件从未被emit，链路已接通，并修复了接通后暴露的4处game.equipment对象/字符串类型混淆bug。
 

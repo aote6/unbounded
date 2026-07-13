@@ -1,9 +1,12 @@
 {
   "version": 1,
-  "total_deaths": 4,
-  "legacy_points": 4,
+  "total_deaths": 6,
+  "legacy_points": 5,
   "unlocked_recipes": [],
-  "unlocked_perks": [],
+  "unlocked_perks": [
+    "start_with_sword",
+    "start_with_pickaxe"
+  ],
   "highest_depth": 0,
   "total_monsters_killed": 0,
   "total_blocks_placed": 0,
@@ -53,6 +56,30 @@
         "digging": 0,
         "combat": 0,
         "defense": 498
+      },
+      "monsters_killed_this_life": 0
+    },
+    {
+      "death_turn": 45,
+      "death_x": 18,
+      "death_y": -16,
+      "death_z": 0,
+      "skills": {
+        "digging": 10,
+        "combat": 0,
+        "defense": 2
+      },
+      "monsters_killed_this_life": 0
+    },
+    {
+      "death_turn": 81,
+      "death_x": 4,
+      "death_y": -41,
+      "death_z": 0,
+      "skills": {
+        "digging": 0,
+        "combat": 0,
+        "defense": 3
       },
       "monsters_killed_this_life": 0
     }
