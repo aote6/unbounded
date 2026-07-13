@@ -60,6 +60,12 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 
 ## 六、会话完成记录（滚动更新，最新在最上）
 
+2026-07-13 本次会话（第五轮，EventBus重复订阅修复 + 视觉反馈系统需求梳理）：
+1. 【真实累积bug修复】EventBus单例的subscribe()没有去重保护，new_game()里 `EventBus().subscribe(EventType.TILE_CHANGED, ...)` 每次死亡重开局都会重复注册，导致同一个check_room_formation随游戏死亡次数线性累积重复调用（不崩溃但逻辑重复执行次数会无限增长，永不清零）。EventBus.clear()方法虽然写了"用于新游戏"的注释但从未被实际调用，是个只有承诺没有实现的死机制。修复：将该订阅从 new_game() 移至 main.py::main() 内，与 register_status() 并列，改为程序启动时注册一次，不随重开局重复。这是本轮排查视觉特效系统订阅方式时，为确认"正确的注册模式该长什么样"而顺带挖出的独立bug
+2. 【发现但暂不处理】do_place() 内的消息覆盖问题：_place_tile_and_emit() 触发的TILE_CHANGED事件会让check_room_formation()把"检测到封闭空间/完整房间"这类反馈写入game.message，但函数末尾无条件执行 game.message = f"放置了{...}"，把前者覆盖掉，导致这类反馈实际上从未能被玩家看到。不属于本轮修复范围，记录在案，计划与下方视觉反馈系统一起解决（用浮动飘字展示这类次要提示，不再抢占主HUD message这一行）
+3. 【需求梳理，未实现】用户提出游戏画面反馈单薄的诉求，讨论出"浮动文字/特效层"方案：伤害数字、怪物名称飘字、对话气泡、攻击特效等，用独立于地图tile网格的覆盖层实现（复用已有EventBus机制订阅DAMAGE_DEALT等事件触发），不侵入player_action.py等战斗逻辑代码。同时排查确认：地图渲染核心 _draw_map_row() 按"字符个数"而非display_width()计算列位置，若直接将怪物tile字符替换为汉字（如"史"代替"s"）会导致display_width不匹配、该行后续内容整体错位——文本对齐工具text_width.py::display_width()已存在但未被地图渲染路径实际使用。结论：怪物/玩家本体"汉字化"需要先改造地图渲染核心的列计算逻辑，风险较高，本轮暂缓，只做不碰tile网格的浮动文字覆盖层
+4. 待实现：浮动文字覆盖层的具体patch（effect.py/effect_manager.py + 通过EventBus订阅DAMAGE_DEALT/MONSTER_KILLED等事件触发飘字 + game_renderer.py里在主地图绘制完成后追加一轮覆盖层渲染），下轮会话继续
+
 2026-07-13 本次会话（第四轮，键位系统彻底清债）：
 1. 【根源修复】KEY_LOAD/L 大小写撞车：keybind.py::DEFAULTS 里 "load": "L" 本身写错大小写（对照save/save_upper的正确写法），且缺失load_upper字段，导致KEY_LOAD被json覆盖成大写L、KEY_LOAD_UPPER退回默认值也是大写L，读档键实际只有大写L能用，小写l完全无效
 2. 排查过程中发现更深层根源：小写l本身是hjkl移动键系统里的"右"（KEY_RIGHT），任何功能想用小写l都会天生冲突，不是配置写错，是设计层面的键位占用冲突

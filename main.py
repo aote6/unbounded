@@ -465,6 +465,9 @@ def main(stdscr):
     _setup_logging()
     setup_curses(stdscr)
     register_status()
+    from systems.core.event_bus import EventBus, EventType
+    from systems.world.room_system import check_room_formation
+    EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
     load_rules()
     game = Game()
     game.engine = Engine(stdscr)

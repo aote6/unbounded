@@ -76,7 +76,6 @@ def new_game(game, inherit_world=False):
     game.equipment = {}
     game.buff_manager = create_buff_manager()
     apply_legacy_perks(game)
-    EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
     game.message = "欢迎来到新世界。" if not inherit_world else "你在这个熟悉的世界醒来..."
     game.place_mode = None
     game.last_place = None
