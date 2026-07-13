@@ -60,7 +60,14 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 
 ## 六、会话完成记录（滚动更新，最新在最上）
 
-2026-07-13 本次会话：
+2026-07-13 本次会话（第二轮，结构审计）：
+1. 全局结构审计（响应"隐藏在代码深处的结构问题"排查诉求）：
+   - unbounded_backup_before_migrate/（1022K，与正式代码同名文件行数完全一致）+ 根目录下 _*.py/*.bak 一次性脚本：核实均已被 .gitignore 排除（git ls-files 计数为0），非真实隐患，非紧急清理项
+   - legacy 命名三方撞车：main.py::LegacyState（dataclass，实际是"本局统计"）与 ui/states/legacy_state.py::LegacyState（State子类，遗产商店UI）同名不同义，且 main.py 原docstring错误标注"跨局遗产统计"（应为本局），是复制粘贴污染导致的认知陷阱
+   - 已修复：main.py::LegacyState → LifeStats，self.legacy → self.life_stats，docstring改为"本局角色统计（死亡时结算进legacy_system的跨局遗产，不要与跨局遗产本身混淆）"，同步改 goal_system.py 一处引用。_xxx_this_life 系列property命名本身准确未动。改动面严格限定在2个文件、10处替换，字符串匹配+assert校验，smoke_test_full.py 6项全过
+   - 排查方法沉淀：改名前必须先跑三层确认——类名引用面(grep ClassName)、实例属性引用面(grep .attr.field)、衍生命名引用面(grep this_life等)，确认改动不会漏改或误伤其他同名/近名符号
+
+2026-07-13 本次会话（第一轮）：
 1. 键位系统整顿（技术债清偿，对应第七节旧待办第1条）：
    - 删除死配置文件 data/keybinds.json（从未被任何代码读取，且内容早已与生效配置 systems/data/keybinds.json 不同步）
    - 修复 keybind.py 中 DEFAULTS 的 save/save_upper 大小写bug：原来 "save":"S" 与 config.py 默认 KEY_SAVE=ord('s') 冲突，导致小写 s 保存键实际失效，现已修复为 save:"s" + save_upper:"S"

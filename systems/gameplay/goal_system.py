@@ -79,7 +79,7 @@ def _evaluate_condition(condition, game):
             if game.turn < value:
                 return False
         elif key == "monsters_killed":
-            if game.legacy.monsters_killed < value:
+            if game.life_stats.monsters_killed < value:
                 return False
         elif key == "has_item":
             if game.inventory.count(value) == 0:

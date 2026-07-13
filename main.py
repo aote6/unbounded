@@ -113,8 +113,8 @@ class GoalState:
 
 
 @dataclass
-class LegacyState:
-    """跨局遗产统计"""
+class LifeStats:
+    """本局角色统计（死亡时结算进 legacy_system 的跨局遗产，不要与跨局遗产本身混淆）"""
     monsters_killed: int = 0
     blocks_placed: int = 0
     crafted: List[str] = field(default_factory=list)
@@ -183,7 +183,7 @@ class Game:
         self.world_state = WorldState()
         self.ui = UIState()
         self.goal_state = GoalState()
-        self.legacy = LegacyState()
+        self.life_stats = LifeStats()
 
         self.recipes: dict = {}
         self.items: dict = {}
@@ -412,22 +412,22 @@ class Game:
     def goal_message_shown(self, v): self.goal_state.message_shown = v
 
     # ═══════════════════════════════════
-    # 向后兼容 property — LegacyState
+    # 向后兼容 property — LifeStats（本局统计，非跨局遗产）
     # ═══════════════════════════════════
     @property
-    def _monsters_killed_this_life(self): return self.legacy.monsters_killed
+    def _monsters_killed_this_life(self): return self.life_stats.monsters_killed
     @_monsters_killed_this_life.setter
-    def _monsters_killed_this_life(self, v): self.legacy.monsters_killed = v
+    def _monsters_killed_this_life(self, v): self.life_stats.monsters_killed = v
 
     @property
-    def _blocks_placed_this_life(self): return self.legacy.blocks_placed
+    def _blocks_placed_this_life(self): return self.life_stats.blocks_placed
     @_blocks_placed_this_life.setter
-    def _blocks_placed_this_life(self, v): self.legacy.blocks_placed = v
+    def _blocks_placed_this_life(self, v): self.life_stats.blocks_placed = v
 
     @property
-    def _crafted_this_life(self): return self.legacy.crafted
+    def _crafted_this_life(self): return self.life_stats.crafted
     @_crafted_this_life.setter
-    def _crafted_this_life(self, v): self.legacy.crafted = v
+    def _crafted_this_life(self, v): self.life_stats.crafted = v
 
     # ═══════════════════════════════════
     # 静态数据加载
