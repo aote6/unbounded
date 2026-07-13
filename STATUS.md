@@ -70,6 +70,23 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
    - equipment_state.py 从"任意键关闭"改为 e/q 关闭，与其余菜单行为统一
    - 顺手修复 tests/smoke_test_full.py 中迁移遗留的孤儿导入路径：from systems import save_manager → from systems.core import save_manager（此前该测试因导入路径错误从未真正跑通，存档持久化功能实际从未被自动化验证过，现已验证通过）
    - smoke_test_full.py 全部6项测试通过
+2. 存档版本迁移机制显式化：
+   - world_data 补充 version 字段，与 player_data 对齐
+   - 原来隐藏在 if "player" in data / else 判断里的 v1(扁平)->v2(player/world分组) 格式转换，重构为可命名、可测试的 _migrate_v1_to_v2() 函数，并建立 _MIGRATIONS 注册表 + migrate_save_data() 统一入口，以后升级到v3只需新增 _migrate_v2_to_v3 并注册，不用再改 apply_load_data 主逻辑
+3. 接通装备on_attack/lifesteal效果链路（对应第七节旧待办第9条）：
+   - 核实发现 EventType.DAMAGE_DEALT 全项目从未被 emit 过，status_system.py 中订阅的 _on_damage_dealt（负责燃烧/中毒/吸血特效）是完全未被执行过的死代码
+   - 在 player_action.py（玩家攻击怪物）和 monster_ai.py（怪物攻击玩家）两处补上 EventBus().emit(DAMAGE_DEALT)
+   - 接通后连续暴露4处同类真bug：多个函数（collect_attack_effects、_player_attack_tags、吸血计算）都误把 game.equipment.values() 里的 EquipmentInstance 对象当字符串名字使用，导致"对象当dict key"的TypeError。逐一修复为直接读取对象属性（getattr(inst, field, default)），不再反查背包
+   - status_system.py 里 game._collect_attack_effects()/game._get_item_attr() 两处调用了 Game 类根本不存在的方法，改为直接调用 combat_system.collect_attack_effects(game) 及 getattr
+   - 实机验证：完整攻击-死亡-掉落流程通过，无崩溃
+4. EventBus 全项目emit/subscribe配对审计（一次性系统排查，非逐条踩坑）：
+   - TURN_START：只订阅（status_system._on_turn_start）没emit，但核实该handler函数体是空的pass，真正的buff结算已被turn_system.py直接调用game.buff_manager.tick_all(game)取代，是M21重构后的无害冗余订阅，不影响功能，可择机清理但不紧急
+   - DAMAGE_DEALT：本次已修复接通（见上）
+   - MONSTER_KILLED：emit/subscribe均存在，正常
+   - PLAYER_HEALED / STATUS_APPLIED：定义了但全项目从未emit也从未subscribe，是纯粹的死枚举值，不影响任何功能，可考虑以后删除或留作扩展占位
+   - TILE_CHANGED：emit（3处）/subscribe均存在，正常
+   - 气候/天气/生态/文明系统（climate.py/weather_system.py/ecology.py/civilization.py）核实为纯坐标查询函数架构（get_xxx(x,y,seed)形式，基于种子确定性计算，不需要"tick"），不走EventBus，weather_system.get_weather_at 确认被 monster_ai.py 和 game_renderer.py 实际调用，链路正常，非断点
+   - 结论：本次审计范围内（EventBus全部6个事件类型 + 气候/天气/生态调用链）未发现新的断线，DAMAGE_DEALT是本次审计前唯一的真实断点且已修复
 
 2026-07-12 本次会话：
 1. 新增背包界面（ui/states/inventory_state.py，按键 i）—— 按材料/装备/消耗品/建材分类浏览，装备类可直接Enter装备/卸下（复用game.equipment，无需跳转装备菜单）
@@ -105,7 +122,7 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 
 其他：
 8. DESIGN.md/ROADMAP.md内容滞后于实际代码（如M21"中立生物+生态"早已上线但仍标"待完成"），建议找时间通读代码校准
-9. 词缀系统on_attack效果实际落地程度未核实（equipment.py、item_generator.py、combat_system.py::collect_attack_effects）
+9. ~~词缀系统on_attack效果实际落地程度~~【2026-07-13已解决，详见第六节】：核实发现DAMAGE_DEALT事件从未被emit，链路已接通，并修复了接通后暴露的4处game.equipment对象/字符串类型混淆bug。
 
 ## 八、给下次会话/协作者的建议
 
