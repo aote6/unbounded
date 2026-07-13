@@ -51,6 +51,7 @@ def build_save_data(game):
         "bed_y": game.bed_y,
     }
     world_data = {
+        "version": CURRENT_SAVE_VERSION,
         "monsters": [_serialize_monster(m) for m in game.monsters],
         "corpses": {f"{x},{y}": v for (x, y), v in game.corpses.items()},
         "chests": _serialize_chests(game.chests),
@@ -128,33 +129,94 @@ def _serialize_chests(chests):
     return result
 
 
+def _detect_save_version(data):
+    """探测存档数据的版本号。
+
+    v1 存档是早期的扁平格式（所有字段直接平铺在根节点，没有
+    "player"/"world" 分组），当时没有显式的 version 字段，
+    因此探测到扁平格式即视为 v1。v2 起存档拆分为
+    {"player": {...}, "world": {...}} 两个子节点，且各自带有
+    "version" 字段。
+
+    Args:
+        data: 从磁盘读入的原始存档 dict。
+
+    Returns:
+        int: 探测到的存档版本号。
+    """
+    if "player" in data:
+        return data["player"].get("version", data.get("version", 1))
+    return data.get("version", 1)
+
+
+def _migrate_v1_to_v2(data):
+    """把 v1 扁平格式存档迁移为 v2 的 {"player","world"} 分组格式。
+
+    v1 存档所有字段（player_x、monsters、chests……）平铺在同一
+    个 dict 里，没有 player/world 分组。v2 起 save_manager 把
+    存档拆成 player.json + world_meta.json 两个文件，读取时统一
+    包装成 {"player": ..., "world": ...} 结构。此函数只做结构
+    包装，不改变任何字段的语义或数值。
+
+    Args:
+        data: v1 格式的扁平存档 dict。
+
+    Returns:
+        dict: 迁移后的 v2 格式 {"player": data, "world": data}。
+        v1 存档里 player 和 world 字段本就混在一起，两侧共用
+        同一份 data 是安全的，因为 _apply_player_data /
+        _apply_world_data 各自只读取自己关心的 key，互不干扰。
+    """
+    return {"player": data, "world": data}
+
+
+# 版本迁移链：key 是"迁移前"版本号，value 是对应的迁移函数。
+# 以后升到 v3，只需要新增一个 _migrate_v2_to_v3 函数并在此注册，
+# migrate_save_data 会自动串联执行，不需要改动 apply_load_data。
+_MIGRATIONS = {
+    1: _migrate_v1_to_v2,
+}
+
+
+def migrate_save_data(data):
+    """将任意旧版本存档逐步迁移到 CURRENT_SAVE_VERSION。
+
+    依次应用 _MIGRATIONS 中登记的迁移函数，直到版本号达到
+    CURRENT_SAVE_VERSION 或没有更多迁移步骤可用为止。
+
+    Args:
+        data: 从磁盘读入的原始存档 dict，可能是任意历史版本。
+
+    Returns:
+        tuple: (迁移后的 data dict, 原始版本号, 是否发生了迁移)。
+    """
+    original_version = _detect_save_version(data)
+    version = original_version
+    migrated = False
+    while version < CURRENT_SAVE_VERSION and version in _MIGRATIONS:
+        data = _MIGRATIONS[version](data)
+        migrated = True
+        version += 1
+    return data, original_version, migrated
+
+
 def apply_load_data(game, data):
     """Apply loaded save data to the current game state.
 
-    Handles both the newer {"player": ..., "world": ...} format and the
-    legacy flat format, and reports a version-upgrade message if the
-    loaded save predates the current save version.
+    先探测存档版本并按需迁移到当前版本，再把 player/world 数据
+    应用到 game 对象上。
 
     Args:
         game: The current game state object to populate.
         data: The loaded save data dict.
     """
-    save_version = data.get(
-        "player",
-        {}).get(
-        "version",
-        data.get(
-            "version",
-            1))
-    if save_version < CURRENT_SAVE_VERSION:
-        game.message = f"旧版本存档(v{save_version})已自动升级到v{CURRENT_SAVE_VERSION}"
-    if "player" in data:
-        _apply_player_data(game, data["player"])
-        _apply_world_data(game, data["world"])
-    else:
-        _apply_player_data(game, data)
-        _apply_world_data(game, data)
-    game.message = f"读档成功。位置 ({game.player_x},{game.player_y})。"
+    data, original_version, migrated = migrate_save_data(data)
+    if migrated:
+        game.message = f"旧版本存档(v{original_version})已自动升级到v{CURRENT_SAVE_VERSION}"
+    _apply_player_data(game, data["player"])
+    _apply_world_data(game, data["world"])
+    if not migrated:
+        game.message = f"读档成功。位置 ({game.player_x},{game.player_y})。"
 
 
 def _apply_player_data(game, data):
