@@ -70,7 +70,14 @@ def count_equipment(game, name):
 
 
 def get_item_attr(game, item_name, field_name):
-    """获取装备实例的属性，兼容旧 items dict。"""
+    """按名字查询背包中装备实例的属性，找不到则回退查 items 静态数据。
+
+    注意：这里的 item_name 必须是字符串名字，用于在背包中按名字
+    查找实例。如果你手上已经是 EquipmentInstance 对象（例如遍历
+    game.equipment.values() 得到的对象），应直接用
+    getattr(inst, field_name, 0)，不要再调用本函数——
+    本函数曾被误用于传入对象而非名字，导致 TypeError（对象不可哈希）。
+    """
     inst = get_equipment_instance(game, item_name)
     if inst:
         return getattr(inst, field_name, 0)

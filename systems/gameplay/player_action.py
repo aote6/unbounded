@@ -197,6 +197,10 @@ def try_move_or_dig(game, dx, dy):
             dmg += game._combat_damage_bonus()
             mon["hp"] -= dmg
             game.message = f"攻击 {mon['name']}，造成 {dmg} 点伤害"
+            EventBus().emit(
+                GameEvent(
+                    EventType.DAMAGE_DEALT, {
+                        "target": mon, "damage": dmg, "attacker": "player"}), game)
             if mon["hp"] <= 0:
                 kill_monster(game, mon, cause="attack")
         else:

@@ -59,12 +59,20 @@ def kill_monster(game, monster, cause="attack"):
 
 
 def collect_attack_effects(game):
-    """收集所有装备的 on_attack 效果"""
+    """收集所有已装备物品的 on_attack 效果。
+
+    game.equipment 的槽位里存的本就是 EquipmentInstance 对象
+    （或历史遗留的纯字符串，见 save_system._deserialize_equipment
+    的兼容注释），不需要再反查背包。之前误把对象当字符串传给
+    get_equipment_instance()，导致对象被当成 dict key 使用而崩溃。
+    """
     effects = []
-    for item_name in game.equipment.values():
-        inst = get_equipment_instance(game, item_name)
-        if inst:
+    for inst in game.equipment.values():
+        if inst is None:
+            continue
+        if hasattr(inst, "on_attack"):
             effects.extend(inst.on_attack)
-        else:
-            effects.extend(game.items.get(item_name, {}).get("on_attack", []))
+        elif isinstance(inst, str):
+            # 兼容旧存档里可能残留的纯字符串装备记录
+            effects.extend(game.items.get(inst, {}).get("on_attack", []))
     return effects

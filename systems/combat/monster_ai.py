@@ -10,6 +10,7 @@ import monsters as monsters_mod
 from tile_props import get_tile_props
 from systems.entity.monster_index import add_monster, monster_moved
 from systems.combat.combat_system import kill_monster
+from systems.core.event_bus import EventBus, EventType, GameEvent
 
 # ── 工具函数（从 monsters.py 迁移，避免循环导入）──
 
@@ -36,6 +37,10 @@ def tick_monsters(game):
                 game.player_hp -= dmg
                 msgs.append(f"{m['name']} 攻击了你，造成 {dmg} 点伤害！")
                 game._gain_skill("defense")
+                EventBus().emit(
+                    GameEvent(
+                        EventType.DAMAGE_DEALT, {
+                            "target": game, "damage": dmg, "attacker": m}), game)
             else:
                 msgs.append(f"{m['name']} 的攻击落空了。")
     # M22: 怪物攻击附近的中立生物

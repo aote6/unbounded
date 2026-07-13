@@ -1,7 +1,7 @@
 """状态系统：统一管理燃烧、中毒、吸血等状态效果。"""
 from systems.core.event_bus import EventBus, EventType
-from systems.gameplay.inventory_actions import get_equipment_instance
 from systems.entity.tag_system import check_interaction
+from systems.combat.combat_system import collect_attack_effects
 
 
 def _tags_of(entity):
@@ -19,7 +19,11 @@ def _tags_of(entity):
 
 
 def _player_attack_tags(game):
-    """获取玩家当前攻击的标签。
+    """获取玩家当前主手武器的标签。
+
+    game.equipment 槽位里存的是 EquipmentInstance 对象本身
+    （或历史遗留的纯字符串），不是名字字符串，因此这里直接读取
+    对象属性，不需要（也不能）再拿它当 key 去反查背包或 items。
 
     Args:
         game: The main game controller instance.
@@ -28,14 +32,14 @@ def _player_attack_tags(game):
         list: A list of tags associated with the player's current weapon.
     """
     tags = []
-    weapon_name = game.equipment.get("main_hand")
-    if not weapon_name:
+    weapon = game.equipment.get("main_hand")
+    if weapon is None:
         return tags
-    inst = get_equipment_instance(game, weapon_name)
-    if inst and hasattr(inst, 'tags') and inst.tags:
-        tags.extend(inst.tags)
-    elif weapon_name in game.items:
-        tags.extend(game.items[weapon_name].get("tags", []))
+    if hasattr(weapon, "tags") and weapon.tags:
+        tags.extend(weapon.tags)
+    elif isinstance(weapon, str) and weapon in game.items:
+        # 兼容旧存档里可能残留的纯字符串装备记录
+        tags.extend(game.items[weapon].get("tags", []))
     return tags
 
 
@@ -54,7 +58,7 @@ def _on_damage_dealt(event, game):
 
     bm = game.buff_manager
 
-    effects = game._collect_attack_effects()
+    effects = collect_attack_effects(game)
     for effect in effects:
         if effect == "fire":
             bm.add(target, "burning", duration=3, damage_per_turn=2, source="fire")
@@ -72,8 +76,10 @@ def _on_damage_dealt(event, game):
 
     if attacker == "player" and damage > 0:
         lifesteal_total = 0
-        for item_name in game.equipment.values():
-            lifesteal_total += game._get_item_attr(item_name, "lifesteal")
+        for inst in game.equipment.values():
+            if inst is None:
+                continue
+            lifesteal_total += getattr(inst, "lifesteal", 0)
         if lifesteal_total > 0:
             heal = min(lifesteal_total, damage)
             game.player_hp = min(game.player_max_hp, game.player_hp + heal)
