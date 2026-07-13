@@ -60,6 +60,17 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 
 ## 六、会话完成记录（滚动更新，最新在最上）
 
+2026-07-13 本次会话：
+1. 键位系统整顿（技术债清偿，对应第七节旧待办第1条）：
+   - 删除死配置文件 data/keybinds.json（从未被任何代码读取，且内容早已与生效配置 systems/data/keybinds.json 不同步）
+   - 修复 keybind.py 中 DEFAULTS 的 save/save_upper 大小写bug：原来 "save":"S" 与 config.py 默认 KEY_SAVE=ord('s') 冲突，导致小写 s 保存键实际失效，现已修复为 save:"s" + save_upper:"S"
+   - keybinds.json 补全新功能遗漏的键位字段：inventory、sprint
+   - 删除 config.py 中全项目零引用的死常量 KEY_CLOSE / KEY_CLOSE_UPPER
+   - 统一5个子菜单（build/inventory/equipment/chest/crafting）的关闭逻辑为"开启键或q/Q"，全部改用 config.KEY_XXX 常量，不再硬编码 ord('c')/ord('q')/ord('o')。原本 build_state 用 c 关闭、inventory_state 用 c 关闭，与各自开启键（b、i）不一致，是主要的键位混乱来源，现已理顺为 b/q 与 i/q
+   - equipment_state.py 从"任意键关闭"改为 e/q 关闭，与其余菜单行为统一
+   - 顺手修复 tests/smoke_test_full.py 中迁移遗留的孤儿导入路径：from systems import save_manager → from systems.core import save_manager（此前该测试因导入路径错误从未真正跑通，存档持久化功能实际从未被自动化验证过，现已验证通过）
+   - smoke_test_full.py 全部6项测试通过
+
 2026-07-12 本次会话：
 1. 新增背包界面（ui/states/inventory_state.py，按键 i）—— 按材料/装备/消耗品/建材分类浏览，装备类可直接Enter装备/卸下（复用game.equipment，无需跳转装备菜单）
 2. 装备菜单简化（ui/states/equipment_state.py）—— 从"操作菜单"降级为"只读状态一览"，避免和背包功能重复/行为不一致
@@ -82,7 +93,7 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 ## 七、已知技术债 / 待核实事项（按优先级粗排）
 
 高优先级（下次会话建议先看）：
-1. 快捷键系统混乱：keybind.py 默认配置里 "close": "c" / "close_upper": "q" 实际赋值有bug（close_upper本该是close的大写"C"，实际赋成了"q"，导致和quit键冲突），craft和close也共用c键冲突。本次会话发现但未处理，用户明确要求"好好按标准规划一下"，建议专门开一次会话统一整理，不要和别的功能改动混在一起做。
+1. ~~快捷键系统混乱~~【2026-07-13已解决，详见第六节】：keybind.py 默认配置里 close/close_upper 已删除（全项目零引用死常量），5个子菜单关闭逻辑已统一为"开启键或q"，save键大小写冲突已修复。
 2. 合成门窗功能缺失：用户最初提出的具体诉求，建造系统目前无法合成门/窗，尚未排查具体在哪个环节缺失（crafting_state.py还是配方数据data/里缺配方）。
 
 中优先级（DeepSeek协作分析产出，未逐条验证真实性，需要按需甄别）：
