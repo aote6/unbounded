@@ -97,7 +97,7 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 2. 合成门窗功能缺失：用户最初提出的具体诉求，建造系统目前无法合成门/窗，尚未排查具体在哪个环节缺失（crafting_state.py还是配方数据data/里缺配方）。
 
 中优先级（DeepSeek协作分析产出，未逐条验证真实性，需要按需甄别）：
-3. generate_loot_for()（monsters.py）每次击杀怪物都重新读盘load_monsters()，应改用StaticDataRegistry缓存
+3. ~~generate_loot_for()重复读盘~~【2026-07-13核实：此条已过时，实际代码已通过StaticDataRegistry缓存monster_data，generate_loot_for只在registry未初始化时才回退读盘，正常游戏流程下不会触发。本条系文档滞后于代码，非真实待办，予以勾销。】
 4. systems/core/event_bus.py::EventBus()是模块级全局单例，多局测试并行可能互相污染
 5. main.py::Game类偏"上帝对象"，承载过多职责，可考虑拆分（不紧急，架构判断标准见第三节第5条，目前尚未到"改一个系统牵动十几个文件"的失控程度）
 6. ui/states/下六个State文件（build/crafting/equipment/chest/dig/look）窗口创建、边框绘制等逻辑有重复，可抽取公共Mixin基类
