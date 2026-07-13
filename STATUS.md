@@ -178,3 +178,9 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 - M28 自定义键位：keybinds.json外部配置，运行时重载（本身在2026-07-13已被重新整顿，详见第六节）
 
 注：ROADMAP.md 中曾把 M17/M20/M21/M22/M23 列为"待完成"，与 DESIGN.md 的"已完成"矛盾，且核实后（2026-07-13）确认这些功能均已实际存在于代码中，ROADMAP.md 的滞后记录已随文件一并删除。
+
+11. `_Player.INITIAL_HP` 死字段：`PlayerState.__init__` 中 `hp: int = PLAYER_INITIAL_HP` 正常使用，但存在一个旧常量 `_Player.INITIAL_HP` 引用了一个已不存在的类 `_Player`，属于历史残留死代码，可安全删除。
+
+12. `do_place()` 消息覆盖：`player_action.py::do_place()` 在成功放置后会设置 `game.message`，但部分调用方在调用 `do_place()` 之后无条件覆盖了这条消息（如 `play_state` 或其他快捷放置入口），导致放置成功的反馈被吞掉，玩家看不到"放置了X"的提示。
+
+13. `STATUS.md` 条目编号已满，下次整理时建议合并已勾销项并重新排号。
