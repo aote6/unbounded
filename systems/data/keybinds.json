@@ -12,7 +12,7 @@
   "repeat": ".",
   "reload": "r",
   "reload_upper": "R",
-  "save": "S",
+  "save": "s",
   "load": "L",
   "move_up": "KEY_UP",
   "move_down": "KEY_DOWN",
@@ -22,10 +22,11 @@
   "move_down_alt": "j",
   "move_left_alt": "h",
   "move_right_alt": "l",
-  "close": "c",
-  "close_upper": "q",
   "confirm": "KEY_ENTER",
   "switch_tab": ",",
   "transfer_all": "+",
-  "legacy_shop": "p"
+  "legacy_shop": "p",
+  "save_upper": "S",
+  "inventory": "i",
+  "sprint": "f"
 }

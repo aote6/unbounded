@@ -103,7 +103,7 @@ def main():
 
     # ── 用例5：存档/读档，装备应保持一致 ──
     def test_save_load_roundtrip():
-        from systems import save_manager
+        from systems.core import save_manager
 
         equipped_name = None
         for inst in game.equipment.values():

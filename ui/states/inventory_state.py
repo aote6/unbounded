@@ -2,6 +2,7 @@
 
 import curses
 from core.state_machine import State
+from config import KEY_INVENTORY, KEY_QUIT, KEY_QUIT_UPPER
 from ui.text_width import display_width
 
 CATEGORIES = [
@@ -45,7 +46,7 @@ class InventoryState(State):
         return entries
 
     def handle_input(self, key):
-        if key in (ord('c'), ord('q')):
+        if key in (KEY_INVENTORY, KEY_QUIT, KEY_QUIT_UPPER):
             self.game.engine.pop_state()
             return None
         elif key == curses.KEY_LEFT:
@@ -105,7 +106,7 @@ class InventoryState(State):
         self.win.erase()
         self.win.box()
         self.win.addstr(0, 2, " 背包 ")
-        self.win.addstr(1, 2, "←→ 切换分类 ↑↓ 选择 Enter 装备/卸下 c 关闭")
+        self.win.addstr(1, 2, "←→ 切换分类 ↑↓ 选择 Enter 装备/卸下 i/q 关闭")
 
         h, w = self.win.getmaxyx()
 

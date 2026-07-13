@@ -100,8 +100,6 @@ KEY_CHEST = ord('o')
 KEY_CHEST_UPPER = ord('O')
 KEY_NEW_GAME = ord('n')
 KEY_NEW_GAME_UPPER = ord('N')
-KEY_CLOSE = ord('c')
-KEY_CLOSE_UPPER = ord('q')
 KEY_ENTER = ord('\n')
 KEY_ENTER_ALT = ord('\r')
 KEY_LEFT = ord('h')
@@ -142,8 +140,6 @@ def _init_keybinds():
         "KEY_DIG": kb.get("dig", KEY_DIG),
         "KEY_CHEST": kb.get("chest", KEY_CHEST),
         "KEY_CHEST_UPPER": kb.get("chest_upper", KEY_CHEST_UPPER),
-        "KEY_CLOSE": kb.get("close", KEY_CLOSE),
-        "KEY_CLOSE_UPPER": kb.get("close_upper", KEY_CLOSE_UPPER),
         "KEY_SWITCH_TAB": kb.get("switch_tab", ord(',')),
         "KEY_TRANSFER_ALL": kb.get("transfer_all", ord('+')),
         "KEY_LEGACY_SHOP": kb.get("legacy_shop", ord('p')),

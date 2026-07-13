@@ -1,6 +1,7 @@
 from inventory import ItemCategory
 from equipment import EquipmentInstance
 from core.state_machine import State
+from config import KEY_CRAFT, KEY_CRAFT_UPPER, KEY_QUIT, KEY_QUIT_UPPER
 import random
 from systems.gameplay.inventory_actions import add_equipment_instance
 """CraftingState - 合成界面状态"""
@@ -69,7 +70,7 @@ class CraftingState(State):
             self.game.engine.pop_state()
             return None
 
-        if key in (ord('c'), ord('q')):
+        if key in (KEY_CRAFT, KEY_CRAFT_UPPER, KEY_QUIT, KEY_QUIT_UPPER):
             self.game.engine.pop_state()
             return None
         elif key == ord(','):
@@ -177,7 +178,7 @@ class CraftingState(State):
             self.selected = 0
 
         self.win.addstr(0, 2, f" 合成菜单 [{cat_name}] ")
-        self.win.addstr(1, 2, ",切换分类 | ↑↓选择 | Enter合成 | c 关闭")
+        self.win.addstr(1, 2, ",切换分类 | ↑↓选择 | Enter合成 | c/q 关闭")
 
         h, w = self.win.getmaxyx()
         for i, name in enumerate(names):

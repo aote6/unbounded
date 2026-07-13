@@ -4,6 +4,7 @@ from systems.gameplay.inventory_actions import add_equipment_instance
 import curses
 from core.state_machine import State
 from systems.gameplay.interaction import get_nearby_chest
+from config import KEY_CHEST, KEY_CHEST_UPPER, KEY_QUIT, KEY_QUIT_UPPER
 
 
 class ChestState(State):
@@ -28,7 +29,7 @@ class ChestState(State):
             game.engine.pop_state()
             return
         self.chest = game.chests[pos]
-        game.message = "箱子：,切换 | Enter取/存 | +全部转移 | o关闭"
+        game.message = "箱子：,切换 | Enter取/存 | +全部转移 | o/q关闭"
         self._refresh_lists()
 
     def exit(self):
@@ -71,7 +72,7 @@ class ChestState(State):
     def handle_input(self, key):
         items, _ = self._get_items()
 
-        if key in (ord('o'), ord('q')):
+        if key in (KEY_CHEST, KEY_CHEST_UPPER, KEY_QUIT, KEY_QUIT_UPPER):
             self.game.engine.pop_state()
             return None
         elif key == ord(','):
@@ -172,7 +173,7 @@ class ChestState(State):
         self.win.erase()
         self.win.box()
         self.win.addstr(0, 2, f" {title} ")
-        self.win.addstr(1, 2, ",切换 | Enter取/存 | +全部转移 | o关闭")
+        self.win.addstr(1, 2, ",切换 | Enter取/存 | +全部转移 | o/q关闭")
 
         if not items:
             self.win.addstr(3, 2, "（空）")

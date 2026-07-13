@@ -5,6 +5,7 @@ from core.state_machine import State
 from config import (
     DIRECTIONS,
     KEY_REPEAT,
+    KEY_BUILD, KEY_QUIT, KEY_QUIT_UPPER,
 )
 from systems.gameplay.player_action import do_place
 import items as items_mod
@@ -58,7 +59,7 @@ class BuildState(State):
             return self._handle_place(key)
 
     def _handle_select(self, key):
-        if key in (ord('c'), ord('q')):
+        if key in (KEY_BUILD, KEY_QUIT, KEY_QUIT_UPPER):
             self.game.engine.pop_state()
             return None
         elif key == curses.KEY_UP:
@@ -77,7 +78,7 @@ class BuildState(State):
         game.last_place = game.place_mode
         game.last_place_item_name = name
         game.cursor_x, game.cursor_y = game.player_x, game.player_y
-        game.message = f"建造模式：放置 {name}，方向键移动光标，回车放置，c 退出。"
+        game.message = f"建造模式：放置 {name}，方向键移动光标，回车放置，b/q 退出。"
         self._selecting = False
         if self.win:
             del self.win
@@ -86,7 +87,7 @@ class BuildState(State):
     def _handle_place(self, key):
         game = self.game
 
-        if key in (ord('c'), ord('q')):
+        if key in (KEY_BUILD, KEY_QUIT, KEY_QUIT_UPPER):
             game.place_mode = None
             game.place_item_name = None
             game.message = "退出了建造模式。"
@@ -110,7 +111,7 @@ class BuildState(State):
                 game.place_mode = game.last_place
                 game.place_item_name = game.last_place_item_name
                 game.cursor_x, game.cursor_y = game.player_x, game.player_y
-                game.message = f"建造模式：放置 {game.last_place}，方向键移动光标，回车放置，c 取消。"
+                game.message = f"建造模式：放置 {game.last_place}，方向键移动光标，回车放置，b/q 取消。"
             else:
                 game.message = "还没有建造过任何东西。合成一个石墙，或按 b 放置背包里的木箱。"
 
@@ -124,7 +125,7 @@ class BuildState(State):
             self.win.erase()
             self.win.box()
             self.win.addstr(0, 2, " 放置物品 ")
-            self.win.addstr(1, 2, "↑↓ 选择 Enter 进入建造 c 关闭")
+            self.win.addstr(1, 2, "↑↓ 选择 Enter 进入建造 b/q 关闭")
             h, w = self.win.getmaxyx()
             for i, name in enumerate(self._candidates):
                 line = f" {name} x{self.game.inventory.count(name)}"

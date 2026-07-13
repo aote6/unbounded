@@ -2,6 +2,7 @@
 
 import curses
 from core.state_machine import State
+from config import KEY_EQUIP, KEY_QUIT, KEY_QUIT_UPPER
 
 SLOTS = [
     ("main_hand", "主手"),
@@ -12,7 +13,7 @@ SLOTS = [
 
 
 class EquipmentState(State):
-    """装备状态一览。任意键关闭。装备/卸下请在背包(i)中操作。"""
+    """装备状态一览。按 e 或 q 关闭。装备/卸下请在背包(i)中操作。"""
 
     def __init__(self, game):
         self.game = game
@@ -33,7 +34,8 @@ class EquipmentState(State):
         self.game.engine.stdscr.refresh()
 
     def handle_input(self, key):
-        self.game.engine.pop_state()
+        if key in (KEY_EQUIP, KEY_QUIT, KEY_QUIT_UPPER):
+            self.game.engine.pop_state()
         return None
 
     def update(self):
@@ -45,7 +47,7 @@ class EquipmentState(State):
         self.win.erase()
         self.win.box()
         self.win.addstr(0, 2, " 装备状态 ")
-        self.win.addstr(1, 2, "装备/卸下请在背包(i)中操作，按任意键关闭")
+        self.win.addstr(1, 2, "装备/卸下请在背包(i)中操作，按 e/q 关闭")
 
         h, w = self.win.getmaxyx()
         for i, (slot_id, slot_name) in enumerate(SLOTS):
