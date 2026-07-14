@@ -30,7 +30,6 @@
   "石墙": {
     "type": "placeable",
     "desc": "石头砌的墙。",
-    "place_tile": "石墙",
     "drop_on_mine": {
       "石头": 2
     },
@@ -57,7 +56,6 @@
   "木墙": {
     "type": "placeable",
     "desc": "泥土压成的墙。",
-    "place_tile": "木墙",
     "drop_on_mine": {
       "泥土": 2
     },
@@ -84,7 +82,6 @@
   "火把": {
     "type": "placeable",
     "desc": "照亮周围（光照系统还没做）。",
-    "place_tile": "火把",
     "weight": 1,
     "properties": {
       "material": "wood",
@@ -111,7 +108,6 @@
   "石灰岩墙": {
     "type": "placeable",
     "desc": "石灰岩砌的墙。",
-    "place_tile": "石灰岩墙",
     "drop_on_mine": {
       "石灰岩": 2
     },
@@ -138,7 +134,6 @@
   "大理石柱": {
     "type": "placeable",
     "desc": "大理石打磨的柱子。",
-    "place_tile": "大理石柱",
     "drop_on_mine": {
       "大理石": 2
     },
@@ -165,7 +160,6 @@
   "花岗岩砖": {
     "type": "placeable",
     "desc": "花岗岩切割的砖块。",
-    "place_tile": "花岗岩砖",
     "drop_on_mine": {
       "花岗岩": 2
     },
@@ -191,7 +185,6 @@
   },
   "玻璃窗": {
     "type": "placeable",
-    "place_tile": "玻璃窗",
     "desc": "透明玻璃窗",
     "tags": [
       "glass",
@@ -216,7 +209,6 @@
   "砖墙": {
     "type": "placeable",
     "desc": "黏土烧制的砖墙。",
-    "place_tile": "砖墙",
     "drop_on_mine": {
       "黏土": 2
     },
@@ -243,7 +235,6 @@
   "砂岩墙": {
     "type": "placeable",
     "desc": "沙子压成的墙。",
-    "place_tile": "砂岩墙",
     "drop_on_mine": {
       "沙子": 2
     },
@@ -270,7 +261,6 @@
   "盐灯": {
     "type": "placeable",
     "desc": "盐矿石雕成的灯，发出微光。",
-    "place_tile": "盐灯",
     "drop_on_mine": {
       "盐矿石": 1
     },
@@ -297,7 +287,6 @@
   "硫磺灯": {
     "type": "placeable",
     "desc": "硫磺制成的灯，发出淡黄光芒。",
-    "place_tile": "硫磺灯",
     "drop_on_mine": {
       "硫磺": 1
     },
@@ -325,7 +314,6 @@
   "木箱": {
     "type": "placeable",
     "desc": "存放物品的箱子。站旁边按 o 打开。",
-    "place_tile": "木箱",
     "drop_on_mine": {
       "泥土": 4
     },
@@ -400,7 +388,6 @@
   },
   "骨墙": {
     "type": "placeable",
-    "place_tile": "骨墙",
     "desc": "阴森的骨墙",
     "tags": [
       "bone",
@@ -423,7 +410,6 @@
   },
   "丝绸墙纸": {
     "type": "placeable",
-    "place_tile": "丝绸墙纸",
     "desc": "华丽的丝绸墙纸",
     "tags": [
       "cloth",
@@ -446,7 +432,6 @@
   },
   "石砖墙": {
     "type": "placeable",
-    "place_tile": "石砖墙",
     "desc": "坚固的石砖墙",
     "tags": [
       "stone",
@@ -469,7 +454,6 @@
   },
   "地毯": {
     "type": "placeable",
-    "place_tile": "地毯",
     "desc": "柔软的地毯",
     "tags": [
       "cloth",

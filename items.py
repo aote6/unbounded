@@ -25,7 +25,12 @@ def is_placeable(items, name):
 
 
 def get_place_tile(items, name):
-    return items.get(name, {}).get("place_tile", name)
+    """放置后tile名固定等于物品名（key）。
+    历史上曾有独立的place_tile字段允许两者不同，但全项目数据审计
+    (2026-07-14)确认16个placeable物品100%二者一致、从未被实际用到过
+    这个自由度，字段已删除以消除两套key体系分裂的隐患，此函数保留
+    仅为兼容调用方签名。"""
+    return name
 
 
 def get_drop_on_mine(items, name):
