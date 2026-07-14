@@ -184,3 +184,15 @@ Termux/Python/curses 跑的无限世界 Roguelike 沙盒。核心理念：世界
 12. `do_place()` 消息覆盖：`player_action.py::do_place()` 在成功放置后会设置 `game.message`，但部分调用方在调用 `do_place()` 之后无条件覆盖了这条消息（如 `play_state` 或其他快捷放置入口），导致放置成功的反馈被吞掉，玩家看不到"放置了X"的提示。
 
 13. `STATUS.md` 条目编号已满，下次整理时建议合并已勾销项并重新排号。
+
+## 第X轮（2026-07-13）技术债清理记录
+
+### 已修复（本轮）
+1. **消息队列改造**：`game.message: str` 单槽位改为 `UIState.messages: list`，根除同回合多系统写 message 必然互相覆盖的问题。改动范围：`main.py` UIState 定义 + message property。
+2. **PLACEABLE 分支修复**：`crafting_state.py` PLACEABLE 分支此前直接用配方 key 当物品名塞背包，与同文件 MATERIAL 分支已写对的 `result_def.get("name", name)` 不一致。若配方 key 与 result.name 不同会导致物品名错位、后续放置查不到 tile。现已统一。
+3. **`_Player.INITIAL_HP` 死字段清理**：`config.py` 中 `_Player.INITIAL_HP=100` 与真正生效的 `PLAYER_INITIAL_HP=50` 两处独立赋值、毫无关联，是认知陷阱（改前者无任何效果）。已删除 `_Player.INITIAL_HP`，唯一生效源见 `PLAYER_INITIAL_HP`。
+4. **`TURN_START` 死订阅清理**：`status_system.py` 中 `_on_turn_start` 函数体为 `pass`，纯冗余（buff 结算已由 `turn_system` 直接调用替代）。订阅+函数一并移除。
+
+### 发现但未修复（留待下轮）
+5. **`items.json` 的 `place_tile` 字段是纯装饰性死数据**：`tile_props.py::_build_placeable_props()` 遍历 items.json 时直接拿 items.json 的 key 当 tile 名，完全没读 `place_tile` 字段。目前"玻璃窗""木门"能正常显示纯粹因为 `place_tile` 值与 items.json 的 key 恰好相同。需决定：要么让代码真正读取 `place_tile` 字段，要么删除该字段避免误导。
+6. **消息队列 UI 展示优化待定**：当前 HUD 仍只显示最后一条消息（`message` property 取 `messages[-1]`）。是否需要升级为多行展示（最近 2~3 条），待确认 `core/state_machine.py` 的实际路径和主循环结构后再定。
