@@ -75,6 +75,6 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 
 **2026-07-14（第二轮）**：EventBus技术债#4排查完毕并修复，见第六节。顺带修复3个测试文件的sys.path.insert执行顺序bug（独立运行会报ModuleNotFoundError）。
 
-**2026-07-14（第二轮）**：EventBus技术债#4排查完毕并修复，见第六节。顺带修复3个测试文件的sys.path.insert执行顺序bug（独立运行会报ModuleNotFoundError）。
 
-**2026-07-14（第二轮）**：EventBus技术债#4排查完毕并修复，见第六节。顺带修复3个测试文件的sys.path.insert执行顺序bug（独立运行会报ModuleNotFoundError）。
+
+
