@@ -92,8 +92,8 @@ class WorldState:
 
 @dataclass
 class UIState:
-    """界面与交互临时状态"""
-    message: str = "欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。"
+    """界面与交互临时状态。messages为队列，避免同回合多系统写message互相覆盖。"""
+    messages: List[str] = field(default_factory=lambda: ["欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。"])
     cursor_x: int = 0
     cursor_y: int = 0
     place_mode: Optional[str] = None
@@ -349,9 +349,12 @@ class Game:
     # 向后兼容 property — UIState
     # ═══════════════════════════════════
     @property
-    def message(self): return self.ui.message
+    def message(self): return self.ui.messages[-1] if self.ui.messages else ""
     @message.setter
-    def message(self, v): self.ui.message = v
+    def message(self, v):
+        self.ui.messages.append(v)
+        if len(self.ui.messages) > 5:
+            self.ui.messages.pop(0)
 
     @property
     def cursor_x(self): return self.ui.cursor_x

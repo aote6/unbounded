@@ -152,9 +152,13 @@ class CraftingState(State):
 
         elif result_type == ItemCategory.PLACEABLE:
             # 统一处理：先加材料到背包，让玩家按 b 放置
-            game.inventory.add(name, 1)
-            self.status_msg = f"合成了 {name} x1（共 {
-                game.inventory.count(name)}）。按 b 放置。"
+            # 修复：此前直接用配方key当物品名，与同文件MATERIAL分支
+            # （上方）的正确写法result_def.get("name", name)不一致，
+            # 若配方key与result.name不同会导致物品名错位。
+            item_name = result_def.get("name", name)
+            game.inventory.add(item_name, 1)
+            self.status_msg = f"合成了 {item_name} x1（共 {
+                game.inventory.count(item_name)}）。按 b 放置。"
 
         else:
             # 兜底分支改为报错，不再静默生成垃圾装备

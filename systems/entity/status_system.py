@@ -85,16 +85,6 @@ def _on_damage_dealt(event, game):
             game.player_hp = min(game.player_max_hp, game.player_hp + heal)
 
 
-def _on_turn_start(event, game):
-    """TURN_START: 委托给 BuffManager 处理所有实体状态。
-
-    Args:
-        event: The GameEvent instance triggering the start of a turn.
-        game: The main game controller instance.
-    """
-    pass
-
-
 def _on_monster_killed(event, game):
     """MONSTER_KILLED: 清理死亡实体的 Buff。
 
@@ -110,6 +100,7 @@ def _on_monster_killed(event, game):
 def register():
     """Register all status system event handlers to the global EventBus."""
     bus = EventBus()
-    bus.subscribe(EventType.TURN_START, _on_turn_start)
+    # TURN_START: 已确认无emit方，_on_turn_start此前是空pass的
+    # 无害冗余订阅（buff结算已由turn_system直接调用替代），已清理。
     bus.subscribe(EventType.DAMAGE_DEALT, _on_damage_dealt)
     bus.subscribe(EventType.MONSTER_KILLED, _on_monster_killed)

@@ -21,7 +21,9 @@ class _World:
 
 @dataclass
 class _Player:
-    INITIAL_HP: int = 100
+    # 注意：INITIAL_HP已删除，此前与下方PLAYER_INITIAL_HP=50两处
+    # 独立赋值毫无关联，是认知陷阱（改这里毫无效果）。
+    # 初始HP唯一生效来源见下方 PLAYER_INITIAL_HP。
     BASE_DAMAGE_MIN: int = 2
     BASE_DAMAGE_MAX: int = 5
     BASE_HIT_CHANCE: float = 0.85
