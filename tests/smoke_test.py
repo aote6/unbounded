@@ -1,11 +1,12 @@
 """冒烟测试：不依赖 curses，验证核心系统不崩溃。"""
-from systems.entity.monster_index import build_monster_index
-from systems.combat.monster_ai import tick_monsters
-import main
 import sys
 from pathlib import Path
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from systems.entity.monster_index import build_monster_index
+from systems.combat.monster_ai import tick_monsters
+from systems.entity.status_system import register as register_status
+import main
 
 
 class FakeCurses:
@@ -58,6 +59,8 @@ class FakeStdscr:
 sys.modules['curses'] = FakeCurses()
 
 print("=== Test 1: import main ===")
+
+register_status()  # 测试脚本不经main()，需手动注册EventBus处理器
 
 print("\n=== Test 2: Game.__init__ ===")
 game = main.Game()

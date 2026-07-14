@@ -1,8 +1,11 @@
 """压力测试：模拟极端场景，验证系统不崩溃"""
-from main import Game
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from main import Game
+from systems.entity.status_system import register as register_status
+register_status()  # 测试脚本不经main()，需手动注册EventBus处理器
 
 
 class FakeWorld:

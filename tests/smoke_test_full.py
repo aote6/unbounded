@@ -30,6 +30,8 @@ def check(name, fn):
 
 def main():
     from main import Game
+    from systems.entity.status_system import register as register_status
+    register_status()  # 测试脚本不经main()，需手动注册EventBus处理器
 
     # ── 用例1：创建游戏对象，静态数据加载 + entity_validator 应正常通过 ──
     game = Game()

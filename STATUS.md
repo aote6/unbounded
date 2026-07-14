@@ -44,7 +44,7 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 1. ~~合成门窗功能缺失~~【2026-07-14已核实非bug】：门窗配方(木门/木门(简易)/玻璃窗)合成→放置全链路正常，此前只是游戏内未凑够材料实测。新发现：recipes.json里`result.place_tile`/`consume_item`字段全项目零引用（死字段，与items.json的同名`place_tile`是完全不同的两套东西，不要混淆），当前数据靠退化到`name`/配方key巧合对齐，未来新增配方避免误用这两个死字段。
 2. ~~`place_tile`字段名实无实~~【2026-07-14已修复】：全数据审计确认16个物品100%字段值与key一致、从未用到"物品名≠tile名"的自由度，已删除该字段（`items.json`）并简化`get_place_tile()`为直接返回`name`，消除两套key体系分裂隐患。
 3. **消息队列HUD展示待优化**：`game.message`已改为队列(`ui.messages`，最近5条)，但HUD仍只显示最后一条(`messages[-1]`)。是否升级为多行展示，待需求明确。
-4. `EventBus()`模块级全局单例，多局测试并行可能互相污染
+~~4. `EventBus()`模块级全局单例~~【2026-07-14已修复】：根因非"重复注册"，而是test_simulation/test_stress/smoke_test三个脚本不经main()，从未调用register_status()，导致DAMAGE_DEALT/MONSTER_KILLED事件测试时静默丢弃(buff_manager死亡实体清理从未被验证)。已在四个测试文件补register_status()调用，顺带修复test_simulation/test_stress/smoke_test里sys.path.insert顺序错误(在import main之后，导致独立运行报ModuleNotFoundError)。
 5. `Game`类偏"上帝对象"，职责过多，不紧急（未到"牵动十几个文件"的失控程度）
 6. `ui/states/`下6个State文件窗口创建/边框绘制逻辑重复，可抽取公共Mixin
 7. docstring风格不统一（中英混搭+中文标点残留），DeepSeek已有整理清单，优先级最低，顺手做
@@ -72,3 +72,5 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 - 改动用"精确字符串匹配+assert校验"的Python patch脚本，assert失败先看清楚再改，不要绕过
 - UI/输入相关改动，改完必须实机在Termux跑一次确认
 - 每次会话结束前，只更新第六、七节；第七节超过3轮的旧记录随时可以删掉（git log是真正的历史来源）
+
+**2026-07-14（第二轮）**：EventBus技术债#4排查完毕并修复，见第六节。顺带修复3个测试文件的sys.path.insert执行顺序bug（独立运行会报ModuleNotFoundError）。

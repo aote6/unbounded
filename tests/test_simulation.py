@@ -1,9 +1,12 @@
 """仿真测试：模拟真实玩家行为，500回合自动运行"""
-from main import Game
 import sys
 import random
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from main import Game
+from systems.entity.status_system import register as register_status
+register_status()  # 测试脚本不经main()，需手动注册EventBus处理器
 
 
 class FakeWorld:
