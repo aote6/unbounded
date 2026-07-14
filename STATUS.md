@@ -74,3 +74,5 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 - 每次会话结束前，只更新第六、七节；第七节超过3轮的旧记录随时可以删掉（git log是真正的历史来源）
 
 **2026-07-14（第二轮）**：EventBus技术债#4排查完毕并修复，见第六节。顺带修复3个测试文件的sys.path.insert执行顺序bug（独立运行会报ModuleNotFoundError）。
+
+**2026-07-14（第二轮）**：EventBus技术债#4排查完毕并修复，见第六节。顺带修复3个测试文件的sys.path.insert执行顺序bug（独立运行会报ModuleNotFoundError）。
