@@ -1,7 +1,5 @@
 from systems.combat.combat_system import kill_monster
 """Buff系统：统一管理所有实体（玩家+怪物）的状态效果。
-from systems.combat.combat_system import kill_monster
-from systems.combat.combat_system import kill_monster
 
 替换原有的三种格式：
 - on_fire (int)        → Buff("on_fire", ...)
