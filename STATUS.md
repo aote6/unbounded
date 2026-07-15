@@ -46,7 +46,7 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 3. **消息队列HUD展示待优化**：`game.message`已改为队列(`ui.messages`，最近5条)，但HUD仍只显示最后一条(`messages[-1]`)。是否升级为多行展示，待需求明确。
 ~~4. `EventBus()`模块级全局单例~~【2026-07-14已修复】：根因非"重复注册"，而是test_simulation/test_stress/smoke_test三个脚本不经main()，从未调用register_status()，导致DAMAGE_DEALT/MONSTER_KILLED事件测试时静默丢弃(buff_manager死亡实体清理从未被验证)。已在四个测试文件补register_status()调用，顺带修复test_simulation/test_stress/smoke_test里sys.path.insert顺序错误(在import main之后，导致独立运行报ModuleNotFoundError)。
 5. `Game`类偏"上帝对象"，职责过多，不紧急（未到"牵动十几个文件"的失控程度）
-6. `ui/states/`下6个State文件窗口创建/边框绘制逻辑重复，可抽取公共Mixin
+6. `ui/states/`下6个State文件窗口创建/边框绘制逻辑重复，已抽取CenteredWindowMixin(ui/states/window_mixin.py)。已完成:equipment_state.py、inventory_state.py。待完成:legacy_state.py、chest_state.py、build_state.py、crafting_state.py
 7. docstring风格不统一（中英混搭+中文标点残留），DeepSeek已有整理清单，优先级最低，顺手做
 
 ## 七、最近会话记录（滚动更新，只保留结论；超过3轮的历史随时可删，git log为准）
