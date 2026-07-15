@@ -82,6 +82,7 @@ class PlayState(State):
                         advance_turn(game)
                 return None
             else:
+                game.message = ""
                 try_move_or_dig(game, dx, dy)
             acted = True
 
