@@ -4,6 +4,7 @@ import curses
 from core.state_machine import State
 from config import KEY_INVENTORY, KEY_QUIT, KEY_QUIT_UPPER
 from ui.text_width import display_width
+from ui.states.window_mixin import CenteredWindowMixin
 
 CATEGORIES = [
     ("material", "材料"),
@@ -13,7 +14,7 @@ CATEGORIES = [
 ]
 
 
-class InventoryState(State):
+class InventoryState(State, CenteredWindowMixin):
     """背包菜单状态。左右切换分类，上下选择物品，c/q 退出。"""
 
     def __init__(self, game):
@@ -25,17 +26,10 @@ class InventoryState(State):
 
     def enter(self):
         h, w = 20, 54
-        y = max(0, (curses.LINES - h) // 2)
-        x = max(0, (curses.COLS - w) // 2)
-        self.win = curses.newwin(h, w, y, x)
-        self.win.keypad(True)
+        self._open_centered_win(h, w)
 
     def exit(self):
-        if self.win:
-            del self.win
-            self.win = None
-        self.game.engine.stdscr.clear()
-        self.game.engine.stdscr.refresh()
+        self._close_win()
 
     def _current_entries(self):
         cat_key = CATEGORIES[self.tab][0]
@@ -103,10 +97,7 @@ class InventoryState(State):
     def render(self, stdscr):
         if not self.win:
             return
-        self.win.erase()
-        self.win.box()
-        self.win.addstr(0, 2, " 背包 ")
-        self.win.addstr(1, 2, "←→ 切换分类 ↑↓ 选择 Enter 装备/卸下 i/q 关闭")
+        self._draw_frame(" 背包 ", "←→ 切换分类 ↑↓ 选择 Enter 装备/卸下 i/q 关闭")
 
         h, w = self.win.getmaxyx()
 
