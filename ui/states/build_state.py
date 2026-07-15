@@ -2,6 +2,7 @@
 
 import curses
 from core.state_machine import State
+from ui.states.window_mixin import CenteredWindowMixin
 from config import (
     DIRECTIONS,
     KEY_REPEAT,
@@ -11,7 +12,7 @@ from systems.gameplay.player_action import do_place
 import items as items_mod
 
 
-class BuildState(State):
+class BuildState(State, CenteredWindowMixin):
     """建造模式：先选物品，再移动光标放置。c/q 退出。"""
 
     def __init__(self, game):
@@ -40,17 +41,10 @@ class BuildState(State):
     def _open_win(self):
         h = len(self._candidates) + 6
         w = 45
-        y = max(0, (curses.LINES - h) // 2)
-        x = max(0, (curses.COLS - w) // 2)
-        self.win = curses.newwin(h, w, y, x)
-        self.win.keypad(True)
+        self._open_centered_win(h, w)
 
     def exit(self):
-        if self.win:
-            del self.win
-            self.win = None
-        self.game.engine.stdscr.touchwin()
-        self.game.engine.stdscr.refresh()
+        self._close_win()
 
     def handle_input(self, key):
         if self._selecting:
@@ -122,10 +116,7 @@ class BuildState(State):
 
     def render(self, stdscr):
         if self._selecting and self.win:
-            self.win.erase()
-            self.win.box()
-            self.win.addstr(0, 2, " 放置物品 ")
-            self.win.addstr(1, 2, "↑↓ 选择 Enter 进入建造 b/q 关闭")
+            self._draw_frame(" 放置物品 ", "↑↓ 选择 Enter 进入建造 b/q 关闭")
             h, w = self.win.getmaxyx()
             for i, name in enumerate(self._candidates):
                 line = f" {name} x{self.game.inventory.count(name)}"
