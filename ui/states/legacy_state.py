@@ -5,10 +5,11 @@ from config import (
 )
 import curses
 from core.state_machine import State
+from ui.states.window_mixin import CenteredWindowMixin
 from systems.gameplay.legacy_system import get_perks_shop, purchase_perk, get_legacy_points
 
 
-class LegacyState(State):
+class LegacyState(State, CenteredWindowMixin):
     def __init__(self, game):
         self.game = game
         self.win = None
@@ -20,19 +21,12 @@ class LegacyState(State):
         self.perks = get_perks_shop()
         h = max(len(self.perks) + 8, 15)
         w = 55
-        y = max(0, (curses.LINES - h) // 2)
-        x = max(0, (curses.COLS - w) // 2)
-        self.win = curses.newwin(h, w, y, x)
-        self.win.keypad(True)
+        self._open_centered_win(h, w)
         points = get_legacy_points()
         self.status_msg = f"遗产点数: {points}"
 
     def exit(self):
-        if self.win:
-            del self.win
-            self.win = None
-        self.game.engine.stdscr.touchwin()
-        self.game.engine.stdscr.refresh()
+        self._close_win()
 
     def handle_input(self, key):
         if key in (KEY_LEGACY_SHOP, KEY_LEGACY_SHOP_UPPER, KEY_QUIT, KEY_QUIT_UPPER):
@@ -57,10 +51,7 @@ class LegacyState(State):
     def render(self, stdscr):
         if not self.win:
             return
-        self.win.erase()
-        self.win.box()
-        self.win.addstr(0, 2, " 遗产商店 ")
-        self.win.addstr(1, 2, "↑↓选择 Enter购买 p/q 关闭")
+        self._draw_frame(" 遗产商店 ", "↑↓选择 Enter购买 p/q 关闭")
 
         h, w = self.win.getmaxyx()
         for i, perk in enumerate(self.perks):

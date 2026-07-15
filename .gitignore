@@ -27,3 +27,6 @@ systems/data/save.json
 systems/data/world_meta.json
 dependency_graph.png
 dependency_graph.svg
+.patches/
+*.tar.gz
+architecture_report.txt
