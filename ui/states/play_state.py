@@ -43,8 +43,6 @@ class PlayState(State):
             game.message = "键位已重新加载。"
 
         acted = False
-        if key != KEY_SPRINT and key not in DIRECTIONS:
-            self._sprint_pending = False
 
         if key in (KEY_CHEST, KEY_CHEST_UPPER):
             return ChestState(game)
@@ -68,13 +66,15 @@ class PlayState(State):
         elif key == KEY_DIG:
             return DigState(game)
         elif key == KEY_SPRINT:
-            self._sprint_pending = True
-            game.message = "疾走模式：请按方向键选择方向。"
+            self._sprint_mode = not getattr(self, "_sprint_mode", False)
+            if self._sprint_mode:
+                game.message = "疾走模式：开启，方向键连续冲刺，再按 f 关闭。"
+            else:
+                game.message = "疾走模式：已关闭。"
             return None
         elif key in DIRECTIONS:
             dx, dy = DIRECTIONS[key]
-            if getattr(self, "_sprint_pending", False):
-                self._sprint_pending = False
+            if getattr(self, "_sprint_mode", False):
                 steps = sprint_move(game, dx, dy)
                 if steps > 0:
                     game.message = f"疾走了 {steps} 步。"
