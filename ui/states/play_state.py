@@ -23,6 +23,7 @@ from systems.core.keybind import reload_keybinds
 # from systems.core.save_manager import save_game, load_game
 from ui.states.dig_state import DigState
 from ui.states.look_state import LookState
+from ui.states.menu_state import MenuState
 
 
 class PlayState(State):
@@ -30,6 +31,7 @@ class PlayState(State):
 
     def __init__(self, game):
         self.game = game
+        self._main_menu_def = {"title": "主菜单", "hint": "↑↓选择 Enter确认 q返回", "items": [{"name": "合成", "state": "craft"}, {"name": "装备", "state": "equip"}, {"name": "背包", "state": "inventory"}, {"name": "建造", "state": "build"}, {"name": "挖掘", "state": "dig"}, {"name": "查看", "state": "look"}, {"name": "存档", "action": "save"}, {"name": "读档", "action": "load"}, {"name": "退出游戏", "action": "quit"}]}
 
     def handle_input(self, key):
         game = self.game
@@ -63,6 +65,8 @@ class PlayState(State):
             load_game(game)
         elif key == KEY_LOOK:
             return LookState(game)
+        elif key == ord("m"):
+            return MenuState(game, self._main_menu_def, self._menu_actions)
         elif key == KEY_DIG:
             return DigState(game)
         elif key == KEY_SPRINT:
@@ -91,6 +95,9 @@ class PlayState(State):
 
         return None
 
+    @property
+    def _menu_actions(self):
+        return {"save": lambda g: (save_game(g), None)[1], "load": lambda g: (load_game(g), None)[1], "quit": lambda g: setattr(g.engine, "_running", False)}
     def update(self):
         pass
 
