@@ -6,6 +6,7 @@ from config import (
 import curses
 from core.state_machine import State
 from ui.states.window_mixin import CenteredWindowMixin
+from ui.text_width import truncate_to_width
 from systems.gameplay.legacy_system import get_perks_shop, purchase_perk, get_legacy_points
 
 
@@ -64,8 +65,8 @@ class LegacyState(State, CenteredWindowMixin):
                 perk['cost']}点) - {
                 perk['desc']}"
             attr = curses.A_REVERSE if i == self.selected else curses.A_NORMAL
-            self.win.addstr(3 + i, 2, line[:w - 4], attr)
+            self.win.addstr(3 + i, 2, truncate_to_width(line, w - 4), attr)
 
         if self.status_msg:
-            self.win.addstr(h - 2, 2, self.status_msg[:w - 4], curses.A_BOLD)
+            self.win.addstr(h - 2, 2, truncate_to_width(self.status_msg, w - 4), curses.A_BOLD)
         self.win.refresh()
