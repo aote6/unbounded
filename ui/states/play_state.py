@@ -31,7 +31,61 @@ class PlayState(State):
 
     def __init__(self, game):
         self.game = game
-        self._main_menu_def = {"title": "主菜单", "hint": "↑↓选择 Enter确认 q返回", "items": [{"name": "合成", "state": "craft"}, {"name": "装备", "state": "equip"}, {"name": "背包", "state": "inventory"}, {"name": "建造", "state": "build"}, {"name": "挖掘", "state": "dig"}, {"name": "查看", "state": "look"}, {"name": "存档", "action": "save"}, {"name": "读档", "action": "load"}, {"name": "退出游戏", "action": "quit"}]}
+
+    def _build_main_menu(self):
+        from systems.world.climate import get_biome
+        from systems.world.civilization import get_settlement_at
+        biome = get_biome(self.game.player_x, self.game.player_y, self.game.world.seed)
+        items = [
+            {"name": "合成", "state": "craft"},
+            {"name": "装备", "state": "equip"},
+            {"name": "背包", "state": "inventory"},
+            {"name": "建造", "state": "build"},
+            {"name": "挖掘", "state": "dig"},
+            {"name": "查看", "state": "look"},
+            {"name": "世界知识", "menu": {
+                "title": "世界知识",
+                "hint": "当前群系: " + biome + " | ↑↓选择 q返回",
+                "items": self._build_world_knowledge()
+            }},
+            {"name": "存档", "action": "save"},
+            {"name": "读档", "action": "load"},
+            {"name": "退出游戏", "action": "quit"},
+        ]
+        return {"title": "主菜单", "hint": "↑↓选择 Enter确认 q返回", "items": items}
+
+    def _build_world_knowledge(self):
+        from systems.world.civilization import get_settlement_at
+        from systems.world.climate import get_biome
+        biome = get_biome(self.game.player_x, self.game.player_y, self.game.world.seed)
+        items = [
+            {"name": "当前群系: " + biome, "action": "_noop"},
+            {"name": "座标: (" + str(self.game.player_x) + ", " + str(self.game.player_y) + ")", "action": "_noop"},
+        ]
+        # 附近聚落
+        found = False
+        for dx in [-200, -100, 0, 100, 200]:
+            for dy in [-200, -100, 0, 100, 200]:
+                if dx == 0 and dy == 0:
+                    continue
+                sx = self.game.player_x + dx
+                sy = self.game.player_y + dy
+                s = get_settlement_at(sx, sy, self.game.world.seed)
+                if s:
+                    dist = max(abs(dx), abs(dy))
+                    direction = ""
+                    if abs(dx) > abs(dy):
+                        direction = "向东" if dx > 0 else "向西"
+                    else:
+                        direction = "向南" if dy > 0 else "向北"
+                    items.append({"name": s["name"] + " — " + direction + str(dist) + "步", "action": "_noop"})
+                    found = True
+        if not found:
+            items.append({"name": "附近未发现聚落", "action": "_noop"})
+        return items
+
+        self._menu_actions = {"save": lambda g: (save_game(g), None)[1], "load": lambda g: (load_game(g), None)[1], "quit": lambda g: setattr(g.engine, "_running", False),
+            "_noop": lambda g: None}
 
     def handle_input(self, key):
         game = self.game
@@ -66,7 +120,7 @@ class PlayState(State):
         elif key == KEY_LOOK:
             return LookState(game)
         elif key == ord("m"):
-            return MenuState(game, self._main_menu_def, self._menu_actions)
+            return MenuState(game, self._build_main_menu(), self._menu_actions)
         elif key == KEY_DIG:
             return DigState(game)
         elif key == KEY_SPRINT:
@@ -97,7 +151,8 @@ class PlayState(State):
 
     @property
     def _menu_actions(self):
-        return {"save": lambda g: (save_game(g), None)[1], "load": lambda g: (load_game(g), None)[1], "quit": lambda g: setattr(g.engine, "_running", False)}
+        return {"save": lambda g: (save_game(g), None)[1], "load": lambda g: (load_game(g), None)[1], "quit": lambda g: setattr(g.engine, "_running", False),
+            "_noop": lambda g: None}
     def update(self):
         pass
 
