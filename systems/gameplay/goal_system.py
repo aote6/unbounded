@@ -49,7 +49,7 @@ def check_goals(game):
             next_goal = _find_goal(goals, next_id)
             if next_goal:
                 game.goal = next_id
-                game.message = f"【目标】{next_goal.get('complete_msg', '新目标！')}"
+                game.narration = f"【目标】{next_goal.get('complete_msg', '新目标！')}"
                 game.goal_message_shown = False
 
 
@@ -103,7 +103,7 @@ def check_special_location(game):
                 game._found_specials = set()
             if (x, y) not in game._found_specials:
                 game._found_specials.add((x, y))
-                game.message = f"🔍 你发现了【{name}】！这里似乎有稀有资源..."
+                game.narration = f"🔍 你发现了【{name}】！这里似乎有稀有资源..."
                 loot_tables = {
                     "废弃矿洞": {"铁矿石": 10, "石头": 20},
                     "蜘蛛巢穴": {"蜘蛛丝": 15},
@@ -116,7 +116,7 @@ def check_special_location(game):
                 loot = loot_tables.get(name, {})
                 for item, count in loot.items():
                     game.inventory.add(item, count)
-                game.message += f" 获得: {
+                game.narration += f" 获得: {
                     ', '.join(
                         f'{c}x{k}' for k,
                         c in loot.items())}"

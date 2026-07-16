@@ -166,6 +166,7 @@ def _tick_monster_vs_neutral(game):
                 target["hp"] -= dmg
                 if target["hp"] <= 0:
                     kill_monster(game, target, cause="predator")
+                    game.narration = "野外：猎杀了一只生物"
                 break
 
 
@@ -457,3 +458,4 @@ def _attack_other_monster(attacker, target, game=None):
     target["hp"] -= dmg
     if target["hp"] <= 0 and game is not None:
         kill_monster(game, target, cause="predator")
+        game.narration = "野外：猎杀了一只生物"
