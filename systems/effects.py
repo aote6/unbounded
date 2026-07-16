@@ -23,6 +23,13 @@ class EffectManager:
         self._effects = []
 
     def spawn(self, kind, x, y, char, duration=1):
+        # NOTE: duration counts update() calls, not real turns.
+        # update() is called at the start of advance_turn(), which runs
+        # in the SAME input cycle as the action that spawns the effect
+        # (spawn happens before advance_turn, in the same handle_input call).
+        # So an effect born this cycle gets aged once before the next
+        # render(). duration=1 means it never survives to be drawn.
+        # Use duration=2 for "visible for one render, gone on next action".
         self._effects.append(
             Effect(kind=kind, x=x, y=y, char=char, age=0, duration=duration))
 
