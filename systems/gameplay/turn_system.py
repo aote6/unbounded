@@ -12,6 +12,7 @@ def advance_turn(game):
     """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     game.turn += 1
+    game.effect_manager.update()
 
     # 只在附近有怪物时才重建气味场，避免无怪物区域每步全量计算
     if any(abs(m["x"] - game.player_x) <= 20 and abs(m["y"] -
