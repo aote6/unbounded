@@ -46,12 +46,13 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 3. **消息队列HUD展示待优化**：`game.message`已改为队列(`ui.messages`，最近5条)，但HUD仍只显示最后一条(`messages[-1]`)。是否升级为多行展示，待需求明确。
 ~~4. `EventBus()`模块级全局单例~~【2026-07-14已修复】：根因非"重复注册"，而是test_simulation/test_stress/smoke_test三个脚本不经main()，从未调用register_status()，导致DAMAGE_DEALT/MONSTER_KILLED事件测试时静默丢弃(buff_manager死亡实体清理从未被验证)。已在四个测试文件补register_status()调用，顺带修复test_simulation/test_stress/smoke_test里sys.path.insert顺序错误(在import main之后，导致独立运行报ModuleNotFoundError)。
 5. `Game`类偏"上帝对象"，职责过多，不紧急（未到"牵动十几个文件"的失控程度）
-6. `ui/states/`下6个State文件窗口创建/边框绘制逻辑重复，已抽取CenteredWindowMixin(ui/states/window_mixin.py)。已完成:inventory_state.py、crafting_state.py。待完成:legacy_state.py、chest_state.py、build_state.py。注:equipment_state.py此前记录为已完成，经核实实际未继承CenteredWindowMixin，记录有误，已改列入待完成。
+6. `ui/states/`下6个State文件窗口创建/边框绘制逻辑重复，已抽取CenteredWindowMixin(ui/states/window_mixin.py)。已完成:inventory_state.py、crafting_state.py、chest_state.py、equipment_state.py。待完成:legacy_state.py、build_state.py。
 7. docstring风格不统一（中英混搭+中文标点残留），DeepSeek已有整理清单，优先级最低，顺手做
 
 ## 七、最近会话记录（滚动更新，只保留结论；超过3轮的历史随时可删，git log为准）
 
 **2026-07-16**：crafting_state.py接入CenteredWindowMixin(技术债#6一项)；合成列表加滚动视口(以selected为中心动态显示，右上角[起始-结束/总数]提示替代原"还有N项"死截断)；text_width.py新增truncate_to_width()按显示宽度截断，修复crafting_state.py中文行(如"木墙(简易)")因len()截断溢出/错位到下一行的问题，3处addstr截断点已切换。
+同日补充：chest_state.py接入CenteredWindowMixin已commit(承接上一会话未提交改动)；equipment_state.py也完成CenteredWindowMixin接入，中文行截断改用truncate_to_width。至此技术债#6剩legacy_state.py、build_state.py待完成。
 
 **2026-07-14**：确认4项已修复无新问题——消息队列改造、crafting_state.py PLACEABLE分支物品名对齐、`_Player.INITIAL_HP`死字段删除、`status_system.py::TURN_START`死订阅清理。核实`place_tile`不是死数据（被`get_place_tile()`实际读取并决定`game.place_mode`），是未触发的隐患，已归入第六节技术债#2，不重复记录。
 
