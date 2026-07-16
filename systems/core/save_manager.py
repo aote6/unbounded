@@ -38,6 +38,7 @@ def new_game(game, inherit_world=False):
     """开始新游戏，可选继承世界。"""
     clear_inventory_instance()
     clear_global_scent_map()
+    game.effect_manager.clear()
     if not inherit_world:
         if SAVE_DIR.exists():
             shutil.rmtree(SAVE_DIR)

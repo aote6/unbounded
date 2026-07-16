@@ -190,6 +190,8 @@ class Game:
         self.monster_data: dict = {}
         self.turn: int = 0
         self.buff_manager = create_buff_manager()
+        from systems.effects import EffectManager
+        self.effect_manager = EffectManager()
         self.engine: Any = None
 
         self._load_static_data()
