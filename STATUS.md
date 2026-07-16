@@ -51,6 +51,8 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 
 ## 七、最近会话记录（滚动更新，只保留结论；超过3轮的历史随时可删，git log为准）
 
+**2026-07-16（下下半场）**：视觉特效系统V1设计定案，未开始实施。核心结构：新建systems/effects.py，Effect(dataclass)+EffectManager(spawn/update/active/clear)，挂在Game层级下与BuffManager同级，不进存档。生命周期靠advance_turn()推进age，不用sleep/线程。V1范围收窄：只做SLASH+TEXT两种kind，只接入攻击命中/未命中/暴击三个点，且只用ASCII符号，不写中文——中文飘字会撞上2026-07-13第五轮记录的_draw_map_row()按字符数截断的旧bug，两个问题分开处理，不在这次一起修。ARCHITECTURE.md暂不改动（Effect是否算Tile/Entity之外第三类，等实现中真遇到具体冲突再补，不预先打补丁）。具体接入点见交接文档。
+
 **2026-07-16**：crafting_state.py接入CenteredWindowMixin(技术债#6一项)；合成列表加滚动视口(以selected为中心动态显示，右上角[起始-结束/总数]提示替代原"还有N项"死截断)；text_width.py新增truncate_to_width()按显示宽度截断，修复crafting_state.py中文行(如"木墙(简易)")因len()截断溢出/错位到下一行的问题，3处addstr截断点已切换。
 同日补充：chest_state.py/equipment_state.py完成CenteredWindowMixin接入。随后一次性审计发现技术债#6实际已全部完成，真正遗留问题是中文行截断：legacy_state.py/build_state.py/chest_state.py/inventory_state.py嘃1处截断点共计4处仍用`[:w-4]`按字符数截断，已全数改用truncate_to_width()并实机验证。至此技术债#6完全收尾，无遗留。
 
