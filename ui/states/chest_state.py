@@ -3,11 +3,12 @@ from systems.gameplay.inventory_actions import add_equipment_instance
 
 import curses
 from core.state_machine import State
+from ui.states.window_mixin import CenteredWindowMixin
 from systems.gameplay.interaction import get_nearby_chest
 from config import KEY_CHEST, KEY_CHEST_UPPER, KEY_QUIT, KEY_QUIT_UPPER
 
 
-class ChestState(State):
+class ChestState(State, CenteredWindowMixin):
     """箱子存取界面。o/q 退出回到 PlayState。"""
 
     def __init__(self, game):
@@ -33,11 +34,7 @@ class ChestState(State):
         self._refresh_lists()
 
     def exit(self):
-        if self.win:
-            del self.win
-            self.win = None
-        self.game.engine.stdscr.touchwin()
-        self.game.engine.stdscr.refresh()
+        self._close_win()
 
     def _refresh_lists(self):
         chest = self.chest
@@ -160,20 +157,8 @@ class ChestState(State):
 
         h = max(len(items) + 5, 6)
         w = 45
-        y = max(0, (curses.LINES - h) // 2)
-        x = max(0, (curses.COLS - w) // 2)
-
-        if self.win:
-            try:
-                del self.win
-            except Exception:
-                pass
-        self.win = curses.newwin(h, w, y, x)
-        self.win.keypad(True)
-        self.win.erase()
-        self.win.box()
-        self.win.addstr(0, 2, f" {title} ")
-        self.win.addstr(1, 2, ",切换 | Enter取/存 | +全部转移 | o/q关闭")
+        self._open_centered_win(h, w)
+        self._draw_frame(f" {title} ", ",切换 | Enter取/存 | +全部转移 | o/q关闭")
 
         if not items:
             self.win.addstr(3, 2, "（空）")
