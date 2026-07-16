@@ -197,6 +197,7 @@ def try_move_or_dig(game, dx, dy):
             dmg += game._combat_damage_bonus()
             mon["hp"] -= dmg
             game.message = f"攻击 {mon['name']}，造成 {dmg} 点伤害"
+            game.effect_manager.spawn("slash", nx, ny, "/", duration=1)
             EventBus().emit(
                 GameEvent(
                     EventType.DAMAGE_DEALT, {
@@ -205,6 +206,7 @@ def try_move_or_dig(game, dx, dy):
                 kill_monster(game, mon, cause="attack")
         else:
             game.message = f"攻击 {mon['name']}，未命中！"
+            game.effect_manager.spawn("text", nx, ny, "MISS", duration=1)
         return
 
     props = get_tile_props(tile)
