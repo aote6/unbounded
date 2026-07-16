@@ -60,6 +60,10 @@ def _compute_cell(game, wx, wy):
         tile = game.world.get_tile(wx, wy)["tile"]
         ch = get_char(tile)
         attr = _tile_attr(tile)
+    for eff in game.effect_manager.active():
+        if eff.kind == "hit_flash" and eff.x == wx and eff.y == wy:
+            attr = curses.color_pair(51) | curses.A_BOLD
+            break
     return ch, attr
 
 
@@ -95,6 +99,21 @@ def _draw_map_row(stdscr, game, row, ox, oy, ambient):
                     f"screen=({max_y},{max_x})"
                 )
         x += len(text)
+
+    for eff in game.effect_manager.active():
+        if eff.kind == "hit_flash":
+            continue
+        if eff.y != wy:
+            continue
+        ecol = eff.x - ox
+        if ecol < 0 or ecol >= max_x:
+            continue
+        available = max_x - ecol
+        eff_text = eff.char[:available]
+        try:
+            stdscr.addstr(row, ecol, eff_text, curses.color_pair(51) | curses.A_BOLD)
+        except curses.error:
+            pass
 
 
 def draw(game):

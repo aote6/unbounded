@@ -172,6 +172,16 @@ def dig_any_tile(game, x, y):
     return True
 
 
+def _badge_position(game, nx, ny):
+    """Effect badge defaults to player's right side; if that cell
+    is the monster's own cell (attacking right), fall back to below
+    the player instead, so the badge never sits on the monster."""
+    bx, by = game.player_x + 1, game.player_y
+    if (bx, by) == (nx, ny):
+        bx, by = game.player_x, game.player_y + 1
+    return bx, by
+
+
 def try_move_or_dig(game, dx, dy):
     """尝试移动或挖掘/攻击。"""
     nx, ny = game.player_x + dx, game.player_y + dy
@@ -197,7 +207,9 @@ def try_move_or_dig(game, dx, dy):
             dmg += game._combat_damage_bonus()
             mon["hp"] -= dmg
             game.message = f"攻击 {mon['name']}，造成 {dmg} 点伤害"
-            game.effect_manager.spawn("slash", nx, ny, "/", duration=2)
+            game.effect_manager.spawn("hit_flash", nx, ny, "", duration=2)
+            bx, by = _badge_position(game, nx, ny)
+            game.effect_manager.spawn("slash", bx, by, "/", duration=2)
             EventBus().emit(
                 GameEvent(
                     EventType.DAMAGE_DEALT, {
@@ -206,7 +218,8 @@ def try_move_or_dig(game, dx, dy):
                 kill_monster(game, mon, cause="attack")
         else:
             game.message = f"攻击 {mon['name']}，未命中！"
-            game.effect_manager.spawn("text", nx, ny, "MISS", duration=2)
+            bx, by = _badge_position(game, nx, ny)
+            game.effect_manager.spawn("text", bx, by, "MISS", duration=2)
         return
 
     props = get_tile_props(tile)
