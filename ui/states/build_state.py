@@ -3,6 +3,7 @@
 import curses
 from core.state_machine import State
 from ui.states.window_mixin import CenteredWindowMixin
+from ui.text_width import truncate_to_width
 from config import (
     DIRECTIONS,
     KEY_REPEAT,
@@ -121,7 +122,7 @@ class BuildState(State, CenteredWindowMixin):
             for i, name in enumerate(self._candidates):
                 line = f" {name} x{self.game.inventory.count(name)}"
                 attr = curses.A_REVERSE if i == self._selected else curses.A_NORMAL
-                self.win.addstr(3 + i, 2, line[:w - 4], attr)
+                self.win.addstr(3 + i, 2, truncate_to_width(line, w - 4), attr)
             self.win.refresh()
         else:
             # 建造模式：渲染地图，显示光标

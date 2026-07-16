@@ -4,6 +4,7 @@ from systems.gameplay.inventory_actions import add_equipment_instance
 import curses
 from core.state_machine import State
 from ui.states.window_mixin import CenteredWindowMixin
+from ui.text_width import truncate_to_width
 from systems.gameplay.interaction import get_nearby_chest
 from config import KEY_CHEST, KEY_CHEST_UPPER, KEY_QUIT, KEY_QUIT_UPPER
 
@@ -169,6 +170,6 @@ class ChestState(State, CenteredWindowMixin):
                 else:
                     line = f"  {item[1]}"
                 attr = curses.A_REVERSE if i == self.selected else curses.A_NORMAL
-                self.win.addstr(3 + i, 2, line[:w - 4], attr)
+                self.win.addstr(3 + i, 2, truncate_to_width(line, w - 4), attr)
 
         self.win.refresh()
