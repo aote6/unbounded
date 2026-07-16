@@ -3,6 +3,8 @@
 import curses
 from core.state_machine import State
 from config import KEY_EQUIP, KEY_QUIT, KEY_QUIT_UPPER
+from ui.states.window_mixin import CenteredWindowMixin
+from ui.text_width import truncate_to_width
 
 SLOTS = [
     ("main_hand", "主手"),
@@ -12,7 +14,7 @@ SLOTS = [
 ]
 
 
-class EquipmentState(State):
+class EquipmentState(State, CenteredWindowMixin):
     """装备状态一览。按 e 或 q 关闭。装备/卸下请在背包(i)中操作。"""
 
     def __init__(self, game):
@@ -21,17 +23,10 @@ class EquipmentState(State):
 
     def enter(self):
         h, w = len(SLOTS) + 6, 50
-        y = max(0, (curses.LINES - h) // 2)
-        x = max(0, (curses.COLS - w) // 2)
-        self.win = curses.newwin(h, w, y, x)
-        self.win.keypad(True)
+        self._open_centered_win(h, w)
 
     def exit(self):
-        if self.win:
-            del self.win
-            self.win = None
-        self.game.engine.stdscr.clear()
-        self.game.engine.stdscr.refresh()
+        self._close_win()
 
     def handle_input(self, key):
         if key in (KEY_EQUIP, KEY_QUIT, KEY_QUIT_UPPER):
@@ -44,10 +39,7 @@ class EquipmentState(State):
     def render(self, stdscr):
         if not self.win:
             return
-        self.win.erase()
-        self.win.box()
-        self.win.addstr(0, 2, " 装备状态 ")
-        self.win.addstr(1, 2, "装备/卸下请在背包(i)中操作，按 e/q 关闭")
+        self._draw_frame(" 装备状态 ", "装备/卸下请在背包(i)中操作，按 e/q 关闭")
 
         h, w = self.win.getmaxyx()
         for i, (slot_id, slot_name) in enumerate(SLOTS):
@@ -58,6 +50,6 @@ class EquipmentState(State):
                     line += " [" + "|".join(inst.affixes) + "]"
             else:
                 line = f" {slot_name}: （空）"
-            self.win.addstr(3 + i, 2, line[:w - 4])
+            self.win.addstr(3 + i, 2, truncate_to_width(line, w - 4))
 
         self.win.noutrefresh()
