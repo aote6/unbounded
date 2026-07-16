@@ -12,6 +12,26 @@ def advance_turn(game):
     """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     """每回合推进：气味→Buff→尸体→怪物→区块→目标→死亡检查"""
     game.turn += 1
+
+    # 时间和天气变化旁白
+    from config import DAY_LENGTH, DAWN_START, DAY_START, DUSK_START, NIGHT_START
+    t = game.turn % DAY_LENGTH
+    if t == DAWN_START:
+        game.narration = "东方泛起鱼肚白，天亮了……"
+    elif t == DAY_START:
+        game.narration = "阳光照耀着大地，温暖而明亮"
+    elif t == DUSK_START:
+        game.narration = "太阳沉入地平线，天色渐渐昏暗下来"
+    elif t == NIGHT_START:
+        game.narration = "夜幕降临，周围伸手不见五指，远处传来嘖叫声……"
+
+    # 天气变化
+    from systems.world.weather_system import get_weather_at
+    weather = get_weather_at(game.player_x, game.player_y, game.world.seed, game.turn)
+    weather_msg = weather.get("message", "")
+    if weather_msg and weather_msg != getattr(game, "_last_weather", ""):
+        game.narration = f"天气：{weather_msg}"
+        game._last_weather = weather_msg
     game.effect_manager.update()
 
     # 只在附近有怪物时才重建气味场，避免无怪物区域每步全量计算
