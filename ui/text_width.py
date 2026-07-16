@@ -20,3 +20,19 @@ def pad_to_width(text: str, target_width: int) -> str:
     if w >= target_width:
         return text
     return text + " " * (target_width - w)
+
+
+def truncate_to_width(text: str, max_width: int) -> str:
+    """按终端实际显示宽度截断字符串（中文等宽字符算2，其余算1）。
+    避免按len()截断导致中文行溢出弹窗边框。"""
+    if max_width <= 0:
+        return ""
+    width = 0
+    result = []
+    for ch in text:
+        ch_width = 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+        if width + ch_width > max_width:
+            break
+        result.append(ch)
+        width += ch_width
+    return "".join(result)

@@ -4,6 +4,8 @@ from core.state_machine import State
 from config import KEY_CRAFT, KEY_CRAFT_UPPER, KEY_QUIT, KEY_QUIT_UPPER
 import random
 from systems.gameplay.inventory_actions import add_equipment_instance
+from ui.states.window_mixin import CenteredWindowMixin
+from ui.text_width import truncate_to_width
 """CraftingState - 合成界面状态"""
 
 import curses
@@ -18,7 +20,7 @@ ORE_TO_MATERIAL = {
 # 矿石名到材质名映射
 
 
-class CraftingState(State):
+class CraftingState(State, CenteredWindowMixin):
     """合成菜单状态。c/q 退出回到 PlayState。"""
 
     def __init__(self, game):
@@ -48,16 +50,10 @@ class CraftingState(State):
         self.ordered_cats += [c for c in self.categories if c not in cat_order]
 
     def enter(self):
-        h, w = 18, 50
-        y = max(0, (curses.LINES - h) // 2)
-        x = max(0, (curses.COLS - w) // 2)
-        self.win = curses.newwin(h, w, y, x)
-        self.win.keypad(True)
+        self._open_centered_win(18, 50)
 
     def exit(self):
-        if self.win:
-            self.win.clear()
-            self.win.refresh()
+        self._close_win()
 
     def handle_input(self, key):
         if not self.ordered_cats:
@@ -174,31 +170,39 @@ class CraftingState(State):
     def render(self, stdscr):
         if not self.win or not self.ordered_cats:
             return
-        self.win.erase()
-        self.win.box()
         cat_name = self.ordered_cats[self.current_cat_idx]
         names = self.categories[cat_name]
         if self.selected >= len(names):
             self.selected = 0
 
-        self.win.addstr(0, 2, f" 合成菜单 [{cat_name}] ")
-        self.win.addstr(1, 2, ",切换分类 | ↑↓选择 | Enter合成 | c/q 关闭")
+        self._draw_frame(f" 合成菜单 [{cat_name}] ", ",切换分类 | ↑↓选择 | Enter合成 | c/q 关闭")
 
         h, w = self.win.getmaxyx()
-        for i, name in enumerate(names):
-            if i >= h - 5:
-                self.win.addstr(3 + i, 2, f"  ... 还有 {len(names) - i} 项")
-                break
+        visible_rows = max(1, h - 5)
+        total = len(names)
+        if total <= visible_rows:
+            scroll_offset = 0
+        else:
+            scroll_offset = max(
+                0, min(self.selected - visible_rows + 1, total - visible_rows))
+
+        visible_names = names[scroll_offset:scroll_offset + visible_rows]
+        for i, name in enumerate(visible_names):
+            idx = scroll_offset + i
             r = self.recipes[name]
             ing = " + ".join(f"{v}x{k}" for k,
                              v in r.get("ingredients", {}).items())
             line = f" {name} <- {ing}"
             if r.get("desc"):
                 line += f" ({r['desc']})"
-            attr = curses.A_REVERSE if i == self.selected else curses.A_NORMAL
-            self.win.addstr(3 + i, 2, line[:w - 4], attr)
+            attr = curses.A_REVERSE if idx == self.selected else curses.A_NORMAL
+            self.win.addstr(3 + i, 2, truncate_to_width(line, w - 4), attr)
+
+        if total > visible_rows:
+            indicator = f" [{scroll_offset + 1}-{min(scroll_offset + visible_rows, total)}/{total}] "
+            self.win.addstr(2, max(2, w - len(indicator) - 2), truncate_to_width(indicator, w - 4))
 
         if self.status_msg:
-            self.win.addstr(h - 2, 2, self.status_msg[:w - 4], curses.A_BOLD)
+            self.win.addstr(h - 2, 2, truncate_to_width(self.status_msg, w - 4), curses.A_BOLD)
 
         self.win.refresh()
