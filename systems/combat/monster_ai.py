@@ -66,6 +66,7 @@ def try_spawn_monster(game):
             game.buff_manager.migrate_legacy(m)
         add_monster(game, m)
         game.message = f"一只 {m['name']} 出现了！"
+        EventBus().emit(GameEvent(EventType.MONSTER_SPAWNED, {"name": m["name"], "x": m["x"], "y": m["y"]}), game)
 
     # M22: 中立生物生成
     _try_spawn_neutral(game)

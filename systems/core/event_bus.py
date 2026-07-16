@@ -14,6 +14,7 @@ class EventType(Enum):
     PLAYER_HEALED = auto()
     STATUS_APPLIED = auto()
     TILE_CHANGED = auto()
+    MONSTER_SPAWNED = auto()
 
 
 @dataclass

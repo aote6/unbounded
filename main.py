@@ -94,6 +94,7 @@ class WorldState:
 class UIState:
     """界面与交互临时状态。messages为队列，避免同回合多系统写message互相覆盖。"""
     messages: List[str] = field(default_factory=lambda: ["欢迎。世界无限延伸。hjkl 移动，c 合成，e 装备，d 挖掘，q 退出。"])
+    narration: List[str] = field(default_factory=list)
     cursor_x: int = 0
     cursor_y: int = 0
     place_mode: Optional[str] = None
@@ -359,6 +360,14 @@ class Game:
             self.ui.messages.pop(0)
 
     @property
+    def narration(self): return self.ui.narration[-1] if self.ui.narration else ""
+    @narration.setter
+    def narration(self, v):
+        self.ui.narration.append(v)
+        if len(self.ui.narration) > 20:
+            self.ui.narration.pop(0)
+
+    @property
     def cursor_x(self): return self.ui.cursor_x
     @cursor_x.setter
     def cursor_x(self, v): self.ui.cursor_x = v
@@ -473,6 +482,7 @@ def main(stdscr):
     from systems.core.event_bus import EventBus, EventType
     from systems.world.room_system import check_room_formation
     EventBus().subscribe(EventType.TILE_CHANGED, lambda e, g: check_room_formation(g))
+    EventBus().subscribe(EventType.MONSTER_SPAWNED, lambda e, g: setattr(g, "narration", f"\u4e00\u53ea {e.data["name"]} \u4ece\u9ed1\u6697\u4e2d\u51fa\u73b0\u4e86\u2026\u2026"))
     load_rules()
     game = Game()
     game.engine = Engine(stdscr)

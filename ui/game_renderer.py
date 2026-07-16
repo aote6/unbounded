@@ -144,53 +144,46 @@ def draw(game):
         _draw_map_row(stdscr, game, row, ox, oy, ambient)
 
     # HUD
-    mats = " ".join(
-        f"{k}:{v}" for k,
-        v in game.inventory.get_materials().items()) or "（空）"
-    eq_parts = []
-    for slot_id in ("main_hand", "off_hand", "body", "accessory"):
-        eq = game.equipment.get(slot_id)
-        eq_name = eq.name if hasattr(eq, "name") else (eq if eq else "空")
-        eq_parts.append(f"{SLOT_NAMES[slot_id]}:{eq_name}")
-    eq_str = " | ".join(eq_parts)
     def_bonus = game._player_defense()
     hp_str = f"HP: {game.player_hp}/{game.player_max_hp}"
     if def_bonus > 0:
         hp_str += f" 防:{def_bonus}"
-    from systems.gameplay.age_system import get_age, get_age_bonus
-    age = get_age()
-    bonus = get_age_bonus()
-    sk_str = f"年龄:{age}岁 闪避:{bonus['evasion']}%"
     goal_names = {
         "build_first_room": "建造第一个房间",
         "explore_cave": "深入地下探索",
         "kill_spiders": "狩猎怪物收集材料",
         "build_luxury": "建造豪华基地",
-        "survive": "活下去"}
+        "survive": "活下去",
+    }
     goal_text = goal_names.get(game.goal, game.goal)
-    s1 = f"[{time_name}] | {hp_str} | {sk_str} | ({game.player_x},{game.player_y}) | 目标:{goal_text} | {weather['name']}"
+    hud1 = f"[{time_name}] {hp_str} {weather['name']}"
+    hud2 = f"({game.player_x},{game.player_y}) 目标:{goal_text} 怪物:{len(game.monsters)} 尸体:{len(game.corpses)}"
     if game.place_mode:
-        s1 += f" | [建造: {game.place_mode}]"
+        hud2 += f" [建造:{game.place_mode}]"
     if game.dig_progress:
-        s1 += f" | [挖掘中 {game.dig_progress['remaining']}/{game.dig_progress['total']}]"
-    s1 += f" | 怪物:{len(game.monsters)} 尸体:{len(game.corpses)}"
-    s2 = f"装备: {eq_str}"
-    equips = [inst.name for inst in game.inventory.get_equipment() if inst]
-    equip_str = " | ".join(equips) if equips else "无"
-    s3 = f"材料: {mats} | 装备: {equip_str}"
+        hud2 += f" [挖掘中{game.dig_progress['remaining']}/{game.dig_progress['total']}]"
     try:
         low_hp = game.player_hp < game.player_max_hp * 0.3
         hud_attr = (curses.color_pair(51) if low_hp else curses.color_pair(50)) | curses.A_BOLD
-        stdscr.addstr(VIEW_HEIGHT + 1, 0, s1, hud_attr)
-        stdscr.addstr(VIEW_HEIGHT + 2, 0, s2, curses.color_pair(50))
-        stdscr.addstr(VIEW_HEIGHT + 3, 0, s3, curses.color_pair(50))
-        stdscr.addstr(VIEW_HEIGHT + 4, 0, game.message, curses.color_pair(50))
-        stdscr.addstr(
-            VIEW_HEIGHT + 6, 0,
-            "移动 | c 合成 | e 装备 | i 背包 | b 放置 | x 查看 | d 挖掘 | o 箱子 | . 重复建造 | f 疾走 | 回车 放置 | r 重载 | S 存档 | L 读档 | q 退出",
-            curses.color_pair(52))
+        stdscr.addstr(VIEW_HEIGHT + 1, 0, hud1, hud_attr)
+        stdscr.addstr(VIEW_HEIGHT + 2, 0, hud2, curses.color_pair(50))
+        stdscr.addstr(VIEW_HEIGHT + 3, 0, "> " + (game.message if game.message else " "), curses.color_pair(3))
+
+        # 旁白窗口
+        narration = game.ui.narration[-11:]
+        if len(narration) > 1 and narration[-1] == game.narration:
+            narration = narration[:-1]
+        for i in range(11):
+            text = narration[i] if i < len(narration) else ""
+            max_w = stdscr.getmaxyx()[1] - 4
+            if len(text) > max_w:
+                text = text[:max_w - 3] + "..."
+            try:
+                stdscr.addstr(VIEW_HEIGHT + 4 + i, 2, text, curses.color_pair(6))
+            except curses.error:
+                pass
     except curses.error as e:
         screen_h, _ = stdscr.getmaxyx()
-        if screen_h > VIEW_HEIGHT + 6:
-            logger.warning(f"HUD 渲染异常（屏幕高度足够却报错）: {e}, screen_h={screen_h}")
+        if screen_h > VIEW_HEIGHT + 15:
+            logger.warning(f"HUD 渲染异常: {e}")
     stdscr.refresh()
