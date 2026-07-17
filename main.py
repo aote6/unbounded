@@ -363,6 +363,16 @@ class Game:
     def narration(self): return self.ui.narration[-1] if self.ui.narration else ""
     @narration.setter
     def narration(self, v):
+        if self.ui.narration:
+            last = self.ui.narration[-1]
+            base, count = last, 1
+            if "\u00d7" in last:
+                parts = last.rsplit(" \u00d7", 1)
+                if len(parts) == 2 and parts[1].isdigit():
+                    base, count = parts[0], int(parts[1])
+            if base == v:
+                self.ui.narration[-1] = f"{v} \u00d7{count + 1}"
+                return
         self.ui.narration.append(v)
         if len(self.ui.narration) > 20:
             self.ui.narration.pop(0)
