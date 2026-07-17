@@ -171,15 +171,18 @@ def draw(game):
 
         # 旁白窗口
         narration = game.ui.narration[-11:]
-        if len(narration) > 1 and narration[-1] == game.narration:
-            narration = narration[:-1]
         for i in range(11):
             text = narration[i] if i < len(narration) else ""
             max_w = stdscr.getmaxyx()[1] - 4
             if len(text) > max_w:
                 text = text[:max_w - 3] + "..."
+            attr = curses.color_pair(6)
+            if i < len(narration) - 1:
+                attr |= curses.A_DIM
+            elif i == len(narration) - 1:
+                attr |= curses.A_BOLD
             try:
-                stdscr.addstr(VIEW_HEIGHT + 4 + i, 2, text, curses.color_pair(6))
+                stdscr.addstr(VIEW_HEIGHT + 4 + i, 2, text, attr)
             except curses.error:
                 pass
     except curses.error as e:
