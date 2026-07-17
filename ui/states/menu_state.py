@@ -123,12 +123,11 @@ class MenuState(State, CenteredWindowMixin):
             auto_sep_after = name in ("查看", "世界知识")
             if len(name) > 40:
                 name = name[:37] + "..."
-            prefix = "◆" if i == self.selected else " "
-            line = prefix + " " + name
+            line = name
             if disabled:
-                attr = curses.color_pair(8) if curses.COLOR_PAIRS > 8 else curses.A_DIM
+                attr = curses.A_NORMAL
             elif i == self.selected:
-                attr = curses.A_REVERSE | curses.A_BOLD
+                attr = curses.A_REVERSE
             else:
                 attr = curses.A_NORMAL
             try:
