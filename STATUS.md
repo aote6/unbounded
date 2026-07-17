@@ -51,6 +51,8 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 
 ## 七、最近会话记录（滚动更新，只保留结论；超过3轮的历史随时可删，git log为准）
 **2026-07-17**：旁白系统精细化与UI约束完善。核心改动：(1)删除MONSTER_SPAWNED事件双重写入bug(monster_ai.py直接写+main.py订阅各写一遍)，保留EventBus订阅版本，系统层不再直接碰ui.narration; (2)旁白getter加去重逻辑:相同消息合并计数显示为"×N"，避免短时间内怪物批量出现时旁白栏刷屏; (3)game_renderer.py修复吞消息bug(原有if逻辑导致最新一条被删掉)，改为真正的11行滚动历史展示，新消息A_BOLD、历史消息A_DIM逐级变暗; (4)HUD操作行改进:删除无谓重复赋值死代码(play_state.py _build_world_knowledge中return后)，在HUD天气信息后固定显示"[m]菜单"提示，补偿HUD精简后新玩家操作入口缺失。实机测试确认无异常，关键观察：旁白×N计数工作正常、大量怪物出现不再刷屏。技术债#3("消息队列HUD展示待优化")实质已解决(旁白窗口11行滚动替代单行输出), 建议标记为已解决。未来NPC对话等交互式需求应独立做DialogueState,不混入narration流。
+（菜单UI）：menu_state.py层级菜单渲染修复与风格统一。(1)修复开窗高度预留不足(h=len(items)+5改+7)，导致两处分隔空行被截断的bug；(2)选中/禁用态最终定型为与其余6个弹窗State（crafting/inventory/chest/build/equipment/legacy）一致的纯 A_REVERSE 选中风格，去掉◆前缀符号、去掉BOLD、disabled不再用紫色/A_DIM而是纯 A_NORMAL（不用颜色/亮度区分禁用态，只靠交互层限制）。已实机验证。技术债注：其余6个弹窗本来就是纯 A_REVERSE，未发现不一致，无需再动。
+
 
 
 **2026-07-16（下下半场）**：视觉特效系统V1设计定案，未开始实施。核心结构：新建systems/effects.py，Effect(dataclass)+EffectManager(spawn/update/active/clear)，挂在Game层级下与BuffManager同级，不进存档。生命周期靠advance_turn()推进age，不用sleep/线程。V1范围收窄：只做SLASH+TEXT两种kind，只接入攻击命中/未命中/暴击三个点，且只用ASCII符号，不写中文——中文飘字会撞上2026-07-13第五轮记录的_draw_map_row()按字符数截断的旧bug，两个问题分开处理，不在这次一起修。ARCHITECTURE.md暂不改动（Effect是否算Tile/Entity之外第三类，等实现中真遇到具体冲突再补，不预先打补丁）。具体接入点见交接文档。
