@@ -18,7 +18,7 @@ from ui.states.window_mixin import CenteredWindowMixin
 
 
 class MenuState(State, CenteredWindowMixin):
-    def __init__(self, game, menu_def, on_action=None):
+    def __init__(self, game, menu_def, on_action=None, is_submenu=False):
         self.game = game
         self.menu_def = menu_def
         self.on_action = on_action or {}
@@ -27,10 +27,11 @@ class MenuState(State, CenteredWindowMixin):
         self.scroll = 0
         self.items = menu_def.get("items", [])
         self.title = menu_def.get("title", "菜单")
-        self.hint = menu_def.get("hint", "上下选择 Enter确认 q返回")
+        self.hint = menu_def.get("hint", "↑↓选择 Enter确认 q返回")
+        self.is_submenu = is_submenu
 
     def enter(self):
-        h = min(len(self.items) + 5, curses.LINES - 2)
+        h = min(len(self.items) + 7, curses.LINES - 2)
         w = min(50, curses.COLS - 2)
         self._open_centered_win(h, w)
 
@@ -44,8 +45,12 @@ class MenuState(State, CenteredWindowMixin):
 
         if key == curses.KEY_UP:
             self.selected = max(0, self.selected - 1)
+            while self.selected > 0 and self.items[self.selected].get("sep"):
+                self.selected -= 1
         elif key == curses.KEY_DOWN:
             self.selected = min(len(self.items) - 1, self.selected + 1)
+            while self.selected < len(self.items) - 1 and self.items[self.selected].get("sep"):
+                self.selected += 1
         elif key in (10, 13, curses.KEY_ENTER, ord(' ')):
             return self._activate()
 
@@ -62,7 +67,7 @@ class MenuState(State, CenteredWindowMixin):
     def _activate(self):
         item = self.items[self.selected]
         if "menu" in item:
-            return MenuState(self.game, item["menu"], self.on_action)
+            return MenuState(self.game, item["menu"], self.on_action, is_submenu=True)
         if "action" in item:
             handler = self.on_action.get(item["action"])
             if handler:
@@ -97,16 +102,44 @@ class MenuState(State, CenteredWindowMixin):
     def render(self, stdscr):
         if not self.win:
             return
-        self._draw_frame(f" {self.title} ", self.hint)
+        title_prefix = "◄" if getattr(self, "is_submenu", False) else "▶"
+        self._draw_frame(f" {title_prefix} {self.title} ", self.hint)
         max_visible = self.win.getmaxyx()[0] - 4
-        for i in range(max_visible):
-            idx = self.scroll + i
-            if idx >= len(self.items):
+        vis_idx = 0
+        for i, item in enumerate(self.items):
+            if vis_idx >= max_visible:
                 break
-            item = self.items[idx]
-            name = item.get("name", str(idx))
-            if len(name) > 44:
-                name = name[:41] + "..."
-            attr = curses.A_REVERSE if idx == self.selected else curses.A_NORMAL
-            self.win.addstr(2 + i, 2, name, attr)
+            if i < self.scroll:
+                continue
+            if item.get("sep"):
+                try:
+                    self.win.addstr(2 + vis_idx, 2, " ", curses.A_NORMAL)
+                except curses.error:
+                    pass
+                vis_idx += 1
+                continue
+            name = item.get("name", "")
+            disabled = item.get("disabled", False)
+            auto_sep_after = name in ("查看", "世界知识")
+            if len(name) > 40:
+                name = name[:37] + "..."
+            prefix = "◆" if i == self.selected else " "
+            line = prefix + " " + name
+            if disabled:
+                attr = curses.color_pair(8) if curses.COLOR_PAIRS > 8 else curses.A_DIM
+            elif i == self.selected:
+                attr = curses.A_REVERSE | curses.A_BOLD
+            else:
+                attr = curses.A_NORMAL
+            try:
+                self.win.addstr(2 + vis_idx, 2, line, attr)
+            except curses.error:
+                pass
+            vis_idx += 1
+            if auto_sep_after and vis_idx < max_visible:
+                try:
+                    self.win.addstr(2 + vis_idx, 2, " ", curses.A_NORMAL)
+                except curses.error:
+                    pass
+                vis_idx += 1
         self.win.refresh()
