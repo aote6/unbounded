@@ -84,9 +84,6 @@ class PlayState(State):
             items.append({"name": "附近未发现聚落", "action": "_noop"})
         return items
 
-        self._menu_actions = {"save": lambda g: (save_game(g), None)[1], "load": lambda g: (load_game(g), None)[1], "quit": lambda g: setattr(g.engine, "_running", False),
-            "_noop": lambda g: None}
-
     def handle_input(self, key):
         game = self.game
 
