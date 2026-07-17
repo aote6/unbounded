@@ -156,7 +156,7 @@ def draw(game):
         "survive": "活下去",
     }
     goal_text = goal_names.get(game.goal, game.goal)
-    hud1 = f"[{time_name}] {hp_str} {weather['name']}"
+    hud1 = f"[{time_name}] {hp_str} {weather['name']}  [m]菜单"
     hud2 = f"({game.player_x},{game.player_y}) 目标:{goal_text} 怪物:{len(game.monsters)} 尸体:{len(game.corpses)}"
     if game.place_mode:
         hud2 += f" [建造:{game.place_mode}]"
