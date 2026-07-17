@@ -43,13 +43,15 @@ Termux/Python/curses 无限世界 Roguelike 沙盒。核心理念：世界先于
 
 1. ~~合成门窗功能缺失~~【2026-07-14已核实非bug】：门窗配方(木门/木门(简易)/玻璃窗)合成→放置全链路正常，此前只是游戏内未凑够材料实测。新发现：recipes.json里`result.place_tile`/`consume_item`字段全项目零引用（死字段，与items.json的同名`place_tile`是完全不同的两套东西，不要混淆），当前数据靠退化到`name`/配方key巧合对齐，未来新增配方避免误用这两个死字段。
 2. ~~`place_tile`字段名实无实~~【2026-07-14已修复】：全数据审计确认16个物品100%字段值与key一致、从未用到"物品名≠tile名"的自由度，已删除该字段（`items.json`）并简化`get_place_tile()`为直接返回`name`，消除两套key体系分裂隐患。
-3. **消息队列HUD展示待优化**：`game.message`已改为队列(`ui.messages`，最近5条)，但HUD仍只显示最后一条(`messages[-1]`)。是否升级为多行展示，待需求明确。
+3. ~~消息队列HUD展示待优化~~【2026-07-17已解决】：`game.message`已改为队列(`ui.messages`，最近5条)，已通过旁白窗口11行滚动+去重计数完成优化，新消息加粗、历史消息变暗，操作反馈独立于旁白流。
 ~~4. `EventBus()`模块级全局单例~~【2026-07-14已修复】：根因非"重复注册"，而是test_simulation/test_stress/smoke_test三个脚本不经main()，从未调用register_status()，导致DAMAGE_DEALT/MONSTER_KILLED事件测试时静默丢弃(buff_manager死亡实体清理从未被验证)。已在四个测试文件补register_status()调用，顺带修复test_simulation/test_stress/smoke_test里sys.path.insert顺序错误(在import main之后，导致独立运行报ModuleNotFoundError)。
 5. `Game`类偏"上帝对象"，职责过多，不紧急（未到"牵动十几个文件"的失控程度）
 ~~6. `ui/states/`下6个State文件窗口创建/边框绘制逻辑重复~~【2026-07-16已修复】：全面审计确认，6个State文件(inventory/crafting/chest/equipment/legacy/build)全部已接入CenteredWindowMixin，STATUS.md之前的"待完成"记录已多次与实际不符，以此次审计为准。
 7. docstring风格不统一（中英混搭+中文标点残留），DeepSeek已有整理清单，优先级最低，顺手做
 
 ## 七、最近会话记录（滚动更新，只保留结论；超过3轮的历史随时可删，git log为准）
+**2026-07-17**：旁白系统精细化与UI约束完善。核心改动：(1)删除MONSTER_SPAWNED事件双重写入bug(monster_ai.py直接写+main.py订阅各写一遍)，保留EventBus订阅版本，系统层不再直接碰ui.narration; (2)旁白getter加去重逻辑:相同消息合并计数显示为"×N"，避免短时间内怪物批量出现时旁白栏刷屏; (3)game_renderer.py修复吞消息bug(原有if逻辑导致最新一条被删掉)，改为真正的11行滚动历史展示，新消息A_BOLD、历史消息A_DIM逐级变暗; (4)HUD操作行改进:删除无谓重复赋值死代码(play_state.py _build_world_knowledge中return后)，在HUD天气信息后固定显示"[m]菜单"提示，补偿HUD精简后新玩家操作入口缺失。实机测试确认无异常，关键观察：旁白×N计数工作正常、大量怪物出现不再刷屏。技术债#3("消息队列HUD展示待优化")实质已解决(旁白窗口11行滚动替代单行输出), 建议标记为已解决。未来NPC对话等交互式需求应独立做DialogueState,不混入narration流。
+
 
 **2026-07-16（下下半场）**：视觉特效系统V1设计定案，未开始实施。核心结构：新建systems/effects.py，Effect(dataclass)+EffectManager(spawn/update/active/clear)，挂在Game层级下与BuffManager同级，不进存档。生命周期靠advance_turn()推进age，不用sleep/线程。V1范围收窄：只做SLASH+TEXT两种kind，只接入攻击命中/未命中/暴击三个点，且只用ASCII符号，不写中文——中文飘字会撞上2026-07-13第五轮记录的_draw_map_row()按字符数截断的旧bug，两个问题分开处理，不在这次一起修。ARCHITECTURE.md暂不改动（Effect是否算Tile/Entity之外第三类，等实现中真遇到具体冲突再补，不预先打补丁）。具体接入点见交接文档。
 
